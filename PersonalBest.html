@@ -1,0 +1,602 @@
+<!DOCTYPE html>
+<html lang="ko">
+<head>
+    <meta charset="UTF-8">
+    <meta name="viewport" content="width=device-width, initial-scale=1.0, maximum-scale=1.0, user-scalable=no">
+    <title>쇼트트랙 최고기록</title>
+    <style>
+        * {
+            margin: 0;
+            padding: 0;
+            box-sizing: border-box;
+            -webkit-tap-highlight-color: transparent;
+        }
+        
+        body {
+            font-family: -apple-system, BlinkMacSystemFont, 'Segoe UI', 'Malgun Gothic', sans-serif;
+            background: linear-gradient(135deg, #667eea 0%, #764ba2 100%);
+            min-height: 100vh;
+            padding: 10px;
+        }
+        
+        .container {
+            max-width: 1400px;
+            margin: 0 auto;
+            background: white;
+            border-radius: 15px;
+            box-shadow: 0 20px 60px rgba(0,0,0,0.3);
+            overflow: hidden;
+        }
+        
+        .header {
+            background: linear-gradient(135deg, #667eea 0%, #764ba2 100%);
+            color: white;
+            padding: 20px 15px;
+            text-align: center;
+        }
+        
+        .header h1 {
+            font-size: 1.8em;
+            margin-bottom: 8px;
+            text-shadow: 2px 2px 4px rgba(0,0,0,0.2);
+        }
+        
+        .header p {
+            font-size: 1em;
+            opacity: 0.9;
+        }
+        
+        .event-selector {
+            display: flex;
+            gap: 8px;
+            padding: 15px;
+            background: #f8f9fa;
+            border-bottom: 2px solid #e9ecef;
+            justify-content: center;
+            flex-wrap: wrap;
+        }
+        
+        .event-btn {
+            flex: 1;
+            min-width: 100px;
+            max-width: 150px;
+            padding: 12px 20px;
+            border: 3px solid #dee2e6;
+            background: white;
+            border-radius: 12px;
+            cursor: pointer;
+            transition: all 0.3s;
+            font-size: 1.1em;
+            font-weight: 700;
+            text-align: center;
+        }
+        
+        .event-btn:active {
+            transform: scale(0.95);
+        }
+        
+        .event-btn.active {
+            background: linear-gradient(135deg, #667eea 0%, #764ba2 100%);
+            color: white;
+            border-color: #667eea;
+            box-shadow: 0 4px 15px rgba(102, 126, 234, 0.4);
+        }
+        
+        .stats {
+            display: grid;
+            grid-template-columns: repeat(auto-fit, minmax(100px, 1fr));
+            gap: 10px;
+            padding: 15px;
+            background: #f8f9fa;
+            border-bottom: 2px solid #e9ecef;
+        }
+        
+        .stat-box {
+            text-align: center;
+            padding: 10px;
+            background: white;
+            border-radius: 10px;
+        }
+        
+        .stat-label {
+            font-size: 0.75em;
+            color: #6c757d;
+            margin-bottom: 5px;
+        }
+        
+        .stat-value {
+            font-size: 1.3em;
+            font-weight: bold;
+            color: #667eea;
+        }
+        
+        .controls {
+            padding: 15px;
+            background: #f8f9fa;
+        }
+        
+        .search-box {
+            margin-bottom: 10px;
+        }
+        
+        .search-box input {
+            width: 100%;
+            padding: 12px 15px;
+            border: 2px solid #dee2e6;
+            border-radius: 10px;
+            font-size: 0.95em;
+            transition: all 0.3s;
+        }
+        
+        .search-box input:focus {
+            outline: none;
+            border-color: #667eea;
+            box-shadow: 0 0 0 3px rgba(102, 126, 234, 0.1);
+        }
+        
+        .filter-buttons {
+            display: flex;
+            gap: 8px;
+            flex-wrap: wrap;
+        }
+        
+        .filter-btn {
+            flex: 1;
+            min-width: 80px;
+            padding: 10px 15px;
+            border: 2px solid #dee2e6;
+            background: white;
+            border-radius: 10px;
+            cursor: pointer;
+            transition: all 0.3s;
+            font-size: 0.9em;
+            font-weight: 600;
+            text-align: center;
+        }
+        
+        .filter-btn:active {
+            transform: scale(0.97);
+        }
+        
+        .filter-btn.active {
+            background: #667eea;
+            color: white;
+            border-color: #667eea;
+        }
+        
+        .table-container {
+            padding: 15px;
+            overflow-x: auto;
+            -webkit-overflow-scrolling: touch;
+        }
+        
+        table {
+            width: 100%;
+            border-collapse: collapse;
+            font-size: 0.85em;
+        }
+        
+        thead {
+            background: linear-gradient(135deg, #667eea 0%, #764ba2 100%);
+            color: white;
+            position: sticky;
+            top: 0;
+            z-index: 10;
+        }
+        
+        th {
+            padding: 12px 8px;
+            text-align: left;
+            font-weight: 600;
+            white-space: nowrap;
+        }
+        
+        th:first-child {
+            text-align: center;
+            width: 50px;
+        }
+        
+        tbody tr {
+            transition: all 0.2s;
+            border-bottom: 1px solid #f0f0f0;
+        }
+        
+        tbody tr:active {
+            background: #f8f9fa;
+        }
+        
+        td {
+            padding: 12px 8px;
+            vertical-align: middle;
+        }
+        
+        td:first-child {
+            text-align: center;
+            font-weight: bold;
+            font-size: 1.1em;
+        }
+        
+        .rank-1 { color: #FFD700; font-size: 1.3em !important; }
+        .rank-2 { color: #C0C0C0; font-size: 1.2em !important; }
+        .rank-3 { color: #CD7F32; font-size: 1.2em !important; }
+        
+        .player-name {
+            font-weight: 600;
+            color: #2c3e50;
+            display: block;
+            margin-bottom: 3px;
+        }
+        
+        .grade-badge {
+            display: inline-block;
+            padding: 3px 8px;
+            border-radius: 10px;
+            font-size: 0.8em;
+            font-weight: 600;
+            color: white;
+        }
+        
+        .grade-6 {
+            background: linear-gradient(135deg, #667eea 0%, #764ba2 100%);
+        }
+        
+        .grade-5 {
+            background: linear-gradient(135deg, #f093fb 0%, #f5576c 100%);
+        }
+        
+        .school-name {
+            color: #6c757d;
+            font-size: 0.85em;
+            display: block;
+            margin-top: 2px;
+        }
+        
+        .record {
+            font-family: 'Courier New', monospace;
+            font-weight: bold;
+            color: #e74c3c;
+            font-size: 1em;
+            white-space: nowrap;
+        }
+        
+        .competition {
+            color: #555;
+            font-size: 0.85em;
+            line-height: 1.4;
+        }
+        
+        .date {
+            color: #888;
+            font-size: 0.8em;
+            display: block;
+            margin-top: 3px;
+        }
+        
+        .no-results {
+            text-align: center;
+            padding: 40px 20px;
+            color: #6c757d;
+            font-size: 1em;
+        }
+        
+        @media (min-width: 768px) {
+            body {
+                padding: 20px;
+            }
+            
+            .container {
+                border-radius: 20px;
+            }
+            
+            .header {
+                padding: 30px;
+            }
+            
+            .header h1 {
+                font-size: 2.5em;
+                margin-bottom: 10px;
+            }
+            
+            .header p {
+                font-size: 1.1em;
+            }
+            
+            .event-selector {
+                padding: 20px;
+            }
+            
+            .event-btn {
+                font-size: 1.2em;
+                padding: 15px 30px;
+            }
+            
+            .event-btn:hover {
+                border-color: #667eea;
+                background: #f8f9fa;
+            }
+            
+            .event-btn.active:hover {
+                background: linear-gradient(135deg, #5568d3 0%, #6a3d8f 100%);
+            }
+            
+            .stats {
+                padding: 20px;
+                gap: 15px;
+            }
+            
+            .stat-box {
+                padding: 15px;
+            }
+            
+            .stat-label {
+                font-size: 0.9em;
+            }
+            
+            .stat-value {
+                font-size: 1.8em;
+            }
+            
+            .controls {
+                padding: 20px;
+                display: flex;
+                gap: 15px;
+                align-items: center;
+            }
+            
+            .search-box {
+                flex: 1;
+                margin-bottom: 0;
+            }
+            
+            .filter-buttons {
+                flex-shrink: 0;
+            }
+            
+            .filter-btn {
+                min-width: 100px;
+                padding: 12px 20px;
+            }
+            
+            .filter-btn:hover {
+                background: #f8f9fa;
+            }
+            
+            .filter-btn.active:hover {
+                background: #5568d3;
+            }
+            
+            .table-container {
+                padding: 20px;
+            }
+            
+            table {
+                font-size: 0.95em;
+            }
+            
+            th, td {
+                padding: 15px 12px;
+            }
+            
+            tbody tr:hover {
+                background: #f8f9fa;
+                transform: scale(1.005);
+                box-shadow: 0 2px 8px rgba(0,0,0,0.1);
+            }
+            
+            .player-name {
+                font-size: 1em;
+            }
+            
+            .school-name {
+                font-size: 0.9em;
+            }
+            
+            .record {
+                font-size: 1.1em;
+            }
+            
+            .competition {
+                font-size: 0.9em;
+            }
+        }
+        
+        .table-container::-webkit-scrollbar {
+            height: 8px;
+        }
+        
+        .table-container::-webkit-scrollbar-track {
+            background: #f1f1f1;
+            border-radius: 10px;
+        }
+        
+        .table-container::-webkit-scrollbar-thumb {
+            background: #667eea;
+            border-radius: 10px;
+        }
+        
+        .table-container::-webkit-scrollbar-thumb:hover {
+            background: #5568d3;
+        }
+    </style>
+</head>
+<body>
+    <div class="container">
+        <div class="header">
+            <h1>🏆 쇼트트랙 최고기록</h1>
+            <p>여자 초등 5·6학년 선수별 최고 기록</p>
+        </div>
+        
+        <div class="event-selector">
+            <button class="event-btn active" data-event="500m">500m</button>
+            <button class="event-btn" data-event="1000m">1000m</button>
+            <button class="event-btn" data-event="1500m">1500m</button>
+        </div>
+        
+        <div class="stats">
+            <div class="stat-box">
+                <div class="stat-label">총 선수</div>
+                <div class="stat-value" id="totalPlayers">26명</div>
+            </div>
+            <div class="stat-box">
+                <div class="stat-label">최고 기록</div>
+                <div class="stat-value" id="bestRecord">45.785초</div>
+            </div>
+            <div class="stat-box">
+                <div class="stat-label">평균 기록</div>
+                <div class="stat-value" id="avgRecord">49.2초</div>
+            </div>
+        </div>
+        
+        <div class="controls">
+            <div class="search-box">
+                <input type="text" id="searchInput" placeholder="🔍 선수 이름, 학교, 대회명 검색...">
+            </div>
+            <div class="filter-buttons">
+                <button class="filter-btn active" data-grade="all">전체</button>
+                <button class="filter-btn" data-grade="6">6학년</button>
+                <button class="filter-btn" data-grade="5">5학년</button>
+            </div>
+        </div>
+        
+        <div class="table-container">
+            <table id="recordTable">
+                <thead>
+                    <tr>
+                        <th>순위</th>
+                        <th>선수</th>
+                        <th>학년</th>
+                        <th>학교</th>
+                        <th>기록</th>
+                        <th>대회명(날짜)</th>
+                    </tr>
+                </thead>
+                <tbody id="tableBody">
+                </tbody>
+            </table>
+            <div id="noResults" class="no-results" style="display: none;">
+                검색 결과가 없습니다.
+            </div>
+        </div>
+    </div>
+    
+    <script>
+        const allData = JSON.parse('{"500m": [{"name": "임채민", "grade": 6, "school": "청계초등학교", "record": "00:45.785", "competition": "2025년 제41회 교보생명컵 꿈나무 체육대회(쇼트트랙-전문)", "date": "2025.07.26", "sort_value": 45.785}, {"name": "박하랑", "grade": 5, "school": "서울양목초등학교", "record": "00:45.901", "competition": "2025년 제41회 교보생명컵 꿈나무 체육대회(쇼트트랙-전문)", "date": "2025.07.26", "sort_value": 45.901}, {"name": "권유하", "grade": 6, "school": "리라초등학교", "record": "00:45.941", "competition": "2025년 제41회 교보생명컵 꿈나무 체육대회(쇼트트랙-전문)", "date": "2025.07.26", "sort_value": 45.941}, {"name": "강혜율", "grade": 6, "school": "리라초등학교", "record": "00:46.652", "competition": "2025년 제41회 교보생명컵 꿈나무 체육대회(쇼트트랙-전문)", "date": "2025.07.26", "sort_value": 46.652}, {"name": "최수안", "grade": 6, "school": "원일초등학교", "record": "00:46.775", "competition": "2025년 제41회 교보생명컵 꿈나무 체육대회(쇼트트랙-전문)", "date": "2025.07.26", "sort_value": 46.775}, {"name": "조예음", "grade": 6, "school": "인천석천초등학교", "record": "00:46.919", "competition": "2025년 제41회 교보생명컵 꿈나무 체육대회(쇼트트랙-전문)", "date": "2025.07.26", "sort_value": 46.919}, {"name": "김채율", "grade": 6, "school": "보름초등학교", "record": "00:46.961", "competition": "제28회 전국남녀 쇼트트랙스피드스케이팅 꿈나무 선수권대회", "date": "2025.10.18", "sort_value": 46.961}, {"name": "이하율", "grade": 6, "school": "인천일반", "record": "00:46.980", "competition": "제28회 전국남녀 쇼트트랙스피드스케이팅 꿈나무 선수권대회", "date": "2025.10.18", "sort_value": 46.98}, {"name": "김연서", "grade": 6, "school": "서울영도초등학교", "record": "00:47.084", "competition": "2025년 제41회 교보생명컵 꿈나무 체육대회(쇼트트랙-전문)", "date": "2025.07.26", "sort_value": 47.084}, {"name": "김서연", "grade": 6, "school": "인천주원초등학교", "record": "00:47.318", "competition": "제28회 전국남녀 쇼트트랙스피드스케이팅 꿈나무 선수권대회", "date": "2025.10.18", "sort_value": 47.318}, {"name": "김지안", "grade": 5, "school": "용문초등학교", "record": "00:48.174", "competition": "2025년 제41회 교보생명컵 꿈나무 체육대회(쇼트트랙-전문)", "date": "2025.07.26", "sort_value": 48.174}, {"name": "김연우", "grade": 5, "school": "평촌초등학교", "record": "00:48.227", "competition": "2025년 제41회 교보생명컵 꿈나무 체육대회(쇼트트랙-전문)", "date": "2025.07.26", "sort_value": 48.227}, {"name": "이소윤", "grade": 5, "school": "죽전초등학교", "record": "00:48.247", "competition": "제28회 전국남녀 쇼트트랙스피드스케이팅 꿈나무 선수권대회", "date": "2025.10.18", "sort_value": 48.247}, {"name": "장서윤", "grade": 5, "school": "율현초등학교", "record": "00:48.667", "competition": "제28회 전국남녀 쇼트트랙스피드스케이팅 꿈나무 선수권대회", "date": "2025.10.18", "sort_value": 48.667}, {"name": "심하율", "grade": 6, "school": "강릉교동초등학교", "record": "00:49.134", "competition": "2025년 제41회 교보생명컵 꿈나무 체육대회(쇼트트랙-전문)", "date": "2025.07.26", "sort_value": 49.134}, {"name": "윤재아", "grade": 5, "school": "인천도담초등학교", "record": "00:49.266", "competition": "2025년 제41회 교보생명컵 꿈나무 체육대회(쇼트트랙-전문)", "date": "2025.07.26", "sort_value": 49.266}, {"name": "오수연", "grade": 5, "school": "청주대성초등학교", "record": "00:49.875", "competition": "제27회 전국남녀 쇼트트랙스피드스케이팅 꿈나무 선수권대회", "date": "2024.11.02", "sort_value": 49.875}, {"name": "류연지", "grade": 6, "school": "만호초등학교", "record": "00:50.058", "competition": "제28회 전국남녀 쇼트트랙스피드스케이팅 꿈나무 선수권대회", "date": "2025.10.18", "sort_value": 50.058}, {"name": "LIZHOUYING", "grade": 6, "school": "인천동춘초등학교", "record": "00:50.074", "competition": "제28회 전국남녀 쇼트트랙스피드스케이팅 꿈나무 선수권대회", "date": "2025.10.18", "sort_value": 50.074}, {"name": "원서진", "grade": 6, "school": "해원초등학교", "record": "00:50.105", "competition": "제28회 전국남녀 쇼트트랙스피드스케이팅 꿈나무 선수권대회", "date": "2025.10.18", "sort_value": 50.105}, {"name": "윤유주", "grade": 6, "school": "율곡초등학교", "record": "00:50.189", "competition": "2025년 제41회 교보생명컵 꿈나무 체육대회(쇼트트랙-전문)", "date": "2025.07.26", "sort_value": 50.189}, {"name": "고다하", "grade": 5, "school": "강릉교동초등학교", "record": "00:50.831", "competition": "제28회 전국남녀 쇼트트랙스피드스케이팅 꿈나무 선수권대회", "date": "2025.10.18", "sort_value": 50.831}, {"name": "박세경", "grade": 5, "school": "광주화정초등학교", "record": "00:51.444", "competition": "제28회 전국남녀 쇼트트랙스피드스케이팅 꿈나무 선수권대회", "date": "2025.10.18", "sort_value": 51.444}, {"name": "박지원", "grade": 6, "school": "진월초등학교", "record": "00:52.119", "competition": "제28회 전국남녀 쇼트트랙스피드스케이팅 꿈나무 선수권대회", "date": "2025.10.18", "sort_value": 52.119}, {"name": "JINYINZHEN", "grade": 6, "school": "대구용지초등학교", "record": "00:56.029", "competition": "제28회 전국남녀 쇼트트랙스피드스케이팅 꿈나무 선수권대회", "date": "2025.10.18", "sort_value": 56.029}, {"name": "나윤채", "grade": 6, "school": "수성초등학교", "record": "00:56.186", "competition": "제28회 전국남녀 쇼트트랙스피드스케이팅 꿈나무 선수권대회", "date": "2025.10.18", "sort_value": 56.186}], "1000m": [{"name": "김채율", "grade": 6, "school": "보름초등학교", "record": "01:35.424", "competition": "제28회 전국남녀 쇼트트랙스피드스케이팅 꿈나무 선수권대회", "date": "2025.10.19", "sort_value": 95.424}, {"name": "권유하", "grade": 6, "school": "리라초등학교", "record": "01:36.004", "competition": "제105회 전국동계체육대회", "date": "2024.02.03", "sort_value": 96.004}, {"name": "임채민", "grade": 6, "school": "청계초등학교", "record": "01:36.215", "competition": "제39회 전국남녀 종별종합 쇼트트랙스피드스케이팅 선수권대회", "date": "2025.03.23", "sort_value": 96.215}, {"name": "강혜율", "grade": 6, "school": "리라초등학교", "record": "01:36.670", "competition": "제40회 회장배 전국남녀 쇼트트랙스피드스케이팅 대회", "date": "2024.12.29", "sort_value": 96.67}, {"name": "김서연", "grade": 6, "school": "인천주원초등학교", "record": "01:36.880", "competition": "제40회 회장배 전국남녀 쇼트트랙스피드스케이팅 대회", "date": "2024.12.29", "sort_value": 96.88}, {"name": "박하랑", "grade": 5, "school": "서울양목초등학교", "record": "01:37.373", "competition": "2025년 제41회 교보생명컵 꿈나무 체육대회(쇼트트랙-전문)", "date": "2025.07.27", "sort_value": 97.373}, {"name": "김연우", "grade": 5, "school": "평촌초등학교", "record": "01:37.410", "competition": "2025년 제41회 교보생명컵 꿈나무 체육대회(쇼트트랙-전문)", "date": "2025.07.27", "sort_value": 97.41}, {"name": "조예음", "grade": 6, "school": "인천석천초등학교", "record": "01:37.567", "competition": "2025년 제41회 교보생명컵 꿈나무 체육대회(쇼트트랙-전문)", "date": "2025.07.27", "sort_value": 97.567}, {"name": "김지안", "grade": 5, "school": "용문초등학교", "record": "01:38.089", "competition": "제28회 전국남녀 쇼트트랙스피드스케이팅 꿈나무 선수권대회", "date": "2025.10.19", "sort_value": 98.089}, {"name": "이하율", "grade": 6, "school": "인천일반", "record": "01:38.322", "competition": "2025년 제41회 교보생명컵 꿈나무 체육대회(쇼트트랙-전문)", "date": "2025.07.27", "sort_value": 98.322}, {"name": "윤재아", "grade": 5, "school": "인천도담초등학교", "record": "01:38.405", "competition": "2025년 제41회 교보생명컵 꿈나무 체육대회(쇼트트랙-전문)", "date": "2025.07.27", "sort_value": 98.405}, {"name": "LIZHOUYING", "grade": 6, "school": "인천동춘초등학교", "record": "01:39.686", "competition": "2025년 제41회 교보생명컵 꿈나무 체육대회(쇼트트랙-전문)", "date": "2025.07.27", "sort_value": 99.686}, {"name": "장서윤", "grade": 5, "school": "율현초등학교", "record": "01:39.821", "competition": "제27회 전국남녀 쇼트트랙스피드스케이팅 꿈나무 선수권대회", "date": "2024.11.03", "sort_value": 99.821}, {"name": "이소윤", "grade": 5, "school": "죽전초등학교", "record": "01:40.165", "competition": "제28회 전국남녀 쇼트트랙스피드스케이팅 꿈나무 선수권대회", "date": "2025.10.19", "sort_value": 100.165}, {"name": "류연지", "grade": 6, "school": "만호초등학교", "record": "01:40.850", "competition": "제28회 전국남녀 쇼트트랙스피드스케이팅 꿈나무 선수권대회", "date": "2025.10.19", "sort_value": 100.85}, {"name": "최수안", "grade": 6, "school": "원일초등학교", "record": "01:41.430", "competition": "제39회 전국남녀 종별종합 쇼트트랙스피드스케이팅 선수권대회", "date": "2025.03.23", "sort_value": 101.43}, {"name": "원서진", "grade": 6, "school": "해원초등학교", "record": "01:42.034", "competition": "2025년 제41회 교보생명컵 꿈나무 체육대회(쇼트트랙-전문)", "date": "2025.07.27", "sort_value": 102.034}, {"name": "김연서", "grade": 6, "school": "서울영도초등학교", "record": "01:42.308", "competition": "제28회 전국남녀 쇼트트랙스피드스케이팅 꿈나무 선수권대회", "date": "2025.10.19", "sort_value": 102.308}, {"name": "오수연", "grade": 5, "school": "청주대성초등학교", "record": "01:42.489", "competition": "2025년 제41회 교보생명컵 꿈나무 체육대회(쇼트트랙-전문)", "date": "2025.07.27", "sort_value": 102.489}, {"name": "심하율", "grade": 6, "school": "강릉교동초등학교", "record": "01:42.943", "competition": "2025년 제41회 교보생명컵 꿈나무 체육대회(쇼트트랙-전문)", "date": "2025.07.27", "sort_value": 102.943}, {"name": "박지원", "grade": 6, "school": "진월초등학교", "record": "01:43.601", "competition": "제28회 전국남녀 쇼트트랙스피드스케이팅 꿈나무 선수권대회", "date": "2025.10.19", "sort_value": 103.601}, {"name": "고다하", "grade": 5, "school": "강릉교동초등학교", "record": "01:43.756", "competition": "제28회 전국남녀 쇼트트랙스피드스케이팅 꿈나무 선수권대회", "date": "2025.10.19", "sort_value": 103.756}, {"name": "박세경", "grade": 5, "school": "광주화정초등학교", "record": "01:45.177", "competition": "2025년 제41회 교보생명컵 꿈나무 체육대회(쇼트트랙-전문)", "date": "2025.07.27", "sort_value": 105.177}, {"name": "윤유주", "grade": 6, "school": "율곡초등학교", "record": "01:45.510", "competition": "제28회 전국남녀 쇼트트랙스피드스케이팅 꿈나무 선수권대회", "date": "2025.10.19", "sort_value": 105.51}, {"name": "JINYINZHEN", "grade": 6, "school": "대구용지초등학교", "record": "01:54.029", "competition": "제28회 전국남녀 쇼트트랙스피드스케이팅 꿈나무 선수권대회", "date": "2025.10.19", "sort_value": 114.029}, {"name": "나윤채", "grade": 6, "school": "수성초등학교", "record": "01:55.636", "competition": "제28회 전국남녀 쇼트트랙스피드스케이팅 꿈나무 선수권대회", "date": "2025.10.19", "sort_value": 115.636}], "1500m": [{"name": "김서연", "grade": 6, "school": "인천주원초등학교", "record": "02:31.470", "competition": "제28회 전국남녀 쇼트트랙스피드스케이팅 꿈나무 선수권대회", "date": "2025.10.18", "sort_value": 151.47}, {"name": "김채율", "grade": 6, "school": "보름초등학교", "record": "02:31.647", "competition": "제28회 전국남녀 쇼트트랙스피드스케이팅 꿈나무 선수권대회", "date": "2025.10.18", "sort_value": 151.647}, {"name": "임채민", "grade": 6, "school": "청계초등학교", "record": "02:31.981", "competition": "제3회 국무총리배 전국남녀 쇼트트랙스피드스케이팅 대회", "date": "2024.11.22", "sort_value": 151.981}, {"name": "김연서", "grade": 6, "school": "서울영도초등학교", "record": "02:31.999", "competition": "제28회 전국남녀 쇼트트랙스피드스케이팅 꿈나무 선수권대회", "date": "2025.10.18", "sort_value": 151.999}, {"name": "권유하", "grade": 6, "school": "리라초등학교", "record": "02:32.704", "competition": "제27회 전국남녀 쇼트트랙스피드스케이팅 꿈나무 선수권대회", "date": "2024.11.02", "sort_value": 152.704}, {"name": "조예음", "grade": 6, "school": "인천석천초등학교", "record": "02:32.963", "competition": "제27회 전국남녀 쇼트트랙스피드스케이팅 꿈나무 선수권대회", "date": "2024.11.02", "sort_value": 152.963}, {"name": "김연우", "grade": 5, "school": "평촌초등학교", "record": "02:34.112", "competition": "제28회 전국남녀 쇼트트랙스피드스케이팅 꿈나무 선수권대회", "date": "2025.10.18", "sort_value": 154.112}, {"name": "장서윤", "grade": 5, "school": "율현초등학교", "record": "02:35.657", "competition": "제28회 전국남녀 쇼트트랙스피드스케이팅 꿈나무 선수권대회", "date": "2025.10.18", "sort_value": 155.657}, {"name": "이하율", "grade": 6, "school": "인천일반", "record": "02:36.801", "competition": "제106회 전국동계체육대회", "date": "2025.01.11", "sort_value": 156.801}, {"name": "강혜율", "grade": 6, "school": "리라초등학교", "record": "02:37.026", "competition": "제28회 전국남녀 쇼트트랙스피드스케이팅 꿈나무 선수권대회", "date": "2025.10.18", "sort_value": 157.026}, {"name": "박하랑", "grade": 5, "school": "서울양목초등학교", "record": "02:37.389", "competition": "제40회 회장배 전국남녀 쇼트트랙스피드스케이팅 대회", "date": "2024.12.27", "sort_value": 157.389}, {"name": "윤재아", "grade": 5, "school": "인천도담초등학교", "record": "02:37.687", "competition": "제40회 회장배 전국남녀 쇼트트랙스피드스케이팅 대회", "date": "2024.12.27", "sort_value": 157.687}, {"name": "심하율", "grade": 6, "school": "강릉교동초등학교", "record": "02:38.239", "competition": "제28회 전국남녀 쇼트트랙스피드스케이팅 꿈나무 선수권대회", "date": "2025.10.18", "sort_value": 158.239}, {"name": "김지안", "grade": 5, "school": "용문초등학교", "record": "02:38.789", "competition": "제28회 전국남녀 쇼트트랙스피드스케이팅 꿈나무 선수권대회", "date": "2025.10.18", "sort_value": 158.789}, {"name": "이소윤", "grade": 5, "school": "죽전초등학교", "record": "02:39.736", "competition": "제28회 전국남녀 쇼트트랙스피드스케이팅 꿈나무 선수권대회", "date": "2025.10.18", "sort_value": 159.736}, {"name": "LIZHOUYING", "grade": 6, "school": "인천동춘초등학교", "record": "02:40.506", "competition": "2025년 제41회 교보생명컵 꿈나무 체육대회(쇼트트랙-전문)", "date": "2025.07.26", "sort_value": 160.506}, {"name": "최수안", "grade": 6, "school": "원일초등학교", "record": "02:41.370", "competition": "제39회 전국남녀 종별종합 쇼트트랙스피드스케이팅 선수권대회", "date": "2025.03.21", "sort_value": 161.37}, {"name": "오수연", "grade": 5, "school": "청주대성초등학교", "record": "02:41.971", "competition": "제27회 전국남녀 쇼트트랙스피드스케이팅 꿈나무 선수권대회", "date": "2024.11.02", "sort_value": 161.971}, {"name": "윤유주", "grade": 6, "school": "율곡초등학교", "record": "02:42.609", "competition": "제28회 전국남녀 쇼트트랙스피드스케이팅 꿈나무 선수권대회", "date": "2025.10.18", "sort_value": 162.609}, {"name": "고다하", "grade": 5, "school": "강릉교동초등학교", "record": "02:43.963", "competition": "제28회 전국남녀 쇼트트랙스피드스케이팅 꿈나무 선수권대회", "date": "2025.10.18", "sort_value": 163.963}, {"name": "원서진", "grade": 6, "school": "해원초등학교", "record": "02:44.537", "competition": "2025년 제41회 교보생명컵 꿈나무 체육대회(쇼트트랙-전문)", "date": "2025.07.26", "sort_value": 164.537}, {"name": "박세경", "grade": 5, "school": "광주화정초등학교", "record": "02:49.113", "competition": "제28회 전국남녀 쇼트트랙스피드스케이팅 꿈나무 선수권대회", "date": "2025.10.18", "sort_value": 169.113}, {"name": "박지원", "grade": 6, "school": "진월초등학교", "record": "02:50.076", "competition": "제28회 전국남녀 쇼트트랙스피드스케이팅 꿈나무 선수권대회", "date": "2025.10.18", "sort_value": 170.076}, {"name": "JINYINZHEN", "grade": 6, "school": "대구용지초등학교", "record": "03:02.173", "competition": "제28회 전국남녀 쇼트트랙스피드스케이팅 꿈나무 선수권대회", "date": "2025.10.18", "sort_value": 182.173}, {"name": "나윤채", "grade": 6, "school": "수성초등학교", "record": "03:03.590", "competition": "제28회 전국남녀 쇼트트랙스피드스케이팅 꿈나무 선수권대회", "date": "2025.10.18", "sort_value": 183.59}]}');
+        
+        let currentEvent = '500m';
+        let currentFilter = 'all';
+        let currentSearch = '';
+        
+        function getMedalEmoji(rank) {
+            if (rank === 1) return '🥇';
+            if (rank === 2) return '🥈';
+            if (rank === 3) return '🥉';
+            return rank;
+        }
+        
+        function getRankClass(rank) {
+            if (rank === 1) return 'rank-1';
+            if (rank === 2) return 'rank-2';
+            if (rank === 3) return 'rank-3';
+            return '';
+        }
+        
+        function renderTable() {
+            const tbody = document.getElementById('tableBody');
+            const noResults = document.getElementById('noResults');
+            
+            const data = allData[currentEvent] || [];
+            
+            let filteredData = data.filter(item => {
+                const matchesGrade = currentFilter === 'all' || item.grade == currentFilter;
+                const matchesSearch = currentSearch === '' || 
+                    item.name.toLowerCase().includes(currentSearch.toLowerCase()) ||
+                    item.school.toLowerCase().includes(currentSearch.toLowerCase()) ||
+                    item.competition.toLowerCase().includes(currentSearch.toLowerCase());
+                return matchesGrade && matchesSearch;
+            });
+            
+            if (filteredData.length === 0) {
+                tbody.innerHTML = '';
+                noResults.style.display = 'block';
+                return;
+            }
+            
+            noResults.style.display = 'none';
+            
+            tbody.innerHTML = filteredData.map((item, index) => {
+                const rank = index + 1;
+                return `
+                    <tr>
+                        <td class="${getRankClass(rank)}">${getMedalEmoji(rank)}</td>
+                        <td>
+                            <span class="player-name">${item.name}</span>
+                        </td>
+                        <td>
+                            <span class="grade-badge grade-${item.grade}">${item.grade}학년</span>
+                        </td>
+                        <td>
+                            <span class="school-name">${item.school}</span>
+                        </td>
+                        <td class="record">${item.record}</td>
+                        <td class="competition">
+                            ${item.competition}
+                            <span class="date">${item.date}</span>
+                        </td>
+                    </tr>
+                `;
+            }).join('');
+            
+            // 통계 업데이트
+            document.getElementById('totalPlayers').textContent = `${filteredData.length}명`;
+            if (filteredData.length > 0) {
+                const bestValue = filteredData[0].sort_value;
+                const avgValue = filteredData.reduce((sum, item) => sum + item.sort_value, 0) / filteredData.length;
+                
+                // 500m은 초 단위, 1000m/1500m은 mm:ss.000 형식
+                if (currentEvent === '500m') {
+                    document.getElementById('bestRecord').textContent = `${bestValue.toFixed(3)}초`;
+                    document.getElementById('avgRecord').textContent = `${avgValue.toFixed(1)}초`;
+                } else {
+                    // mm:ss.000 형식으로 변환
+                    const bestMin = Math.floor(bestValue / 60);
+                    const bestSec = (bestValue % 60).toFixed(3);
+                    document.getElementById('bestRecord').textContent = `${bestMin}:${bestSec.padStart(6, '0')}`;
+                    
+                    const avgMin = Math.floor(avgValue / 60);
+                    const avgSec = (avgValue % 60).toFixed(3);
+                    document.getElementById('avgRecord').textContent = `${avgMin}:${avgSec.padStart(6, '0')}`;
+                }
+            }
+        }
+        
+        // 종목 선택 이벤트
+        document.querySelectorAll('.event-btn').forEach(btn => {
+            btn.addEventListener('click', function() {
+                document.querySelectorAll('.event-btn').forEach(b => b.classList.remove('active'));
+                this.classList.add('active');
+                currentEvent = this.dataset.event;
+                renderTable();
+            });
+        });
+        
+        // 학년 필터 이벤트
+        document.querySelectorAll('.filter-btn').forEach(btn => {
+            btn.addEventListener('click', function() {
+                document.querySelectorAll('.filter-btn').forEach(b => b.classList.remove('active'));
+                this.classList.add('active');
+                currentFilter = this.dataset.grade;
+                renderTable();
+            });
+        });
+        
+        // 검색 이벤트
+        document.getElementById('searchInput').addEventListener('input', function() {
+            currentSearch = this.value;
+            renderTable();
+        });
+        
+        // 초기 렌더링
+        renderTable();
+    </script>
+</body>
+</html>
