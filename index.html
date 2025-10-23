@@ -13010,7 +13010,7 @@ const defaultPlayersData = {
                 // 새 파일 업로드 시 첫 번째 선수를 기본 선택 (가나다순)
                 const sortedNames = Object.keys(loadedData).sort((a, b) => a.localeCompare(b, 'ko'));
                 if (sortedNames.length > 0) {
-                    setSelectedPlayer(sortedNames[0]);
+                    setSelectedPlayer(sortedNames["이소윤"]);
                 }
                 setViewMode('player');
             };
