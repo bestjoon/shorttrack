@@ -1,0 +1,979 @@
+<!DOCTYPE html>
+<html lang="ko">
+<head>
+    <meta charset="UTF-8">
+    <meta name="viewport" content="width=device-width, initial-scale=1.0, maximum-scale=1.0, user-scalable=no">
+    <title>쇼트트랙 기록 History</title>
+    <script crossorigin src="https://unpkg.com/react@18/umd/react.production.min.js"></script>
+    <script crossorigin src="https://unpkg.com/react-dom@18/umd/react-dom.production.min.js"></script>
+    <script src="https://unpkg.com/@babel/standalone/babel.min.js"></script>
+    <script src="https://cdn.tailwindcss.com"></script>
+    <script src="https://cdnjs.cloudflare.com/ajax/libs/xlsx/0.18.5/xlsx.full.min.js"></script>
+    <!-- 선수 데이터 파일 로드 -->
+    <script src="players_data.js"></script>
+    <style>
+        body {
+            background: linear-gradient(135deg, #667eea 0%, #764ba2 100%);
+            min-height: 100vh;
+            margin: 0;
+            padding: 0;
+        }
+        .glass-effect {
+            background: rgba(255, 255, 255, 0.95);
+            backdrop-filter: blur(10px);
+            box-shadow: 0 4px 16px 0 rgba(31, 38, 135, 0.25);
+        }
+        .record-card {
+            transition: all 0.2s ease;
+        }
+        .record-card:hover {
+            transform: translateY(-2px);
+            box-shadow: 0 6px 20px rgba(0, 0, 0, 0.1);
+        }
+        .badge {
+            animation: pulse 2s infinite;
+        }
+        @keyframes pulse {
+            0%, 100% { opacity: 1; }
+            50% { opacity: 0.7; }
+        }
+        .event-tab {
+            cursor: pointer;
+            transition: all 0.2s ease;
+        }
+        .event-tab:hover {
+            background-color: rgba(102, 126, 234, 0.1);
+        }
+        .event-tab.active {
+            background-color: rgba(102, 126, 234, 0.2);
+            border-bottom: 2px solid #667eea;
+        }
+        .upload-area {
+            border: 2px dashed #667eea;
+            transition: all 0.2s ease;
+        }
+        .upload-area:hover {
+            border-color: #764ba2;
+            background-color: rgba(102, 126, 234, 0.05);
+        }
+        .upload-area.dragover {
+            border-color: #764ba2;
+            background-color: rgba(102, 126, 234, 0.1);
+        }
+        
+        /* 모바일 최적화 */
+        @media (max-width: 768px) {
+            body {
+                font-size: 14px;
+            }
+            .glass-effect {
+                box-shadow: 0 2px 8px 0 rgba(31, 38, 135, 0.2);
+            }
+            table {
+                font-size: 12px;
+            }
+            .mobile-compact td, .mobile-compact th {
+                padding: 6px 4px !important;
+            }
+            .mobile-hidden {
+                display: none;
+            }
+            .mobile-text-sm {
+                font-size: 11px;
+            }
+            .mobile-text-xs {
+                font-size: 10px;
+            }
+        }
+        
+        /* 스크롤바 스타일링 */
+        ::-webkit-scrollbar {
+            width: 6px;
+            height: 6px;
+        }
+        ::-webkit-scrollbar-track {
+            background: rgba(255, 255, 255, 0.1);
+        }
+        ::-webkit-scrollbar-thumb {
+            background: rgba(102, 126, 234, 0.5);
+            border-radius: 3px;
+        }
+        ::-webkit-scrollbar-thumb:hover {
+            background: rgba(102, 126, 234, 0.7);
+        }
+        
+        /* 로딩 스피너 */
+        .loader {
+            border: 3px solid #f3f3f3;
+            border-top: 3px solid #667eea;
+            border-radius: 50%;
+            width: 40px;
+            height: 40px;
+            animation: spin 1s linear infinite;
+            margin: 20px auto;
+        }
+        
+        @keyframes spin {
+            0% { transform: rotate(0deg); }
+            100% { transform: rotate(360deg); }
+        }
+    </style>
+</head>
+<body>
+    <div id="root"></div>
+
+    <script type="text/babel">
+        const { useState, useEffect } = React;
+
+        function parseTime2000M(timeStr) {
+            // 2000M 기록에서 포인트 제거하고 시간만 추출
+            // 예: "(15)03:53.692" -> "03:53.692"
+            if (!timeStr) return null;
+            
+            const cleanedStr = String(timeStr).replace(/^\(\d+\)/, '');
+            return cleanedStr;
+        }
+
+        function parseSheetData(jsonData) {
+            // 선수 정보 파싱 (행 2-5)
+            const playerInfo = {
+                '이름': jsonData[2]?.[1] || '',
+                '성별': jsonData[2]?.[3] || '',
+                '출생년도': jsonData[3]?.[1] || '',
+                '종별': jsonData[3]?.[3] || '',
+                '소속팀': jsonData[4]?.[1] || '',
+                '시도': jsonData[4]?.[3] || '',
+                '최종등록년도': jsonData[5]?.[1] || '',
+                '등록구분': jsonData[5]?.[3] || ''
+            };
+
+            // 대회 기록 파싱 (행 10부터 시작)
+            const competitions = [];
+            let currentComp = null;
+            let records = [];
+
+            for (let i = 10; i < jsonData.length; i++) {
+                const row = jsonData[i];
+                if (!row || row.length === 0) continue;
+                
+                // 대회명 행 (첫 번째 컬럼에 값이 있고 두 번째 컬럼이 없는 경우)
+                if (row[0] && !row[1]) {
+                    if (currentComp && records.length > 0) {
+                        competitions.push({
+                            name: currentComp,
+                            records: records
+                        });
+                    }
+                    currentComp = row[0];
+                    records = [];
+                }
+                // 기록 행 (일자가 숫자인 경우)
+                else if (typeof row[0] === 'number' && row[0] > 20000000) {
+                    const record = {
+                        '일자': String(row[0]),
+                        '종별': row[1] || '',
+                        '세부종목': row[2] || '',
+                        '라운드': row[3] || '',
+                        '소속': row[4] || '',
+                        '기록': row[5] || '',
+                        '순위': row[6] || ''
+                    };
+                    records.push(record);
+                }
+            }
+
+            // 마지막 대회 추가
+            if (currentComp && records.length > 0) {
+                competitions.push({
+                    name: currentComp,
+                    records: records
+                });
+            }
+
+            // 연도별 최고 기록 계산
+            const yearlyBest = {};
+            const allEvents = new Set();
+
+            const timeToSeconds = (timeStr) => {
+                if (!timeStr || timeStr === '-' || timeStr === '') return null;
+                
+                // 2000M 포인트 제거: "(15)03:53.692" -> "03:53.692"
+                const cleanedStr = parseTime2000M(timeStr).trim();
+                
+                // 다양한 시간 형식 처리
+                // 형식 1: "00:01:23.456" 또는 "00:01:23.456000"
+                let match = cleanedStr.match(/(\d{1,2}):(\d{2}):(\d{2})\.?(\d*)/);
+                if (match) {
+                    const hours = parseInt(match[1]) || 0;
+                    const minutes = parseInt(match[2]) || 0;
+                    const seconds = parseInt(match[3]) || 0;
+                    const millisStr = match[4] || '0';
+                    const milliseconds = parseInt(millisStr.substring(0, 3).padEnd(3, '0'));
+                    return hours * 3600 + minutes * 60 + seconds + milliseconds / 1000;
+                }
+                
+                // 형식 2: "01:23.456" (분:초.밀리초)
+                match = cleanedStr.match(/^(\d{1,2}):(\d{2})\.(\d+)$/);
+                if (match) {
+                    const minutes = parseInt(match[1]) || 0;
+                    const seconds = parseInt(match[2]) || 0;
+                    const millisStr = match[3] || '0';
+                    const milliseconds = parseInt(millisStr.substring(0, 3).padEnd(3, '0'));
+                    return minutes * 60 + seconds + milliseconds / 1000;
+                }
+                
+                // 형식 3: "23.456" (초.밀리초)
+                match = cleanedStr.match(/^(\d{1,2})\.(\d+)$/);
+                if (match) {
+                    const seconds = parseInt(match[1]) || 0;
+                    const millisStr = match[2] || '0';
+                    const milliseconds = parseInt(millisStr.substring(0, 3).padEnd(3, '0'));
+                    return seconds + milliseconds / 1000;
+                }
+                
+                return null;
+            };
+
+            competitions.forEach(comp => {
+                comp.records.forEach(record => {
+                    const dateStr = record['일자'];
+                    if (dateStr && dateStr.length >= 8) {
+                        const year = dateStr.substring(0, 4);
+                        const event = String(record['세부종목']).toUpperCase();
+                        const timeSeconds = timeToSeconds(record['기록']);
+                        
+                        if (timeSeconds) {
+                            allEvents.add(event);
+                            
+                            if (!yearlyBest[year]) {
+                                yearlyBest[year] = {};
+                            }
+                            
+                            if (!yearlyBest[year][event] || timeSeconds < yearlyBest[year][event].time) {
+                                yearlyBest[year][event] = {
+                                    time: timeSeconds,
+                                    time_str: record['기록'],
+                                    competition: comp.name,
+                                    date: dateStr,
+                                    rank: record['순위']
+                                };
+                            }
+                        }
+                    }
+                });
+            });
+
+            return {
+                player_info: playerInfo,
+                yearly_best: yearlyBest,
+                competitions: competitions,
+                events: Array.from(allEvents).sort()
+            };
+        }
+
+        function parseExcelFile(file) {
+            return new Promise((resolve, reject) => {
+                const reader = new FileReader();
+                reader.onload = (e) => {
+                    try {
+                        const data = new Uint8Array(e.target.result);
+                        const workbook = XLSX.read(data, { type: 'array' });
+                        
+                        console.log('Sheet names:', workbook.SheetNames);
+                        
+                        const allPlayers = {};
+                        
+                        // 모든 시트 읽기
+                        workbook.SheetNames.forEach(sheetName => {
+                            const worksheet = workbook.Sheets[sheetName];
+                            
+                            // 셀을 직접 읽어서 포맷 유지
+                            const range = XLSX.utils.decode_range(worksheet['!ref']);
+                            const jsonData = [];
+                            
+                            for (let R = range.s.r; R <= range.e.r; ++R) {
+                                const row = [];
+                                for (let C = range.s.c; C <= range.e.c; ++C) {
+                                    const cellAddress = XLSX.utils.encode_cell({ r: R, c: C });
+                                    const cell = worksheet[cellAddress];
+                                    
+                                    if (cell && cell.v !== undefined) {
+                                        // 기록 컬럼(5번 컬럼) 특별 처리
+                                        if (C === 5) {
+                                            if (typeof cell.v === 'string') {
+                                                // 문자열인 경우 (2000M 포인트 기록 등)
+                                                row[C] = cell.v;
+                                            } else if (typeof cell.v === 'number' && cell.v < 1) {
+                                                // Excel의 시간 값 (하루의 비율로 저장됨)
+                                                const totalSeconds = cell.v * 86400;
+                                                const hours = Math.floor(totalSeconds / 3600);
+                                                const minutes = Math.floor((totalSeconds % 3600) / 60);
+                                                const seconds = Math.floor(totalSeconds % 60);
+                                                const milliseconds = Math.round((totalSeconds % 1) * 1000);
+                                                
+                                                // 시간 문자열 생성
+                                                row[C] = `${String(hours).padStart(2, '0')}:${String(minutes).padStart(2, '0')}:${String(seconds).padStart(2, '0')}.${String(milliseconds).padStart(3, '0')}000`;
+                                            } else if (cell.w && cell.w.includes(':')) {
+                                                // 이미 시간 형식으로 포맷된 경우
+                                                row[C] = cell.w;
+                                            } else if (cell.w && /^\d+\.\d+$/.test(cell.w)) {
+                                                // "0138.6" 같은 형식 처리
+                                                const parts = cell.w.match(/^(\d+)(\d{2})\.(\d+)$/);
+                                                if (parts) {
+                                                    const minutes = parseInt(parts[1]);
+                                                    const seconds = parseInt(parts[2]);
+                                                    const decimal = parts[3];
+                                                    row[C] = `00:${String(minutes).padStart(2, '0')}:${String(seconds).padStart(2, '0')}.${decimal.padEnd(3, '0')}000`;
+                                                } else {
+                                                    // 일반적인 초.밀리초 형식
+                                                    const totalSeconds = parseFloat(cell.w);
+                                                    const minutes = Math.floor(totalSeconds / 60);
+                                                    const seconds = Math.floor(totalSeconds % 60);
+                                                    const milliseconds = Math.round((totalSeconds % 1) * 1000);
+                                                    row[C] = `00:${String(minutes).padStart(2, '0')}:${String(seconds).padStart(2, '0')}.${String(milliseconds).padStart(3, '0')}000`;
+                                                }
+                                            } else {
+                                                row[C] = cell.w || cell.v;
+                                            }
+                                        } else {
+                                            // 다른 컬럼들
+                                            row[C] = cell.w || cell.v;
+                                        }
+                                    } else {
+                                        row[C] = null;
+                                    }
+                                }
+                                jsonData.push(row);
+                            }
+                            
+                            const parsedData = parseSheetData(jsonData);
+                            parsedData.sheetName = sheetName;
+                            
+                            // 이름이 있는 경우만 추가
+                            const playerName = parsedData.player_info['이름'];
+                            if (playerName && playerName.trim()) {
+                                allPlayers[playerName] = parsedData;
+                            }
+                        });
+                        
+                        resolve(allPlayers);
+                    } catch (error) {
+                        console.error('Error parsing Excel:', error);
+                        reject(error);
+                    }
+                };
+                reader.onerror = reject;
+                reader.readAsArrayBuffer(file);
+            });
+        }
+
+        function downloadJSON(data, filename) {
+            const blob = new Blob([JSON.stringify(data, null, 2)], {type: 'application/json'});
+            const url = URL.createObjectURL(blob);
+            const a = document.createElement('a');
+            a.href = url;
+            a.download = filename;
+            document.body.appendChild(a);
+            a.click();
+            document.body.removeChild(a);
+            URL.revokeObjectURL(url);
+        }
+
+        function App() {
+            const [playersData, setPlayersData] = useState(null);
+            const [selectedPlayer, setSelectedPlayer] = useState(null);
+            const [selectedEvent, setSelectedEvent] = useState('ALL');
+            const [selectedYear, setSelectedYear] = useState('ALL');
+            const [selectedRegion, setSelectedRegion] = useState('ALL');
+            const [selectedBirthYear, setSelectedBirthYear] = useState('ALL');
+            const [loading, setLoading] = useState(true);
+            const [uploadStatus, setUploadStatus] = useState('');
+            const [dragOver, setDragOver] = useState(false);
+            const [dataSource, setDataSource] = useState('default'); // 'default' or 'uploaded'
+            const [originalDefaultData, setOriginalDefaultData] = useState(null);
+
+            // 초기 데이터 로드
+            useEffect(() => {
+                function loadDefaultData() {
+                    // 전역 변수에서 데이터 확인
+                    if (typeof defaultPlayersData !== 'undefined') {
+                        setOriginalDefaultData(defaultPlayersData);
+                        setPlayersData(defaultPlayersData);
+                        
+                        // 첫 번째 선수 자동 선택
+                        const firstPlayer = Object.keys(defaultPlayersData)[0];
+                        if (firstPlayer) {
+                            setSelectedPlayer(firstPlayer);
+                        }
+                        setDataSource('default');
+                        setLoading(false);
+                        setUploadStatus('');
+                    } else {
+                        // 데이터가 아직 로드되지 않은 경우 이벤트 리스너 추가
+                        const handleDataLoaded = () => {
+                            if (typeof defaultPlayersData !== 'undefined') {
+                                setOriginalDefaultData(defaultPlayersData);
+                                setPlayersData(defaultPlayersData);
+                                
+                                const firstPlayer = Object.keys(defaultPlayersData)[0];
+                                if (firstPlayer) {
+                                    setSelectedPlayer(firstPlayer);
+                                }
+                                setDataSource('default');
+                                setLoading(false);
+                                setUploadStatus('');
+                            }
+                        };
+                        
+                        window.addEventListener('playersDataLoaded', handleDataLoaded);
+                        
+                        // 3초 후에도 데이터가 없으면 에러 메시지 표시
+                        setTimeout(() => {
+                            if (loading) {
+                                setUploadStatus('기본 데이터 파일(players_data.js)을 찾을 수 없습니다. 엑셀 파일을 업로드해주세요.');
+                                setLoading(false);
+                            }
+                        }, 3000);
+                        
+                        return () => {
+                            window.removeEventListener('playersDataLoaded', handleDataLoaded);
+                        };
+                    }
+                }
+                
+                loadDefaultData();
+            }, []);
+
+            const handleFileInput = async (e) => {
+                const file = e.target.files[0];
+                if (file) {
+                    await handleFile(file);
+                }
+            };
+
+            const handleFile = async (file) => {
+                if (!file.name.match(/\.(xlsx|xls)$/)) {
+                    setUploadStatus('엑셀 파일(.xlsx, .xls)만 업로드 가능합니다.');
+                    return;
+                }
+
+                setLoading(true);
+                setUploadStatus('파일 처리 중...');
+                
+                try {
+                    const parsedData = await parseExcelFile(file);
+                    setPlayersData(parsedData);
+                    setDataSource('uploaded');
+                    
+                    const firstPlayer = Object.keys(parsedData)[0];
+                    if (firstPlayer) {
+                        setSelectedPlayer(firstPlayer);
+                    }
+                    
+                    setUploadStatus(`${Object.keys(parsedData).length}명의 선수 데이터를 성공적으로 로드했습니다.`);
+                } catch (error) {
+                    console.error('File processing error:', error);
+                    setUploadStatus('파일 처리 중 오류가 발생했습니다.');
+                } finally {
+                    setLoading(false);
+                }
+            };
+
+            const handleDragOver = (e) => {
+                e.preventDefault();
+                setDragOver(true);
+            };
+
+            const handleDragLeave = (e) => {
+                e.preventDefault();
+                setDragOver(false);
+            };
+
+            const handleDrop = async (e) => {
+                e.preventDefault();
+                setDragOver(false);
+                
+                const file = e.dataTransfer.files[0];
+                if (file) {
+                    await handleFile(file);
+                }
+            };
+
+            const handleResetToDefault = () => {
+                if (originalDefaultData) {
+                    setPlayersData(originalDefaultData);
+                    setDataSource('default');
+                    const firstPlayer = Object.keys(originalDefaultData)[0];
+                    if (firstPlayer) {
+                        setSelectedPlayer(firstPlayer);
+                    }
+                    setUploadStatus('기본 데이터로 초기화되었습니다.');
+                }
+            };
+
+            const formatTime = (seconds) => {
+                if (!seconds) return '-';
+                const mins = Math.floor(seconds / 60);
+                const secs = seconds % 60;
+                return `${mins}:${secs.toFixed(3).padStart(6, '0')}`;
+            };
+
+            const formatDate = (dateStr) => {
+                if (!dateStr) return '-';
+                if (dateStr.length === 8) {
+                    return `${dateStr.substring(4, 6)}.${dateStr.substring(6, 8)}`;
+                }
+                return dateStr;
+            };
+
+            const calculateImprovement = (currentTime, previousTime) => {
+                if (!currentTime || !previousTime) return null;
+                const diff = previousTime - currentTime;
+                return diff > 0 ? `▼ ${diff.toFixed(3)}s` : null;
+            };
+
+            const getEventStats = (playerData, event) => {
+                const times = [];
+                Object.entries(playerData.yearly_best || {}).forEach(([year, events]) => {
+                    if (events[event]) {
+                        times.push({
+                            year,
+                            time: events[event].time,
+                            rank: events[event].rank
+                        });
+                    }
+                });
+                
+                if (times.length === 0) return null;
+                
+                times.sort((a, b) => a.time - b.time);
+                const best = times[0];
+                const latest = times[times.length - 1];
+                const average = times.reduce((acc, t) => acc + t.time, 0) / times.length;
+                
+                return {
+                    best: best.time,
+                    bestYear: best.year,
+                    latest: latest.time,
+                    latestYear: latest.year,
+                    average,
+                    count: times.length
+                };
+            };
+
+            // 지역 및 출생년도 목록 추출
+            const availableRegions = playersData ? 
+                [...new Set(Object.values(playersData).map(p => p.player_info['시도']).filter(Boolean))].sort() : [];
+            const availableBirthYears = playersData ? 
+                [...new Set(Object.values(playersData).map(p => p.player_info['출생년도']).filter(Boolean))].sort() : [];
+
+            // 필터링된 선수 목록
+            const filteredPlayers = playersData ? 
+                Object.keys(playersData).filter(name => {
+                    const player = playersData[name];
+                    const regionMatch = selectedRegion === 'ALL' || player.player_info['시도'] === selectedRegion;
+                    const birthYearMatch = selectedBirthYear === 'ALL' || player.player_info['출생년도'] === selectedBirthYear;
+                    return regionMatch && birthYearMatch;
+                }) : [];
+
+            const currentPlayerData = playersData && selectedPlayer ? playersData[selectedPlayer] : null;
+            const availableYears = currentPlayerData ? 
+                [...new Set(Object.keys(currentPlayerData.yearly_best || {}))].sort((a, b) => b - a) : [];
+            const availableEvents = currentPlayerData ? 
+                (currentPlayerData.events || []) : [];
+
+            // 필터링된 연도 목록
+            const displayYears = selectedYear === 'ALL' ? availableYears : [selectedYear];
+
+            return (
+                <div className="min-h-screen py-4 px-2 md:py-8 md:px-4">
+                    <div className="max-w-7xl mx-auto">
+                        <div className="glass-effect rounded-lg p-4 md:p-8 mb-6">
+                            <h1 className="text-2xl md:text-4xl font-bold text-gray-800 mb-4 text-center">
+                                🏁 쇼트트랙 기록 History 🏆
+                            </h1>
+                            
+                            {/* 파일 업로드 영역 */}
+                            <div className="mb-6">
+                                <div 
+                                    className={`upload-area p-6 rounded-lg text-center ${dragOver ? 'dragover' : ''}`}
+                                    onDragOver={handleDragOver}
+                                    onDragLeave={handleDragLeave}
+                                    onDrop={handleDrop}
+                                >
+                                    <input
+                                        type="file"
+                                        accept=".xlsx,.xls"
+                                        onChange={handleFileInput}
+                                        className="hidden"
+                                        id="file-input"
+                                    />
+                                    <label 
+                                        htmlFor="file-input" 
+                                        className="cursor-pointer inline-block px-4 py-2 bg-gradient-to-r from-purple-500 to-indigo-600 text-white rounded-lg hover:from-purple-600 hover:to-indigo-700 transition-all"
+                                    >
+                                        엑셀 파일 선택
+                                    </label>
+                                    <p className="mt-2 text-gray-600 text-sm">
+                                        또는 파일을 여기로 드래그하세요
+                                    </p>
+                                </div>
+                                
+                                {uploadStatus && (
+                                    <div className={`mt-2 p-2 rounded text-sm ${
+                                        uploadStatus.includes('오류') || uploadStatus.includes('찾을 수 없습니다') 
+                                            ? 'bg-red-100 text-red-700' 
+                                            : 'bg-green-100 text-green-700'
+                                    }`}>
+                                        {uploadStatus}
+                                    </div>
+                                )}
+                                
+                                {/* 데이터 관리 버튼 */}
+                                <div className="mt-4 flex flex-wrap gap-2 justify-center">
+                                    {originalDefaultData && dataSource === 'uploaded' && (
+                                        <button
+                                            onClick={handleResetToDefault}
+                                            className="px-4 py-2 bg-gray-600 text-white rounded-lg hover:bg-gray-700 transition-all text-sm"
+                                        >
+                                            🔄 기본 데이터로 초기화
+                                        </button>
+                                    )}
+                                    {dataSource === 'uploaded' && (
+                                        <span className="px-4 py-2 bg-blue-100 text-blue-700 rounded-lg text-sm">
+                                            📊 업로드된 데이터 사용 중
+                                        </span>
+                                    )}
+                                </div>
+                            </div>
+
+                            {loading && <div className="loader"></div>}
+
+                            {!loading && playersData && (
+                                <>
+                                    {/* 지역 및 출생년도 필터 */}
+                                    <div className="mb-6 bg-gray-50 rounded-lg p-4">
+                                        <h2 className="text-lg font-semibold mb-3 text-gray-700">필터</h2>
+                                        <div className="grid grid-cols-1 md:grid-cols-2 gap-4">
+                                            <div>
+                                                <h3 className="text-sm font-semibold mb-2 text-gray-600">지역별</h3>
+                                                <div className="flex flex-wrap gap-2">
+                                                    <button
+                                                        onClick={() => setSelectedRegion('ALL')}
+                                                        className={`px-3 py-1 rounded text-xs transition-all ${
+                                                            selectedRegion === 'ALL' 
+                                                                ? 'bg-blue-600 text-white' 
+                                                                : 'bg-white text-gray-700 hover:bg-gray-100'
+                                                        }`}
+                                                    >
+                                                        전체
+                                                    </button>
+                                                    {availableRegions.map(region => (
+                                                        <button
+                                                            key={region}
+                                                            onClick={() => setSelectedRegion(region)}
+                                                            className={`px-3 py-1 rounded text-xs transition-all ${
+                                                                selectedRegion === region 
+                                                                    ? 'bg-blue-600 text-white' 
+                                                                    : 'bg-white text-gray-700 hover:bg-gray-100'
+                                                            }`}
+                                                        >
+                                                            {region}
+                                                        </button>
+                                                    ))}
+                                                </div>
+                                            </div>
+                                            <div>
+                                                <h3 className="text-sm font-semibold mb-2 text-gray-600">출생년도별</h3>
+                                                <div className="flex flex-wrap gap-2">
+                                                    <button
+                                                        onClick={() => setSelectedBirthYear('ALL')}
+                                                        className={`px-3 py-1 rounded text-xs transition-all ${
+                                                            selectedBirthYear === 'ALL' 
+                                                                ? 'bg-green-600 text-white' 
+                                                                : 'bg-white text-gray-700 hover:bg-gray-100'
+                                                        }`}
+                                                    >
+                                                        전체
+                                                    </button>
+                                                    {availableBirthYears.map(year => (
+                                                        <button
+                                                            key={year}
+                                                            onClick={() => setSelectedBirthYear(year)}
+                                                            className={`px-3 py-1 rounded text-xs transition-all ${
+                                                                selectedBirthYear === year 
+                                                                    ? 'bg-green-600 text-white' 
+                                                                    : 'bg-white text-gray-700 hover:bg-gray-100'
+                                                            }`}
+                                                        >
+                                                            {year}
+                                                        </button>
+                                                    ))}
+                                                </div>
+                                            </div>
+                                        </div>
+                                    </div>
+
+                                    {/* 선수 선택 버튼 */}
+                                    <div className="mb-6">
+                                        <h2 className="text-lg font-semibold mb-3 text-gray-700">
+                                            선수 선택 
+                                            {(selectedRegion !== 'ALL' || selectedBirthYear !== 'ALL') && 
+                                                <span className="text-sm font-normal text-gray-500 ml-2">
+                                                    ({filteredPlayers.length}명)
+                                                </span>
+                                            }
+                                        </h2>
+                                        <div className="flex flex-wrap gap-2">
+                                            {filteredPlayers.map(playerName => (
+                                                <button
+                                                    key={playerName}
+                                                    onClick={() => setSelectedPlayer(playerName)}
+                                                    className={`px-3 py-2 rounded-lg transition-all text-sm ${
+                                                        selectedPlayer === playerName
+                                                            ? 'bg-gradient-to-r from-purple-500 to-indigo-600 text-white'
+                                                            : 'bg-white text-gray-700 hover:bg-gray-100'
+                                                    }`}
+                                                >
+                                                    {playerName}
+                                                </button>
+                                            ))}
+                                        </div>
+                                    </div>
+
+                                    {/* 선수 정보 및 기록 표시 */}
+                                    {currentPlayerData && (
+                                        <>
+                                            {/* 선수 정보 카드 */}
+                                            <div className="mb-6 bg-gradient-to-r from-blue-50 to-purple-50 rounded-lg p-4">
+                                                <h2 className="text-xl font-bold mb-3 text-gray-800">
+                                                    {currentPlayerData.player_info['이름']} 선수 정보
+                                                </h2>
+                                                <div className="grid grid-cols-2 md:grid-cols-4 gap-3 text-sm">
+                                                    <div>
+                                                        <span className="text-gray-600">성별:</span>
+                                                        <span className="ml-2 font-semibold">{currentPlayerData.player_info['성별']}</span>
+                                                    </div>
+                                                    <div>
+                                                        <span className="text-gray-600">출생년도:</span>
+                                                        <span className="ml-2 font-semibold">{currentPlayerData.player_info['출생년도']}</span>
+                                                    </div>
+                                                    <div>
+                                                        <span className="text-gray-600">지역:</span>
+                                                        <span className="ml-2 font-semibold">{currentPlayerData.player_info['시도']}</span>
+                                                    </div>
+                                                    <div>
+                                                        <span className="text-gray-600">종별:</span>
+                                                        <span className="ml-2 font-semibold">{currentPlayerData.player_info['종별']}</span>
+                                                    </div>
+                                                    <div className="md:col-span-2">
+                                                        <span className="text-gray-600">소속팀:</span>
+                                                        <span className="ml-2 font-semibold">{currentPlayerData.player_info['소속팀']}</span>
+                                                    </div>
+                                                    <div>
+                                                        <span className="text-gray-600">최종등록:</span>
+                                                        <span className="ml-2 font-semibold">{currentPlayerData.player_info['최종등록년도']}</span>
+                                                    </div>
+                                                    <div>
+                                                        <span className="text-gray-600">등록구분:</span>
+                                                        <span className="ml-2 font-semibold">{currentPlayerData.player_info['등록구분']}</span>
+                                                    </div>
+                                                </div>
+                                            </div>
+
+                                            {/* 종목 및 연도 필터 */}
+                                            <div className="mb-4 space-y-4">
+                                                <div>
+                                                    <h3 className="text-sm font-semibold mb-2 text-gray-600">종목별 필터</h3>
+                                                    <div className="flex flex-wrap gap-2">
+                                                        <button
+                                                            onClick={() => setSelectedEvent('ALL')}
+                                                            className={`px-3 py-1 rounded text-xs event-tab ${
+                                                                selectedEvent === 'ALL' ? 'active' : ''
+                                                            }`}
+                                                        >
+                                                            전체
+                                                        </button>
+                                                        {availableEvents.map(event => (
+                                                            <button
+                                                                key={event}
+                                                                onClick={() => setSelectedEvent(event)}
+                                                                className={`px-3 py-1 rounded text-xs event-tab ${
+                                                                    selectedEvent === event ? 'active' : ''
+                                                                }`}
+                                                            >
+                                                                {event}
+                                                            </button>
+                                                        ))}
+                                                    </div>
+                                                </div>
+
+                                                <div>
+                                                    <h3 className="text-sm font-semibold mb-2 text-gray-600">연도별 필터</h3>
+                                                    <div className="flex flex-wrap gap-2">
+                                                        <button
+                                                            onClick={() => setSelectedYear('ALL')}
+                                                            className={`px-3 py-1 rounded text-xs event-tab ${
+                                                                selectedYear === 'ALL' ? 'active' : ''
+                                                            }`}
+                                                        >
+                                                            전체
+                                                        </button>
+                                                        {availableYears.map(year => (
+                                                            <button
+                                                                key={year}
+                                                                onClick={() => setSelectedYear(year)}
+                                                                className={`px-3 py-1 rounded text-xs event-tab ${
+                                                                    selectedYear === year ? 'active' : ''
+                                                                }`}
+                                                            >
+                                                                {year}
+                                                            </button>
+                                                        ))}
+                                                    </div>
+                                                </div>
+                                            </div>
+
+                                            {/* 연도별 최고 기록 표 */}
+                                            <div className="mb-6">
+                                                <h3 className="text-lg font-bold mb-3 text-gray-800">연도별 최고 기록</h3>
+                                                <div className="overflow-x-auto">
+                                                    <table className="w-full text-left border-collapse">
+                                                        <thead>
+                                                            <tr className="bg-gray-100 border-b">
+                                                                <th className="p-3 text-center font-semibold">연도</th>
+                                                                <th className="p-3 text-center font-semibold">500M</th>
+                                                                <th className="p-3 text-center font-semibold">1000M</th>
+                                                                <th className="p-3 text-center font-semibold">1500M</th>
+                                                                <th className="p-3 text-center font-semibold">2000M</th>
+                                                            </tr>
+                                                        </thead>
+                                                        <tbody>
+                                                            {displayYears.map(year => {
+                                                                const yearData = currentPlayerData.yearly_best[year];
+                                                                if (!yearData) return null;
+
+                                                                return (
+                                                                    <tr key={year} className="border-b hover:bg-gray-50">
+                                                                        <td className="p-3 text-center font-bold text-purple-600">{year}</td>
+                                                                        {['500M', '1000M', '1500M', '2000M'].map(event => {
+                                                                            const record = yearData[event];
+                                                                            if (!record) {
+                                                                                return <td key={event} className="p-3 text-center text-gray-400">-</td>;
+                                                                            }
+                                                                            return (
+                                                                                <td key={event} className="p-3 text-center">
+                                                                                    <div className="font-mono font-semibold">
+                                                                                        {formatTime(record.time)}
+                                                                                    </div>
+                                                                                    <div className="text-xs text-gray-500">
+                                                                                        {formatDate(record.date)}
+                                                                                    </div>
+                                                                                </td>
+                                                                            );
+                                                                        })}
+                                                                    </tr>
+                                                                );
+                                                            })}
+                                                        </tbody>
+                                                    </table>
+                                                </div>
+                                            </div>
+
+                                            {/* 종목별 통계 */}
+                                            {selectedEvent !== 'ALL' && (
+                                                <div className="mb-6 bg-yellow-50 rounded-lg p-4">
+                                                    <h3 className="text-lg font-bold mb-3 text-gray-800">
+                                                        {selectedEvent} 통계
+                                                    </h3>
+                                                    {(() => {
+                                                        const stats = getEventStats(currentPlayerData, selectedEvent);
+                                                        if (!stats) return <p className="text-gray-600">기록 없음</p>;
+                                                        
+                                                        return (
+                                                            <div className="grid grid-cols-2 md:grid-cols-4 gap-3 text-sm">
+                                                                <div>
+                                                                    <div className="text-gray-600">최고 기록</div>
+                                                                    <div className="font-bold text-lg">{formatTime(stats.best)}</div>
+                                                                    <div className="text-xs text-gray-500">({stats.bestYear}년)</div>
+                                                                </div>
+                                                                <div>
+                                                                    <div className="text-gray-600">최근 기록</div>
+                                                                    <div className="font-bold text-lg">{formatTime(stats.latest)}</div>
+                                                                    <div className="text-xs text-gray-500">({stats.latestYear}년)</div>
+                                                                </div>
+                                                                <div>
+                                                                    <div className="text-gray-600">평균 기록</div>
+                                                                    <div className="font-bold text-lg">{formatTime(stats.average)}</div>
+                                                                </div>
+                                                                <div>
+                                                                    <div className="text-gray-600">총 참가</div>
+                                                                    <div className="font-bold text-lg">{stats.count}회</div>
+                                                                </div>
+                                                            </div>
+                                                        );
+                                                    })()}
+                                                </div>
+                                            )}
+
+                                            {/* 대회별 상세 기록 */}
+                                            <div className="mb-6">
+                                                <h3 className="text-lg font-bold mb-3 text-gray-800">대회별 상세 기록</h3>
+                                                <div className="overflow-x-auto">
+                                                    <table className="w-full text-left mobile-compact">
+                                                        <thead>
+                                                            <tr className="bg-gray-100">
+                                                                <th className="p-2 mobile-text-xs">대회명</th>
+                                                                <th className="p-2 mobile-text-xs">일자</th>
+                                                                <th className="p-2 mobile-text-xs">종목</th>
+                                                                <th className="p-2 mobile-text-xs mobile-hidden">라운드</th>
+                                                                <th className="p-2 mobile-text-xs">기록</th>
+                                                                <th className="p-2 mobile-text-xs">순위</th>
+                                                            </tr>
+                                                        </thead>
+                                                        <tbody>
+                                                            {currentPlayerData.competitions.map((comp, compIdx) => {
+                                                                const filteredRecords = comp.records.filter(record => {
+                                                                    const yearMatch = selectedYear === 'ALL' || 
+                                                                        record['일자'].substring(0, 4) === selectedYear;
+                                                                    const eventMatch = selectedEvent === 'ALL' || 
+                                                                        String(record['세부종목']).toUpperCase() === selectedEvent;
+                                                                    return yearMatch && eventMatch;
+                                                                });
+
+                                                                if (filteredRecords.length === 0) return null;
+
+                                                                return filteredRecords.map((record, idx) => (
+                                                                    <tr key={`${compIdx}-${idx}`} className="border-b hover:bg-gray-50">
+                                                                        <td className="p-2 mobile-text-xs">{comp.name}</td>
+                                                                        <td className="p-2 mobile-text-xs">{formatDate(record['일자'])}</td>
+                                                                        <td className="p-2 mobile-text-xs font-semibold">{record['세부종목']}</td>
+                                                                        <td className="p-2 mobile-text-xs mobile-hidden">{record['라운드']}</td>
+                                                                        <td className="p-2 mobile-text-xs font-mono">{record['기록']}</td>
+                                                                        <td className="p-2 mobile-text-xs">
+                                                                            {record['순위'] === 1 && '🥇'}
+                                                                            {record['순위'] === 2 && '🥈'}
+                                                                            {record['순위'] === 3 && '🥉'}
+                                                                            {record['순위'] && ` ${record['순위']}위`}
+                                                                        </td>
+                                                                    </tr>
+                                                                ));
+                                                            })}
+                                                        </tbody>
+                                                    </table>
+                                                </div>
+                                            </div>
+                                        </>
+                                    )}
+                                </>
+                            )}
+                        </div>
+                    </div>
+                </div>
+            );
+        }
+
+        ReactDOM.render(<App />, document.getElementById('root'));
+    </script>
+</body>
+</html>
