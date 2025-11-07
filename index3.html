@@ -367,18 +367,6 @@
             });
         }
 
-        function downloadJSON(data, filename) {
-            const blob = new Blob([JSON.stringify(data, null, 2)], {type: 'application/json'});
-            const url = URL.createObjectURL(blob);
-            const a = document.createElement('a');
-            a.href = url;
-            a.download = filename;
-            document.body.appendChild(a);
-            a.click();
-            document.body.removeChild(a);
-            URL.revokeObjectURL(url);
-        }
-
         function App() {
             const [playersData, setPlayersData] = useState(null);
             const [selectedPlayer, setSelectedPlayer] = useState(null);
@@ -386,6 +374,7 @@
             const [selectedYear, setSelectedYear] = useState('ALL');
             const [selectedRegion, setSelectedRegion] = useState('ALL');
             const [selectedBirthYear, setSelectedBirthYear] = useState('ALL');
+            const [selectedGender, setSelectedGender] = useState('ALL');
             const [loading, setLoading] = useState(true);
             const [uploadStatus, setUploadStatus] = useState('');
             const [dragOver, setDragOver] = useState(false);
@@ -561,9 +550,11 @@
                 };
             };
 
-            // 지역 및 출생년도 목록 추출
+            // 지역, 성별 및 출생년도 목록 추출
             const availableRegions = playersData ? 
                 [...new Set(Object.values(playersData).map(p => p.player_info['시도']).filter(Boolean))].sort() : [];
+            const availableGenders = playersData ? 
+                [...new Set(Object.values(playersData).map(p => p.player_info['성별']).filter(Boolean))].sort() : [];
             const availableBirthYears = playersData ? 
                 [...new Set(Object.values(playersData).map(p => p.player_info['출생년도']).filter(Boolean))].sort() : [];
 
@@ -572,8 +563,9 @@
                 Object.keys(playersData).filter(name => {
                     const player = playersData[name];
                     const regionMatch = selectedRegion === 'ALL' || player.player_info['시도'] === selectedRegion;
+                    const genderMatch = selectedGender === 'ALL' || player.player_info['성별'] === selectedGender;
                     const birthYearMatch = selectedBirthYear === 'ALL' || player.player_info['출생년도'] === selectedBirthYear;
-                    return regionMatch && birthYearMatch;
+                    return regionMatch && genderMatch && birthYearMatch;
                 }) : [];
 
             const currentPlayerData = playersData && selectedPlayer ? playersData[selectedPlayer] : null;
@@ -651,12 +643,40 @@
 
                             {!loading && playersData && (
                                 <>
-                                    {/* 지역 및 출생년도 필터 */}
+                                    {/* 지역, 성별 및 출생년도 필터 */}
                                     <div className="mb-6 bg-gray-50 rounded-lg p-4">
                                         <h2 className="text-lg font-semibold mb-3 text-gray-700">필터</h2>
-                                        <div className="grid grid-cols-1 md:grid-cols-2 gap-4">
+                                        <div className="grid grid-cols-1 md:grid-cols-3 gap-4">
                                             <div>
-                                                <h3 className="text-sm font-semibold mb-2 text-gray-600">지역별</h3>
+                                                <h3 className="text-sm font-semibold mb-2 text-gray-600">성별</h3>
+                                                <div className="flex flex-wrap gap-2">
+                                                    <button
+                                                        onClick={() => setSelectedGender('ALL')}
+                                                        className={`px-3 py-1 rounded text-xs transition-all ${
+                                                            selectedGender === 'ALL' 
+                                                                ? 'bg-purple-600 text-white' 
+                                                                : 'bg-white text-gray-700 hover:bg-gray-100'
+                                                        }`}
+                                                    >
+                                                        전체
+                                                    </button>
+                                                    {availableGenders.map(gender => (
+                                                        <button
+                                                            key={gender}
+                                                            onClick={() => setSelectedGender(gender)}
+                                                            className={`px-3 py-1 rounded text-xs transition-all ${
+                                                                selectedGender === gender 
+                                                                    ? 'bg-purple-600 text-white' 
+                                                                    : 'bg-white text-gray-700 hover:bg-gray-100'
+                                                            }`}
+                                                        >
+                                                            {gender}
+                                                        </button>
+                                                    ))}
+                                                </div>
+                                            </div>
+                                            <div>
+                                                <h3 className="text-sm font-semibold mb-2 text-gray-600">지역</h3>
                                                 <div className="flex flex-wrap gap-2">
                                                     <button
                                                         onClick={() => setSelectedRegion('ALL')}
@@ -684,7 +704,7 @@
                                                 </div>
                                             </div>
                                             <div>
-                                                <h3 className="text-sm font-semibold mb-2 text-gray-600">출생년도별</h3>
+                                                <h3 className="text-sm font-semibold mb-2 text-gray-600">출생년도</h3>
                                                 <div className="flex flex-wrap gap-2">
                                                     <button
                                                         onClick={() => setSelectedBirthYear('ALL')}
@@ -718,7 +738,7 @@
                                     <div className="mb-6">
                                         <h2 className="text-lg font-semibold mb-3 text-gray-700">
                                             선수 선택 
-                                            {(selectedRegion !== 'ALL' || selectedBirthYear !== 'ALL') && 
+                                            {(selectedGender !== 'ALL' || selectedRegion !== 'ALL' || selectedBirthYear !== 'ALL') && 
                                                 <span className="text-sm font-normal text-gray-500 ml-2">
                                                     ({filteredPlayers.length}명)
                                                 </span>
