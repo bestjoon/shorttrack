@@ -380,6 +380,7 @@
             const [dragOver, setDragOver] = useState(false);
             const [dataSource, setDataSource] = useState('default'); // 'default' or 'uploaded'
             const [originalDefaultData, setOriginalDefaultData] = useState(null);
+            const [showAllRounds, setShowAllRounds] = useState(false); // 전체 라운드 표시 여부
 
             // 초기 데이터 로드
             useEffect(() => {
@@ -561,9 +562,46 @@
             const formatDate = (dateStr) => {
                 if (!dateStr) return '-';
                 if (dateStr.length === 8) {
-                    return `${dateStr.substring(4, 6)}.${dateStr.substring(6, 8)}`;
+                    return `${dateStr.substring(0, 4)}.${dateStr.substring(4, 6)}.${dateStr.substring(6, 8)}`;
                 }
                 return dateStr;
+            };
+
+            // 라운드 진행 순서 정의 (문자열 시작 기준)
+            const getRoundOrder = (roundStr) => {
+                if (!roundStr) return -1;
+                
+                roundStr = String(roundStr).trim();
+                
+                // 시작 문자열 기준으로 판단
+                if (roundStr.startsWith('예선')) return 0;
+                if (roundStr.startsWith('준준결승')) return 1;
+                if (roundStr.startsWith('준결승')) return 2;
+                if (roundStr.startsWith('결승B')) return 3;
+                if (roundStr.startsWith('결승')) return 4;
+                
+                return -1;
+            };
+
+            // 라운드 정렬 함수
+            const compareRounds = (a, b) => {
+                return getRoundOrder(a) - getRoundOrder(b);
+            };
+
+            // 종목 순서 정의 (500M, 1000M, 1500M, 2000M)
+            const getEventOrder = (eventStr) => {
+                const eventMap = {
+                    '500M': 0,
+                    '1000M': 1,
+                    '1500M': 2,
+                    '2000M': 3
+                };
+                return eventMap[eventStr] !== undefined ? eventMap[eventStr] : 999;
+            };
+
+            // 종목 정렬 함수
+            const compareEvents = (a, b) => {
+                return getEventOrder(a) - getEventOrder(b);
             };
 
             const calculateImprovement = (currentTime, previousTime) => {
@@ -806,7 +844,10 @@
                                             {filteredPlayers.map(playerName => (
                                                 <button
                                                     key={playerName}
-                                                    onClick={() => setSelectedPlayer(playerName)}
+                                                    onClick={() => {
+                                                        setSelectedPlayer(playerName);
+                                                        setShowAllRounds(false); // 선수 변경 시 초기화
+                                                    }}
                                                     className={`px-3 py-2 rounded-lg transition-all text-sm ${
                                                         selectedPlayer === playerName
                                                             ? 'bg-gradient-to-r from-purple-500 to-indigo-600 text-white'
@@ -996,7 +1037,19 @@
 
                                             {/* 대회별 상세 기록 */}
                                             <div className="mb-6">
-                                                <h3 className="text-lg font-bold mb-3 text-gray-800">대회별 상세 기록</h3>
+                                                <div className="flex justify-between items-center mb-3">
+                                                    <h3 className="text-lg font-bold text-gray-800">대회별 상세 기록</h3>
+                                                    <button
+                                                        onClick={() => setShowAllRounds(!showAllRounds)}
+                                                        className={`px-3 py-1 rounded text-xs font-semibold transition-all ${
+                                                            showAllRounds
+                                                                ? 'bg-orange-500 text-white'
+                                                                : 'bg-gray-300 text-gray-700 hover:bg-gray-400'
+                                                        }`}
+                                                    >
+                                                        {showAllRounds ? '✓ 전체표시' : '전체표시'}
+                                                    </button>
+                                                </div>
                                                 <div className="overflow-x-auto">
                                                     <table className="w-full text-left mobile-compact">
                                                         <thead>
@@ -1010,33 +1063,94 @@
                                                             </tr>
                                                         </thead>
                                                         <tbody>
-                                                            {currentPlayerData.competitions.map((comp, compIdx) => {
-                                                                const filteredRecords = comp.records.filter(record => {
-                                                                    const yearMatch = selectedYear === 'ALL' || 
-                                                                        record['일자'].substring(0, 4) === selectedYear;
-                                                                    const eventMatch = selectedEvent === 'ALL' || 
-                                                                        String(record['세부종목']).toUpperCase() === selectedEvent;
-                                                                    return yearMatch && eventMatch;
+                                                            {(() => {
+                                                                // 모든 기록을 그룹화: (대회명, 일자, 종목) 기준
+                                                                const groupedRecords = {};
+                                                                
+                                                                currentPlayerData.competitions.forEach((comp, compIdx) => {
+                                                                    comp.records.forEach((record, recordIdx) => {
+                                                                        const yearMatch = selectedYear === 'ALL' || 
+                                                                            record['일자'].substring(0, 4) === selectedYear;
+                                                                        const eventMatch = selectedEvent === 'ALL' || 
+                                                                            String(record['세부종목']).toUpperCase() === selectedEvent;
+                                                                        
+                                                                        if (!yearMatch || !eventMatch) return;
+                                                                        
+                                                                        // 그룹 키: 대회명 + 일자 + 종목
+                                                                        const groupKey = `${comp.name}||${record['일자']}||${record['세부종목']}`;
+                                                                        if (!groupedRecords[groupKey]) {
+                                                                            groupedRecords[groupKey] = {
+                                                                                compName: comp.name,
+                                                                                date: record['일자'],
+                                                                                event: record['세부종목'],
+                                                                                records: []
+                                                                            };
+                                                                        }
+                                                                        groupedRecords[groupKey].records.push({
+                                                                            ...record,
+                                                                            compIdx,
+                                                                            recordIdx
+                                                                        });
+                                                                    });
                                                                 });
 
-                                                                if (filteredRecords.length === 0) return null;
+                                                                // 각 그룹의 기록들을 라운드 순서대로 정렬
+                                                                Object.keys(groupedRecords).forEach(key => {
+                                                                    groupedRecords[key].records.sort((a, b) => {
+                                                                        return compareRounds(a['라운드'], b['라운드']);
+                                                                    });
+                                                                });
 
-                                                                return filteredRecords.map((record, idx) => (
-                                                                    <tr key={`${compIdx}-${idx}`} className="border-b hover:bg-gray-50">
-                                                                        <td className="p-2 mobile-text-xs">{comp.name}</td>
-                                                                        <td className="p-2 mobile-text-xs">{formatDate(record['일자'])}</td>
-                                                                        <td className="p-2 mobile-text-xs font-semibold">{record['세부종목']}</td>
-                                                                        <td className="p-2 mobile-text-xs">{record['라운드']}</td>
-                                                                        <td className="p-2 mobile-text-xs font-mono text-right">{formatRecordTime(record['기록'])}</td>
-                                                                        <td className="p-2 mobile-text-xs">
-                                                                            {record['순위'] === 1 && '🥇'}
-                                                                            {record['순위'] === 2 && '🥈'}
-                                                                            {record['순위'] === 3 && '🥉'}
-                                                                            {record['순위'] && ` ${record['순위']}위`}
-                                                                        </td>
-                                                                    </tr>
-                                                                ));
-                                                            })}
+                                                                // 그룹을 일자(최신순), 종목, 라운드 순서로 정렬
+                                                                const sortedGroupKeys = Object.keys(groupedRecords).sort((keyA, keyB) => {
+                                                                    const groupA = groupedRecords[keyA];
+                                                                    const groupB = groupedRecords[keyB];
+                                                                    
+                                                                    // 1. 일자 정렬 (최신순)
+                                                                    if (groupA.date !== groupB.date) {
+                                                                        return parseInt(groupB.date) - parseInt(groupA.date);
+                                                                    }
+                                                                    // 2. 종목 정렬 (500M, 1000M, 1500M, 2000M 순)
+                                                                    const eventCompare = compareEvents(groupA.event, groupB.event);
+                                                                    if (eventCompare !== 0) {
+                                                                        return eventCompare;
+                                                                    }
+                                                                    // 3. 대회명 정렬 (사전순)
+                                                                    return groupA.compName.localeCompare(groupB.compName);
+                                                                });
+
+                                                                // 렌더링
+                                                                return sortedGroupKeys.map((groupKey, idx) => {
+                                                                    const group = groupedRecords[groupKey];
+                                                                    let recordsToShow = group.records;
+                                                                    
+                                                                    // 전체표시가 아닌 경우, 가장 진행된 라운드만 표시
+                                                                    if (!showAllRounds && group.records.length > 0) {
+                                                                        const bestRound = group.records[group.records.length - 1];
+                                                                        recordsToShow = [bestRound];
+                                                                    }
+                                                                    
+                                                                    return recordsToShow.map((record, ridx) => (
+                                                                        <tr key={`${groupKey}-${ridx}`} className="border-b hover:bg-gray-50">
+                                                                            {ridx === 0 && (
+                                                                                <>
+                                                                                    <td className="p-2 mobile-text-xs" rowSpan={recordsToShow.length}>{group.compName}</td>
+                                                                                    <td className="p-2 mobile-text-xs" rowSpan={recordsToShow.length}>{formatDate(group.date)}</td>
+                                                                                    <td className="p-2 mobile-text-xs font-semibold" rowSpan={recordsToShow.length}>{group.event}</td>
+                                                                                </>
+                                                                            )}
+                                                                            <td className="p-2 mobile-text-xs">{record['라운드']}</td>
+                                                                            <td className="p-2 mobile-text-xs font-mono text-right">{formatRecordTime(record['기록'])}</td>
+                                                                            <td className="p-2 mobile-text-xs">
+                                                                                {record['순위'] === 1 && '🥇'}
+                                                                                {record['순위'] === 2 && '🥈'}
+                                                                                {record['순위'] === 3 && '🥉'}
+                                                                                {record['순위'] && ` ${record['순위']}위`}
+                                                                            </td>
+                                                                        </tr>
+                                                                    ));
+                                                                });
+                                                            })()}
                                                         </tbody>
                                                     </table>
                                                 </div>
