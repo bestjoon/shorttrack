@@ -1,0 +1,523 @@
+<!DOCTYPE html>
+<html lang="ko">
+<head>
+    <meta charset="UTF-8">
+    <meta name="viewport" content="width=device-width, initial-scale=1.0">
+    <title>엑셀 → JavaScript 데이터 변환기</title>
+    <script src="https://cdnjs.cloudflare.com/ajax/libs/xlsx/0.18.5/xlsx.full.min.js"></script>
+    <style>
+        body {
+            font-family: -apple-system, BlinkMacSystemFont, 'Segoe UI', Roboto, Oxygen, Ubuntu, sans-serif;
+            max-width: 800px;
+            margin: 50px auto;
+            padding: 20px;
+            background: linear-gradient(135deg, #667eea 0%, #764ba2 100%);
+            min-height: 100vh;
+        }
+        .container {
+            background: white;
+            border-radius: 10px;
+            padding: 30px;
+            box-shadow: 0 4px 16px rgba(0, 0, 0, 0.1);
+        }
+        h1 {
+            color: #333;
+            text-align: center;
+            margin-bottom: 30px;
+        }
+        .upload-area {
+            border: 2px dashed #667eea;
+            border-radius: 8px;
+            padding: 40px;
+            text-align: center;
+            cursor: pointer;
+            transition: all 0.3s ease;
+            margin-bottom: 20px;
+        }
+        .upload-area:hover {
+            background: rgba(102, 126, 234, 0.05);
+            border-color: #764ba2;
+        }
+        .upload-area.dragover {
+            background: rgba(102, 126, 234, 0.1);
+            border-color: #764ba2;
+        }
+        .btn {
+            background: linear-gradient(135deg, #667eea 0%, #764ba2 100%);
+            color: white;
+            border: none;
+            padding: 12px 24px;
+            border-radius: 6px;
+            cursor: pointer;
+            font-size: 16px;
+            transition: transform 0.2s ease;
+        }
+        .btn:hover {
+            transform: translateY(-2px);
+        }
+        .btn:disabled {
+            opacity: 0.5;
+            cursor: not-allowed;
+        }
+        .status {
+            margin: 20px 0;
+            padding: 15px;
+            border-radius: 6px;
+            display: none;
+        }
+        .status.success {
+            background: #d4edda;
+            color: #155724;
+            border: 1px solid #c3e6cb;
+            display: block;
+        }
+        .status.error {
+            background: #f8d7da;
+            color: #721c24;
+            border: 1px solid #f5c6cb;
+            display: block;
+        }
+        .status.info {
+            background: #d1ecf1;
+            color: #0c5460;
+            border: 1px solid #bee5eb;
+            display: block;
+        }
+        .file-info {
+            background: #f8f9fa;
+            border-radius: 6px;
+            padding: 15px;
+            margin: 20px 0;
+        }
+        .player-list {
+            max-height: 200px;
+            overflow-y: auto;
+            background: #f8f9fa;
+            border-radius: 6px;
+            padding: 15px;
+            margin: 20px 0;
+        }
+        .player-item {
+            padding: 5px;
+            border-bottom: 1px solid #dee2e6;
+        }
+        code {
+            background: #f4f4f4;
+            padding: 2px 6px;
+            border-radius: 3px;
+            font-family: 'Courier New', monospace;
+        }
+        .instructions {
+            background: #f0f8ff;
+            border-left: 4px solid #667eea;
+            padding: 15px;
+            margin: 20px 0;
+        }
+    </style>
+</head>
+<body>
+    <div class="container">
+        <h1>🔄 엑셀 → JavaScript 데이터 변환기</h1>
+        
+        <div class="instructions">
+            <h3>📋 사용 방법:</h3>
+            <ol>
+                <li>선수 데이터가 포함된 엑셀 파일(.xlsx)을 선택하세요</li>
+                <li>데이터가 자동으로 파싱되어 JavaScript 형식으로 변환됩니다</li>
+                <li>변환된 <code>players_data.js</code> 파일을 다운로드하세요</li>
+                <li>다운로드한 파일을 <code>index.html</code>과 같은 폴더에 놓으세요</li>
+            </ol>
+        </div>
+
+        <div class="upload-area" id="uploadArea">
+            <input type="file" id="fileInput" accept=".xlsx,.xls" style="display: none;">
+            <div>
+                <p style="font-size: 48px; margin: 0;">📁</p>
+                <p style="font-size: 18px; margin: 10px 0;">엑셀 파일을 선택하거나 여기로 드래그하세요</p>
+                <button class="btn" onclick="document.getElementById('fileInput').click()">파일 선택</button>
+            </div>
+        </div>
+
+        <div id="status" class="status"></div>
+        <div id="fileInfo" class="file-info" style="display: none;"></div>
+        <div id="playerList" class="player-list" style="display: none;"></div>
+
+        <div style="text-align: center; margin-top: 20px;">
+            <button id="downloadBtn" class="btn" style="display: none;" onclick="downloadJS()">
+                💾 players_data.js 다운로드
+            </button>
+            <button id="downloadJsonBtn" class="btn" style="display: none; margin-left: 10px;" onclick="downloadJSON()">
+                📄 players_data.json 다운로드
+            </button>
+        </div>
+    </div>
+
+    <script>
+        let parsedData = null;
+        const uploadArea = document.getElementById('uploadArea');
+        const fileInput = document.getElementById('fileInput');
+        const statusDiv = document.getElementById('status');
+        const fileInfoDiv = document.getElementById('fileInfo');
+        const playerListDiv = document.getElementById('playerList');
+        const downloadBtn = document.getElementById('downloadBtn');
+        const downloadJsonBtn = document.getElementById('downloadJsonBtn');
+
+        // 파일 입력 이벤트
+        fileInput.addEventListener('change', handleFileSelect);
+
+        // 드래그 앤 드롭 이벤트
+        uploadArea.addEventListener('dragover', (e) => {
+            e.preventDefault();
+            uploadArea.classList.add('dragover');
+        });
+
+        uploadArea.addEventListener('dragleave', () => {
+            uploadArea.classList.remove('dragover');
+        });
+
+        uploadArea.addEventListener('drop', (e) => {
+            e.preventDefault();
+            uploadArea.classList.remove('dragover');
+            const files = e.dataTransfer.files;
+            if (files.length > 0) {
+                handleFile(files[0]);
+            }
+        });
+
+        function handleFileSelect(e) {
+            const file = e.target.files[0];
+            if (file) {
+                handleFile(file);
+            }
+        }
+
+        function parseTime2000M(timeStr) {
+            if (!timeStr) return timeStr;
+            // 2000M 기록에서 포인트 제거: "(15)03:53.692" -> "03:53.692"
+            return String(timeStr).replace(/^\(\d+\)/, '');
+        }
+
+        function handleFile(file) {
+            if (!file.name.match(/\.(xlsx|xls)$/)) {
+                showStatus('엑셀 파일(.xlsx, .xls)만 업로드 가능합니다.', 'error');
+                return;
+            }
+
+            showStatus('파일을 처리하는 중...', 'info');
+            
+            const reader = new FileReader();
+            reader.onload = (e) => {
+                try {
+                    const data = new Uint8Array(e.target.result);
+                    const workbook = XLSX.read(data, { type: 'array' });
+                    
+                    parsedData = {};
+                    
+                    // 모든 시트 처리
+                    workbook.SheetNames.forEach(sheetName => {
+                        const worksheet = workbook.Sheets[sheetName];
+                        const jsonData = parseSheet(worksheet);
+                        
+                        if (jsonData) {
+                            const playerName = jsonData.player_info['이름'];
+                            if (playerName && playerName.trim()) {
+                                parsedData[playerName] = jsonData;
+                            }
+                        }
+                    });
+                    
+                    // 결과 표시
+                    const playerCount = Object.keys(parsedData).length;
+                    if (playerCount > 0) {
+                        showStatus(`✅ ${playerCount}명의 선수 데이터를 성공적으로 변환했습니다.`, 'success');
+                        showFileInfo(file.name, playerCount);
+                        showPlayerList(Object.keys(parsedData));
+                        downloadBtn.style.display = 'inline-block';
+                        downloadJsonBtn.style.display = 'inline-block';
+                    } else {
+                        showStatus('유효한 선수 데이터를 찾을 수 없습니다.', 'error');
+                    }
+                    
+                } catch (error) {
+                    console.error('Error:', error);
+                    showStatus('파일 처리 중 오류가 발생했습니다: ' + error.message, 'error');
+                }
+            };
+            
+            reader.readAsArrayBuffer(file);
+        }
+
+        function parseSheet(worksheet) {
+            const range = XLSX.utils.decode_range(worksheet['!ref']);
+            const jsonData = [];
+            
+            // 셀 데이터 읽기
+            for (let R = range.s.r; R <= range.e.r; ++R) {
+                const row = [];
+                for (let C = range.s.c; C <= range.e.c; ++C) {
+                    const cellAddress = XLSX.utils.encode_cell({ r: R, c: C });
+                    const cell = worksheet[cellAddress];
+                    
+                    if (cell && cell.v !== undefined) {
+                        // 기록 컬럼(5번 컬럼) 특별 처리
+                        if (C === 5) {
+                            if (typeof cell.v === 'string') {
+                                // 문자열인 경우 (2000M 포인트 기록 등)
+                                row[C] = cell.v;
+                            } else if (typeof cell.v === 'number' && cell.v < 1) {
+                                // Excel의 시간 값 (하루의 비율로 저장됨)
+                                const totalSeconds = cell.v * 86400;
+                                const hours = Math.floor(totalSeconds / 3600);
+                                const minutes = Math.floor((totalSeconds % 3600) / 60);
+                                const seconds = Math.floor(totalSeconds % 60);
+                                const milliseconds = Math.round((totalSeconds % 1) * 1000);
+                                
+                                // 시간 문자열 생성
+                                row[C] = `${String(hours).padStart(2, '0')}:${String(minutes).padStart(2, '0')}:${String(seconds).padStart(2, '0')}.${String(milliseconds).padStart(3, '0')}000`;
+                            } else if (cell.w && cell.w.includes(':')) {
+                                // 이미 시간 형식으로 포맷된 경우
+                                row[C] = cell.w;
+                            } else if (cell.w && /^\d+\.\d+$/.test(cell.w)) {
+                                // "0138.6" 같은 형식 처리
+                                const parts = cell.w.match(/^(\d+)(\d{2})\.(\d+)$/);
+                                if (parts) {
+                                    const minutes = parseInt(parts[1]);
+                                    const seconds = parseInt(parts[2]);
+                                    const decimal = parts[3];
+                                    row[C] = `00:${String(minutes).padStart(2, '0')}:${String(seconds).padStart(2, '0')}.${decimal.padEnd(3, '0')}000`;
+                                } else {
+                                    // 일반적인 초.밀리초 형식
+                                    const totalSeconds = parseFloat(cell.w);
+                                    const minutes = Math.floor(totalSeconds / 60);
+                                    const seconds = Math.floor(totalSeconds % 60);
+                                    const milliseconds = Math.round((totalSeconds % 1) * 1000);
+                                    row[C] = `00:${String(minutes).padStart(2, '0')}:${String(seconds).padStart(2, '0')}.${String(milliseconds).padStart(3, '0')}000`;
+                                }
+                            } else {
+                                row[C] = cell.w || cell.v;
+                            }
+                        } else {
+                            // 다른 컬럼들
+                            row[C] = cell.w || cell.v;
+                        }
+                    } else {
+                        row[C] = null;
+                    }
+                }
+                jsonData.push(row);
+            }
+            
+            // 데이터 파싱
+            const playerInfo = {
+                '이름': jsonData[2]?.[1] || '',
+                '성별': jsonData[2]?.[3] || '',
+                '출생년도': jsonData[3]?.[1] || '',
+                '종별': jsonData[3]?.[3] || '',
+                '소속팀': jsonData[4]?.[1] || '',
+                '시도': jsonData[4]?.[3] || '',
+                '최종등록년도': jsonData[5]?.[1] || '',
+                '등록구분': jsonData[5]?.[3] || ''
+            };
+            
+            console.log('Player Info:', playerInfo);
+            
+            // 대회 기록 파싱
+            const competitions = [];
+            let currentComp = null;
+            let records = [];
+            
+            for (let i = 10; i < jsonData.length; i++) {
+                const row = jsonData[i];
+                if (!row || row.length === 0) continue;
+                
+                // 대회명 행 체크 (첫 번째 컬럼에 값이 있고 두 번째 컬럼이 비어있는 경우)
+                if (row[0] && (!row[1] || row[1] === null)) {
+                    if (currentComp && records.length > 0) {
+                        competitions.push({
+                            name: currentComp,
+                            records: records
+                        });
+                    }
+                    currentComp = row[0];
+                    records = [];
+                    console.log('Found competition:', currentComp);
+                } 
+                // 기록 행 체크 (일자가 숫자이고 8자리 이상인 경우)
+                else if (row[0] && (typeof row[0] === 'number' || /^\d{8}/.test(String(row[0])))) {
+                    const dateStr = String(row[0]);
+                    if (dateStr.length >= 8 && parseInt(dateStr) > 20000000) {
+                        const record = {
+                            '일자': dateStr,
+                            '종별': row[1] || '',
+                            '세부종목': row[2] || '',
+                            '라운드': row[3] || '',
+                            '소속': row[4] || '',
+                            '기록': row[5] || '',
+                            '순위': row[6] || ''
+                        };
+                        records.push(record);
+                    }
+                }
+            }
+            
+            if (currentComp && records.length > 0) {
+                competitions.push({
+                    name: currentComp,
+                    records: records
+                });
+            }
+            
+            // 연도별 최고 기록 계산
+            const yearlyBest = {};
+            const allEvents = new Set();
+            
+            let recordCount = 0;
+            let validTimeCount = 0;
+            
+            competitions.forEach(comp => {
+                comp.records.forEach(record => {
+                    recordCount++;
+                    const dateStr = record['일자'];
+                    if (dateStr && dateStr.length >= 8) {
+                        const year = dateStr.substring(0, 4);
+                        const event = String(record['세부종목']).toUpperCase();
+                        const timeStr = parseTime2000M(record['기록']);
+                        const timeSeconds = timeToSeconds(timeStr);
+                        
+                        if (timeSeconds) {
+                            validTimeCount++;
+                            allEvents.add(event);
+                            
+                            if (!yearlyBest[year]) {
+                                yearlyBest[year] = {};
+                            }
+                            
+                            if (!yearlyBest[year][event] || timeSeconds < yearlyBest[year][event].time) {
+                                yearlyBest[year][event] = {
+                                    time: timeSeconds,
+                                    time_str: record['기록'],
+                                    competition: comp.name,
+                                    date: dateStr,
+                                    rank: record['순위']
+                                };
+                                console.log(`Updated best for ${year} ${event}: ${timeSeconds}s (${record['기록']})`);
+                            }
+                        }
+                    }
+                });
+            });
+            
+            console.log(`Processed ${recordCount} records, ${validTimeCount} with valid times`);
+            console.log('Yearly best:', yearlyBest);
+            
+            return {
+                sheetName: playerInfo['이름'],
+                player_info: playerInfo,
+                yearly_best: yearlyBest,
+                competitions: competitions,
+                events: Array.from(allEvents).sort()
+            };
+        }
+
+        function timeToSeconds(timeStr) {
+            if (!timeStr || timeStr === '-' || timeStr === '') return null;
+            
+            // 2000M 포인트 제거: "(15)03:53.692" -> "03:53.692"
+            let cleanedStr = String(timeStr).replace(/^\(\d+\)/, '').trim();
+            
+            // 다양한 시간 형식 처리
+            // 형식 1: "00:01:23.456" 또는 "00:01:23.456000"
+            let match = cleanedStr.match(/(\d{1,2}):(\d{2}):(\d{2})\.?(\d*)/);
+            if (match) {
+                const hours = parseInt(match[1]) || 0;
+                const minutes = parseInt(match[2]) || 0;
+                const seconds = parseInt(match[3]) || 0;
+                const millisStr = match[4] || '0';
+                const milliseconds = parseInt(millisStr.substring(0, 3).padEnd(3, '0'));
+                return hours * 3600 + minutes * 60 + seconds + milliseconds / 1000;
+            }
+            
+            // 형식 2: "01:23.456" (분:초.밀리초)
+            match = cleanedStr.match(/^(\d{1,2}):(\d{2})\.(\d+)$/);
+            if (match) {
+                const minutes = parseInt(match[1]) || 0;
+                const seconds = parseInt(match[2]) || 0;
+                const millisStr = match[3] || '0';
+                const milliseconds = parseInt(millisStr.substring(0, 3).padEnd(3, '0'));
+                return minutes * 60 + seconds + milliseconds / 1000;
+            }
+            
+            // 형식 3: "23.456" (초.밀리초)
+            match = cleanedStr.match(/^(\d{1,2})\.(\d+)$/);
+            if (match) {
+                const seconds = parseInt(match[1]) || 0;
+                const millisStr = match[2] || '0';
+                const milliseconds = parseInt(millisStr.substring(0, 3).padEnd(3, '0'));
+                return seconds + milliseconds / 1000;
+            }
+            
+            return null;
+        }
+
+        function showStatus(message, type) {
+            statusDiv.className = 'status ' + type;
+            statusDiv.textContent = message;
+        }
+
+        function showFileInfo(filename, playerCount) {
+            fileInfoDiv.innerHTML = `
+                <strong>📄 파일명:</strong> ${filename}<br>
+                <strong>👥 선수 수:</strong> ${playerCount}명
+            `;
+            fileInfoDiv.style.display = 'block';
+        }
+
+        function showPlayerList(players) {
+            playerListDiv.innerHTML = '<strong>선수 목록:</strong><br>' + 
+                players.map(name => `<div class="player-item">${name}</div>`).join('');
+            playerListDiv.style.display = 'block';
+        }
+
+        function downloadJS() {
+            if (!parsedData) return;
+            
+            const jsContent = `// 선수 데이터 - 자동 생성된 파일
+// 이 파일은 index.html과 같은 폴더에 있어야 합니다.
+// 생성 시간: ${new Date().toLocaleString('ko-KR')}
+
+const defaultPlayersData = ${JSON.stringify(parsedData, null, 2)};
+
+// 데이터가 로드되었음을 알리는 이벤트 발생
+if (typeof window !== 'undefined') {
+  window.defaultPlayersDataLoaded = true;
+  window.dispatchEvent(new Event('playersDataLoaded'));
+}
+`;
+            
+            const blob = new Blob([jsContent], { type: 'application/javascript' });
+            const url = URL.createObjectURL(blob);
+            const a = document.createElement('a');
+            a.href = url;
+            a.download = 'players_data.js';
+            document.body.appendChild(a);
+            a.click();
+            document.body.removeChild(a);
+            URL.revokeObjectURL(url);
+        }
+
+        function downloadJSON() {
+            if (!parsedData) return;
+            
+            const blob = new Blob([JSON.stringify(parsedData, null, 2)], { type: 'application/json' });
+            const url = URL.createObjectURL(blob);
+            const a = document.createElement('a');
+            a.href = url;
+            a.download = 'players_data.json';
+            document.body.appendChild(a);
+            a.click();
+            document.body.removeChild(a);
+            URL.revokeObjectURL(url);
+        }
+    </script>
+</body>
+</html>
