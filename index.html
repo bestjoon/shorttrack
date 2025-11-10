@@ -863,30 +863,55 @@
                                                 </span>
                                             }
                                         </h2>
-                                        <div className="flex flex-wrap gap-2">
-                                            {filteredPlayers.sort().map(playerName => {
-                                                const playerBirthYear = playersData[playerName].player_info['출생년도'];
-                                                const colorClass = getBirthYearColor(playerBirthYear);
-                                                
-                                                return (
-                                                    <button
-                                                        key={playerName}
-                                                        onClick={() => {
-                                                            setSelectedPlayer(playerName);
-                                                            setShowAllRounds(false); // 선수 변경 시 초기화
-                                                        }}
-                                                        className={`px-4 py-2 rounded-lg transition-all text-sm font-semibold border-2 ${
-                                                            selectedPlayer === playerName
-                                                                ? 'bg-gradient-to-r from-purple-500 to-indigo-600 text-white border-purple-700 shadow-lg'
-                                                                : `${colorClass} hover:shadow-md`
-                                                        }`}
-                                                        title={`출생년도: ${playerBirthYear}`}
-                                                    >
-                                                        {playerName}
-                                                    </button>
-                                                );
-                                            })}
-                                        </div>
+                                        {(() => {
+                                            // 출생년도별로 선수 그룹화
+                                            const playersByBirthYear = {};
+                                            filteredPlayers.sort().forEach(playerName => {
+                                                const birthYear = playersData[playerName].player_info['출생년도'];
+                                                if (!playersByBirthYear[birthYear]) {
+                                                    playersByBirthYear[birthYear] = [];
+                                                }
+                                                playersByBirthYear[birthYear].push(playerName);
+                                            });
+
+                                            // 출생년도 오름차순으로 정렬
+                                            const sortedBirthYears = Object.keys(playersByBirthYear).sort();
+
+                                            return (
+                                                <div className="space-y-3">
+                                                    {sortedBirthYears.map(birthYear => (
+                                                        <div key={birthYear}>
+                                                            <div className="text-xs font-semibold text-gray-600 mb-2 pl-1">
+                                                                {birthYear}
+                                                            </div>
+                                                            <div className="flex flex-wrap gap-2">
+                                                                {playersByBirthYear[birthYear].map(playerName => {
+                                                                    const colorClass = getBirthYearColor(birthYear);
+                                                                    
+                                                                    return (
+                                                                        <button
+                                                                            key={playerName}
+                                                                            onClick={() => {
+                                                                                setSelectedPlayer(playerName);
+                                                                                setShowAllRounds(false);
+                                                                            }}
+                                                                            className={`px-3 py-1 rounded text-xs transition-all border ${
+                                                                                selectedPlayer === playerName
+                                                                                    ? 'bg-gradient-to-r from-purple-500 to-indigo-600 text-white border-purple-700 shadow-md'
+                                                                                    : `${colorClass} hover:shadow-sm`
+                                                                            }`}
+                                                                            title={`출생년도: ${birthYear}`}
+                                                                        >
+                                                                            {playerName}
+                                                                        </button>
+                                                                    );
+                                                                })}
+                                                            </div>
+                                                        </div>
+                                                    ))}
+                                                </div>
+                                            );
+                                        })()}
                                     </div>
 
                                     {/* 선수 정보 및 기록 표시 */}
