@@ -604,6 +604,29 @@
                 return getEventOrder(a) - getEventOrder(b);
             };
 
+            // 출생년도별 색상 맵 - 밝은 색상으로 변경 (학년별)
+            // 2024년 현재 기준: 2010년생=고3, 2011년생=고2, 2012년생=고1, 2013년생=중3, 2014년생=중2, 2015년생=중1 등
+            const getBirthYearColor = (birthYear) => {
+                const colorMap = {
+                    '2010': 'bg-red-100 text-red-800 border-red-300',      // 고3
+                    '2011': 'bg-orange-100 text-orange-800 border-orange-300',  // 고2
+                    '2012': 'bg-yellow-100 text-yellow-800 border-yellow-300',  // 고1
+                    '2013': 'bg-green-100 text-green-800 border-green-300',     // 중3
+                    '2014': 'bg-blue-100 text-blue-800 border-blue-300',        // 중2
+                    '2015': 'bg-indigo-100 text-indigo-800 border-indigo-300',  // 중1
+                    '2016': 'bg-purple-100 text-purple-800 border-purple-300',  // 초6
+                    '2017': 'bg-pink-100 text-pink-800 border-pink-300',        // 초5
+                    '2018': 'bg-cyan-100 text-cyan-800 border-cyan-300',        // 초4
+                    '2019': 'bg-teal-100 text-teal-800 border-teal-300',        // 초3
+                    '2020': 'bg-lime-100 text-lime-800 border-lime-300',        // 초2
+                    '2021': 'bg-emerald-100 text-emerald-800 border-emerald-300', // 초1
+                    '2022': 'bg-sky-100 text-sky-800 border-sky-300',           // 취학전
+                    '2023': 'bg-violet-100 text-violet-800 border-violet-300',  // 미취학
+                    '2024': 'bg-rose-100 text-rose-800 border-rose-300'        // 미취학
+                };
+                return colorMap[String(birthYear)] || 'bg-gray-100 text-gray-800 border-gray-300';
+            };
+
             const calculateImprovement = (currentTime, previousTime) => {
                 if (!currentTime || !previousTime) return null;
                 const diff = previousTime - currentTime;
@@ -841,22 +864,28 @@
                                             }
                                         </h2>
                                         <div className="flex flex-wrap gap-2">
-                                            {filteredPlayers.map(playerName => (
-                                                <button
-                                                    key={playerName}
-                                                    onClick={() => {
-                                                        setSelectedPlayer(playerName);
-                                                        setShowAllRounds(false); // 선수 변경 시 초기화
-                                                    }}
-                                                    className={`px-3 py-2 rounded-lg transition-all text-sm ${
-                                                        selectedPlayer === playerName
-                                                            ? 'bg-gradient-to-r from-purple-500 to-indigo-600 text-white'
-                                                            : 'bg-white text-gray-700 hover:bg-gray-100'
-                                                    }`}
-                                                >
-                                                    {playerName}
-                                                </button>
-                                            ))}
+                                            {filteredPlayers.sort().map(playerName => {
+                                                const playerBirthYear = playersData[playerName].player_info['출생년도'];
+                                                const colorClass = getBirthYearColor(playerBirthYear);
+                                                
+                                                return (
+                                                    <button
+                                                        key={playerName}
+                                                        onClick={() => {
+                                                            setSelectedPlayer(playerName);
+                                                            setShowAllRounds(false); // 선수 변경 시 초기화
+                                                        }}
+                                                        className={`px-4 py-2 rounded-lg transition-all text-sm font-semibold border-2 ${
+                                                            selectedPlayer === playerName
+                                                                ? 'bg-gradient-to-r from-purple-500 to-indigo-600 text-white border-purple-700 shadow-lg'
+                                                                : `${colorClass} hover:shadow-md`
+                                                        }`}
+                                                        title={`출생년도: ${playerBirthYear}`}
+                                                    >
+                                                        {playerName}
+                                                    </button>
+                                                );
+                                            })}
                                         </div>
                                     </div>
 
