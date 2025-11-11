@@ -10,7 +10,7 @@
     <script src="https://cdn.tailwindcss.com"></script>
     <script src="https://cdnjs.cloudflare.com/ajax/libs/xlsx/0.18.5/xlsx.full.min.js"></script>
     <!-- 선수 데이터 파일 로드 -->
-    <script src="players_data.js"></script>
+    <script src="players_data_sy.js"></script>
     <style>
         body {
             background: linear-gradient(135deg, #667eea 0%, #764ba2 100%);
@@ -446,7 +446,7 @@
                         // 3초 후에도 데이터가 없으면 에러 메시지 표시
                         setTimeout(() => {
                             if (loading) {
-                                setUploadStatus('기본 데이터 파일(players_data.js)을 찾을 수 없습니다. 엑셀 파일을 업로드해주세요.');
+                                setUploadStatus('기본 데이터 파일(players_data_sy.js)을 찾을 수 없습니다. 엑셀 파일을 업로드해주세요.');
                                 setLoading(false);
                             }
                         }, 3000);
