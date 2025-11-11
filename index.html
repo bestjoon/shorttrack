@@ -68,6 +68,7 @@
             }
             .glass-effect {
                 box-shadow: 0 2px 8px 0 rgba(31, 38, 135, 0.2);
+                padding: 1rem !important;
             }
             table {
                 font-size: 12px;
@@ -83,6 +84,10 @@
             }
             .mobile-text-xs {
                 font-size: 10px;
+            }
+            /* 모바일에서 버튼 여백 최소화 */
+            .mobile-btn-container {
+                gap: 0.4rem !important;
             }
         }
         
@@ -395,7 +400,7 @@
             const [selectedYear, setSelectedYear] = useState('ALL');
             const [selectedRegion, setSelectedRegion] = useState('ALL');
             const [selectedBirthYears, setSelectedBirthYears] = useState([]); // 배열로 변경 (복수 선택)
-            const [selectedGender, setSelectedGender] = useState('ALL');
+            const [selectedGender, setSelectedGender] = useState('여'); // 기본값을 "여"로 설정
             const [loading, setLoading] = useState(true);
             const [uploadStatus, setUploadStatus] = useState('');
             const [dragOver, setDragOver] = useState(false);
@@ -691,6 +696,17 @@
             const availableBirthYears = playersData ? 
                 [...new Set(Object.values(playersData).map(p => p.player_info['출생년도']).filter(Boolean))].sort() : [];
 
+            // 성별 기본값 설정: "여"가 있으면 "여", 없으면 "전체"
+            useEffect(() => {
+                if (playersData && availableGenders.length > 0) {
+                    if (availableGenders.includes('여')) {
+                        setSelectedGender('여');
+                    } else {
+                        setSelectedGender('ALL');
+                    }
+                }
+            }, [playersData]);
+
             // 필터링된 선수 목록
             const filteredPlayers = playersData ? 
                 Object.keys(playersData).filter(name => {
@@ -783,7 +799,7 @@
                                         <div className="grid grid-cols-1 md:grid-cols-3 gap-4">
                                             <div>
                                                 <h3 className="text-sm font-semibold mb-2 text-gray-600">성별</h3>
-                                                <div className="flex flex-wrap gap-2">
+                                                <div className="flex flex-wrap gap-1">
                                                     <button
                                                         onClick={() => setSelectedGender('ALL')}
                                                         className={`px-3 py-1 rounded text-xs transition-all ${
@@ -811,7 +827,7 @@
                                             </div>
                                             <div>
                                                 <h3 className="text-sm font-semibold mb-2 text-gray-600">지역</h3>
-                                                <div className="flex flex-wrap gap-2">
+                                                <div className="flex flex-wrap gap-1">
                                                     <button
                                                         onClick={() => setSelectedRegion('ALL')}
                                                         className={`px-3 py-1 rounded text-xs transition-all ${
@@ -839,7 +855,7 @@
                                             </div>
                                             <div>
                                                 <h3 className="text-sm font-semibold mb-2 text-gray-600">출생년도</h3>
-                                                <div className="flex flex-wrap gap-2">
+                                                <div className="flex flex-wrap gap-1">
                                                     <button
                                                         onClick={() => setSelectedBirthYears([])}
                                                         className={`px-3 py-1 rounded text-xs transition-all ${
@@ -905,7 +921,7 @@
                                                             <div className="text-xs font-semibold text-gray-600 mb-2 pl-1">
                                                                 {birthYear}
                                                             </div>
-                                                            <div className="flex flex-wrap gap-2">
+                                                            <div className="flex flex-wrap gap-1">
                                                                 {playersByBirthYear[birthYear].map(playerName => {
                                                                     const colorClass = getBirthYearColor(birthYear);
                                                                     
@@ -939,7 +955,7 @@
                                     {currentPlayerData && (
                                         <>
                                             {/* 선수 정보 카드 */}
-                                            <div className="mb-6 bg-gradient-to-r from-blue-50 to-purple-50 rounded-lg p-4">
+                                            <div className="mb-6 bg-gradient-to-r from-blue-50 to-purple-50 rounded-lg p-4 border-2 border-purple-300">
                                                 <h2 className="text-xl font-bold mb-3 text-gray-800">
                                                     {currentPlayerData.player_info['이름']} 선수 정보
                                                 </h2>
