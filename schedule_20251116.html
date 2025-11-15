@@ -62,7 +62,8 @@
             align-items: center;
         }
 
-        .search-box select {
+        .search-box select,
+        .search-box input {
             flex: 1;
             min-width: 200px;
             padding: 6px 10px;
@@ -73,7 +74,8 @@
             background: white;
         }
 
-        .search-box select:focus {
+        .search-box select:focus,
+        .search-box input:focus {
             outline: none;
             border-color: #34495e;
         }
@@ -341,9 +343,7 @@
 
         <div class="search-container">
             <div class="search-box">
-                <select id="athleteSelect" onchange="searchFromSelect()">
-                    <option value="">선수를 선택하세요...</option>
-                </select>
+                <input type="text" id="athleteSearch" placeholder="선수 이름이나 팀명으로 검색..." onkeyup="handleSearchInput()" />
                 <button onclick="clearSearch()" class="clear-btn">초기화</button>
                 <button onclick="toggleAllSchedules()" class="expand-all-btn" id="expandAllBtn">모두 접기</button>
             </div>
@@ -3604,60 +3604,23 @@
         }
 
         function populateAthleteSelect() {
-            const athleteSelect = document.getElementById('athleteSelect');
-            const athletes = [];
-            
-            // 모든 선수 정보 수집
-            scheduleData.forEach(timeSlot => {
-                timeSlot.events.forEach(event => {
-                    if (!event.isIceMaintenance && event.groups) {
-                        event.groups.forEach(group => {
-                            group.athletes.forEach(athlete => {
-                                if (athlete.name) {
-                                    athletes.push({
-                                        name: athlete.name,
-                                        school: athlete.school,
-                                        displayText: `${athlete.name} (${athlete.school})`
-                                    });
-                                }
-                            });
-                        });
-                    }
-                });
-            });
-            
-            // 선수명으로 정렬 (중복 제거)
-            const uniqueAthletes = athletes.filter((athlete, index, self) => 
-                index === self.findIndex(a => a.name === athlete.name && a.school === athlete.school)
-            ).sort((a, b) => a.name.localeCompare(b.name));
-            
-            // 옵션 추가
-            uniqueAthletes.forEach(athlete => {
-                const option = document.createElement('option');
-                option.value = athlete.name;
-                option.textContent = athlete.displayText;
-                athleteSelect.appendChild(option);
-            });
+            // textbox 기반 검색이므로 더 이상 필요 없음
+            // 호환성을 위해 빈 함수로 유지
         }
 
-        function searchFromSelect() {
-            const athleteSelect = document.getElementById('athleteSelect');
-            const selectedName = athleteSelect.value;
+        function handleSearchInput() {
+            const searchInput = document.getElementById('athleteSearch');
+            const searchTerm = searchInput.value.trim();
             
-            if (!selectedName) {
+            if (!searchTerm) {
                 clearHighlights();
                 return;
             }
             
-            searchAthlete(selectedName);
+            searchAthleteByText(searchTerm);
         }
 
-        function searchAthlete(searchTerm = null) {
-            if (!searchTerm) {
-                const athleteSelect = document.getElementById('athleteSelect');
-                searchTerm = athleteSelect.value;
-            }
-            
+        function searchAthleteByText(searchTerm) {
             if (!searchTerm) return;
 
             clearHighlights();
@@ -3667,17 +3630,24 @@
             const athletes = document.querySelectorAll('.athlete[data-name]');
             
             athletes.forEach((athlete) => {
-                if (athlete.dataset.name === searchTerm) {
+                const name = athlete.dataset.name;
+                const school = athlete.querySelector('.athlete-cap').nextElementSibling?.nextSibling?.textContent?.trim() || '';
+                
+                // 선수명이나 팀명에 검색어가 포함되어 있는지 확인 (부분 검색)
+                if (name.includes(searchTerm) || school.includes(searchTerm)) {
                     searchResults.push(athlete);
                 }
             });
             
             if (searchResults.length === 0) {
-                alert('해당 선수를 찾을 수 없습니다.');
                 return;
             }
             
             highlightCurrentResult();
+        }
+
+        function searchAthlete(searchTerm = null) {
+            searchAthleteByText(searchTerm);
         }
 
         function highlightCurrentResult() {
@@ -3714,6 +3684,12 @@
             content.classList.remove('collapsed');
             toggle.classList.add('rotated');
             
+            // 동적 높이 설정
+            setTimeout(() => {
+                const scrollHeight = content.scrollHeight;
+                content.style.maxHeight = (scrollHeight + 100) + 'px';
+            }, 10);
+            
             // 스크롤
             currentResult.scrollIntoView({ behavior: 'smooth', block: 'center' });
         }
@@ -3726,8 +3702,8 @@
         }
 
         function clearSearch() {
-            const athleteSelect = document.getElementById('athleteSelect');
-            athleteSelect.selectedIndex = 0;
+            const searchInput = document.getElementById('athleteSearch');
+            searchInput.value = '';
             clearHighlights();
         }
 
@@ -3780,7 +3756,6 @@
         // 페이지 로드 시 스케줄 렌더링
         document.addEventListener('DOMContentLoaded', function() {
             renderSchedule();
-            populateAthleteSelect();
         });
     </script>
 </body>
