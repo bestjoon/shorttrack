@@ -1,0 +1,3787 @@
+<!DOCTYPE html>
+<html lang="ko">
+<head>
+    <meta charset="UTF-8">
+    <meta name="viewport" content="width=device-width, initial-scale=1.0">
+    <title>제1회 경기도 교육감배 쇼트트랙 스피드스케이팅 대회</title>
+    <style>
+        * {
+            margin: 0;
+            padding: 0;
+            box-sizing: border-box;
+        }
+
+        body {
+            font-family: 'Segoe UI', Tahoma, Geneva, Verdana, sans-serif;
+            line-height: 1.3;
+            color: #333;
+            background: linear-gradient(135deg, #2c3e50 0%, #3498db 50%, #2980b9 100%);
+            min-height: 100vh;
+        }
+
+        .container {
+            max-width: 1200px;
+            margin: 0 auto;
+            padding: 8px;
+        }
+
+        .header {
+            text-align: center;
+            color: white;
+            margin-bottom: 12px;
+            padding: 15px;
+            background: rgba(44, 62, 80, 0.8);
+            border-radius: 12px;
+            backdrop-filter: blur(10px);
+            box-shadow: 0 4px 20px rgba(0, 0, 0, 0.15);
+            border: 1px solid rgba(255, 255, 255, 0.1);
+        }
+
+        .header h1 {
+            font-size: 1.8em;
+            margin-bottom: 5px;
+            text-shadow: 2px 2px 4px rgba(0, 0, 0, 0.3);
+        }
+
+        .header p {
+            font-size: 0.9em;
+            opacity: 0.9;
+        }
+
+        .search-container {
+            margin-bottom: 12px;
+            padding: 12px;
+            background: rgba(255, 255, 255, 0.95);
+            border-radius: 8px;
+            box-shadow: 0 2px 10px rgba(0, 0, 0, 0.1);
+        }
+
+        .search-box {
+            display: flex;
+            gap: 6px;
+            align-items: center;
+        }
+
+        .search-box select {
+            flex: 1;
+            min-width: 200px;
+            padding: 6px 10px;
+            border: 1px solid #e0e0e0;
+            border-radius: 4px;
+            font-size: 14px;
+            transition: border-color 0.3s ease;
+            background: white;
+        }
+
+        .search-box select:focus {
+            outline: none;
+            border-color: #34495e;
+        }
+
+        .search-box button {
+            padding: 6px 12px;
+            background: #34495e;
+            color: white;
+            border: none;
+            border-radius: 4px;
+            cursor: pointer;
+            font-size: 12px;
+            transition: background 0.3s ease;
+        }
+
+        .search-box button:hover {
+            background: #2c3e50;
+        }
+
+        .clear-btn {
+            background: #6c757d !important;
+        }
+
+        .clear-btn:hover {
+            background: #545b62 !important;
+        }
+
+        .expand-all-btn {
+            background: #28a745 !important;
+        }
+
+        .expand-all-btn:hover {
+            background: #218838 !important;
+        }
+
+        .schedule-item {
+            margin-bottom: 8px;
+            background: rgba(255, 255, 255, 0.95);
+            border-radius: 8px;
+            overflow: hidden;
+            box-shadow: 0 2px 8px rgba(0, 0, 0, 0.1);
+            transition: transform 0.2s ease;
+        }
+
+        .schedule-item:hover {
+            transform: translateY(-1px);
+        }
+
+        .schedule-header {
+            padding: 12px;
+            background: linear-gradient(135deg, #34495e, #2c3e50);
+            color: white;
+            cursor: pointer;
+            display: flex;
+            justify-content: space-between;
+            align-items: center;
+            transition: background 0.3s ease;
+        }
+
+        .schedule-header:hover {
+            background: linear-gradient(135deg, #3d566e, #34495e);
+        }
+
+        .schedule-time {
+            font-size: 1em;
+            font-weight: bold;
+        }
+
+        .schedule-events {
+            font-size: 0.8em;
+            opacity: 0.9;
+            margin-top: 2px;
+        }
+
+        .toggle-icon {
+            font-size: 1.2em;
+            transition: transform 0.3s ease;
+        }
+
+        .toggle-icon.rotated {
+            transform: rotate(180deg);
+        }
+
+        .schedule-content {
+            padding: 0 12px;
+            max-height: 10000px;
+            overflow: hidden;
+            transition: max-height 0.4s ease, padding 0.2s ease;
+        }
+
+        .schedule-content.collapsed {
+            max-height: 0;
+            padding: 0 12px;
+        }
+
+        .event-section {
+            margin: 12px 0;
+            padding: 8px;
+            border-left: 3px solid #34495e;
+            background: #f8f9ff;
+            border-radius: 4px;
+        }
+
+        .event-title {
+            font-size: 0.9em;
+            font-weight: bold;
+            color: #333;
+            margin-bottom: 8px;
+        }
+
+        .group {
+            margin: 8px 0;
+            padding: 8px;
+            background: white;
+            border-radius: 4px;
+            box-shadow: 0 1px 3px rgba(0, 0, 0, 0.05);
+        }
+
+        .group-title {
+            font-weight: bold;
+            color: #34495e;
+            margin-bottom: 6px;
+            font-size: 0.8em;
+        }
+
+        .athletes {
+            display: grid;
+            grid-template-columns: repeat(auto-fit, minmax(180px, 1fr));
+            gap: 4px;
+        }
+
+        .athlete {
+            padding: 4px 8px;
+            background: #f8f9ff;
+            border-radius: 3px;
+            border-left: 2px solid transparent;
+            transition: all 0.3s ease;
+            font-size: 0.85em;
+            position: relative;
+        }
+
+        .athlete.highlight {
+            background: #fff3cd;
+            border-left-color: #ffc107;
+            box-shadow: 0 0 8px rgba(255, 193, 7, 0.4);
+        }
+
+        .next-search-btn {
+            position: absolute;
+            right: 4px;
+            top: 50%;
+            transform: translateY(-50%);
+            background: #ffc107;
+            color: #000;
+            border: none;
+            border-radius: 2px;
+            padding: 1px 4px;
+            font-size: 0.6em;
+            cursor: pointer;
+            z-index: 10;
+            font-weight: bold;
+        }
+
+        .next-search-btn:hover {
+            background: #e0a800;
+        }
+
+        .athlete-cap {
+            display: inline-block;
+            width: 8px;
+            height: 8px;
+            border-radius: 50%;
+            margin-right: 6px;
+        }
+
+        .cap-white { background: #ffffff; border: 1px solid #ccc; }
+        .cap-yellow { background: #ffd700; }
+        .cap-red { background: #dc3545; }
+        .cap-blue { background: #007bff; }
+        .cap-purple { background: #6f42c1; }
+        .cap-black { background: #343a40; }
+        .cap-orange { background: #fd7e14; }
+
+        .ice-maintenance {
+            background: linear-gradient(135deg, #16a085, #1abc9c) !important;
+            color: white !important;
+            cursor: default !important;
+        }
+
+        .ice-maintenance .schedule-time {
+            font-style: italic;
+        }
+
+        .ice-maintenance .toggle-icon {
+            display: none;
+        }
+
+        @media (max-width: 768px) {
+            .container {
+                padding: 4px;
+            }
+
+            .header h1 {
+                font-size: 1.4em;
+            }
+
+            .header p {
+                font-size: 0.8em;
+            }
+
+            .search-box {
+                gap: 4px;
+            }
+
+            .search-box select,
+            .search-box button {
+                font-size: 12px;
+            }
+
+            .search-box select {
+                min-width: 120px;
+            }
+
+            .search-box button {
+                padding: 6px 8px;
+                font-size: 10px;
+            }
+
+            .athletes {
+                grid-template-columns: 1fr 1fr;
+                gap: 3px;
+            }
+
+            .athlete {
+                font-size: 0.8em;
+                padding: 3px 6px;
+            }
+
+            .athlete-cap {
+                width: 6px;
+                height: 6px;
+                margin-right: 4px;
+            }
+
+            .schedule-header {
+                padding: 10px;
+            }
+
+            .schedule-time {
+                font-size: 0.9em;
+            }
+
+            .schedule-events {
+                font-size: 0.7em;
+            }
+        }
+    </style>
+</head>
+<body>
+    <div class="container">
+        <div class="header">
+            <h1>2025 서울특별시장배 빙상경기대회(생활체육:쇼트트랙)</h1>
+            <p>일시: 2025.11.16(일) | 장소: 목동 아이스링크</p>
+        </div>
+
+        <div class="search-container">
+            <div class="search-box">
+                <select id="athleteSelect" onchange="searchFromSelect()">
+                    <option value="">선수를 선택하세요...</option>
+                </select>
+                <button onclick="clearSearch()" class="clear-btn">초기화</button>
+                <button onclick="toggleAllSchedules()" class="expand-all-btn" id="expandAllBtn">모두 접기</button>
+            </div>
+        </div>
+
+        <div id="schedule">
+            <!-- Schedule items will be generated by JavaScript -->
+        </div>
+    </div>
+
+    <script>
+        let currentSearchIndex = 0;
+        let searchResults = [];
+        let allExpanded = true;
+
+        const scheduleData = [
+    {
+        "time": "08:30~",
+        "events": [
+            {
+                "id": 1,
+                "title": "여자 일반부 500M",
+                "isIceMaintenance": false,
+                "groups": [
+                    {
+                        "name": "1조",
+                        "athletes": [
+                            {
+                                "name": "최효림",
+                                "school": "OK",
+                                "cap": "white"
+                            },
+                            {
+                                "name": "김효정",
+                                "school": "USC",
+                                "cap": "yellow"
+                            },
+                            {
+                                "name": "이은효",
+                                "school": "홍팀",
+                                "cap": "red"
+                            }
+                        ]
+                    },
+                    {
+                        "name": "2조",
+                        "athletes": [
+                            {
+                                "name": "강린지",
+                                "school": "이화여대",
+                                "cap": "white"
+                            },
+                            {
+                                "name": "이은나",
+                                "school": "김도원클럽",
+                                "cap": "yellow"
+                            },
+                            {
+                                "name": "김서현",
+                                "school": "경기일반",
+                                "cap": "red"
+                            }
+                        ]
+                    },
+                    {
+                        "name": "3조",
+                        "athletes": [
+                            {
+                                "name": "계현수",
+                                "school": "과천이승환",
+                                "cap": "white"
+                            },
+                            {
+                                "name": "손지수",
+                                "school": "김도원클럽",
+                                "cap": "yellow"
+                            },
+                            {
+                                "name": "이재원",
+                                "school": "변우신팀",
+                                "cap": "red"
+                            }
+                        ]
+                    },
+                    {
+                        "name": "4조",
+                        "athletes": [
+                            {
+                                "name": "이금나",
+                                "school": "김도원클럽",
+                                "cap": "white"
+                            },
+                            {
+                                "name": "김미림",
+                                "school": "USC",
+                                "cap": "yellow"
+                            }
+                        ]
+                    }
+                ]
+            },
+            {
+                "id": 2,
+                "title": "남자 일반부 500M",
+                "isIceMaintenance": false,
+                "groups": [
+                    {
+                        "name": "1조",
+                        "athletes": [
+                            {
+                                "name": "성화성",
+                                "school": "OK & 과천이준선",
+                                "cap": "white"
+                            },
+                            {
+                                "name": "patrick R.G",
+                                "school": "과천이승환",
+                                "cap": "yellow"
+                            }
+                        ]
+                    },
+                    {
+                        "name": "2조",
+                        "athletes": [
+                            {
+                                "name": "유규창",
+                                "school": "OK",
+                                "cap": "white"
+                            },
+                            {
+                                "name": "박한우",
+                                "school": "정일권팀",
+                                "cap": "yellow"
+                            }
+                        ]
+                    },
+                    {
+                        "name": "3조",
+                        "athletes": [
+                            {
+                                "name": "김선욱",
+                                "school": "백곰스케이트",
+                                "cap": "white"
+                            },
+                            {
+                                "name": "신현우",
+                                "school": "김도원클럽",
+                                "cap": "yellow"
+                            },
+                            {
+                                "name": "박성훈",
+                                "school": "OK & 과천이준선",
+                                "cap": "red"
+                            }
+                        ]
+                    }
+                ]
+            },
+            {
+                "id": 3,
+                "title": "여자 중등부 500M",
+                "isIceMaintenance": false,
+                "groups": [
+                    {
+                        "name": "1조",
+                        "athletes": [
+                            {
+                                "name": "정윤진",
+                                "school": "남인천여중",
+                                "cap": "white"
+                            },
+                            {
+                                "name": "배예원",
+                                "school": "김도원클럽",
+                                "cap": "yellow"
+                            },
+                            {
+                                "name": "김가람",
+                                "school": "USC",
+                                "cap": "red"
+                            }
+                        ]
+                    },
+                    {
+                        "name": "2조",
+                        "athletes": [
+                            {
+                                "name": "류다윤",
+                                "school": "화수중",
+                                "cap": "white"
+                            },
+                            {
+                                "name": "강예원",
+                                "school": "USC",
+                                "cap": "yellow"
+                            },
+                            {
+                                "name": "이정연",
+                                "school": "세화여중",
+                                "cap": "red"
+                            }
+                        ]
+                    }
+                ]
+            },
+            {
+                "id": 4,
+                "title": "남자 중등부 500M",
+                "isIceMaintenance": false,
+                "groups": [
+                    {
+                        "name": "1조",
+                        "athletes": [
+                            {
+                                "name": "김한슬",
+                                "school": "해솔중학교",
+                                "cap": "white"
+                            },
+                            {
+                                "name": "한현우",
+                                "school": "경성중학교",
+                                "cap": "yellow"
+                            },
+                            {
+                                "name": "채민재",
+                                "school": "(동도중학교",
+                                "cap": "red"
+                            }
+                        ]
+                    },
+                    {
+                        "name": "2조",
+                        "athletes": [
+                            {
+                                "name": "백시우",
+                                "school": "한별중학교",
+                                "cap": "white"
+                            },
+                            {
+                                "name": "염승윤",
+                                "school": "TEAM-K",
+                                "cap": "yellow"
+                            }
+                        ]
+                    },
+                    {
+                        "name": "3조",
+                        "athletes": [
+                            {
+                                "name": "이택함",
+                                "school": "신송중학교",
+                                "cap": "white"
+                            },
+                            {
+                                "name": "도연준",
+                                "school": "USC",
+                                "cap": "yellow"
+                            }
+                        ]
+                    }
+                ]
+            },
+            {
+                "id": 5,
+                "title": "남자 고등부 500M",
+                "isIceMaintenance": false,
+                "groups": [
+                    {
+                        "name": "1조",
+                        "athletes": [
+                            {
+                                "name": "최현수",
+                                "school": "덕일전자공업고",
+                                "cap": "white"
+                            }
+                        ]
+                    }
+                ]
+            },
+            {
+                "id": 6,
+                "title": "C조 여초 1학년 222M",
+                "isIceMaintenance": false,
+                "groups": [
+                    {
+                        "name": "1조",
+                        "athletes": [
+                            {
+                                "name": "김모은",
+                                "school": "화홍초",
+                                "cap": "white"
+                            },
+                            {
+                                "name": "배수빈",
+                                "school": "예일초",
+                                "cap": "yellow"
+                            }
+                        ]
+                    }
+                ]
+            },
+            {
+                "id": 7,
+                "title": "C조 남초 1학년 222M",
+                "isIceMaintenance": false,
+                "groups": [
+                    {
+                        "name": "1조",
+                        "athletes": [
+                            {
+                                "name": "유승하",
+                                "school": "김도원팀",
+                                "cap": "white"
+                            }
+                        ]
+                    }
+                ]
+            },
+            {
+                "id": 8,
+                "title": "C조 남초 2학년 222M",
+                "isIceMaintenance": false,
+                "groups": [
+                    {
+                        "name": "1조",
+                        "athletes": [
+                            {
+                                "name": "한지안",
+                                "school": "고봉초",
+                                "cap": "white"
+                            }
+                        ]
+                    }
+                ]
+            },
+            {
+                "id": 9,
+                "title": "C조 남초 3학년 222M",
+                "isIceMaintenance": false,
+                "groups": []
+            },
+            {
+                "id": 10,
+                "title": "C조 남초 4학년 222M",
+                "isIceMaintenance": false,
+                "groups": [
+                    {
+                        "name": "1조",
+                        "athletes": [
+                            {
+                                "name": "임하준",
+                                "school": "TEAM-UEP",
+                                "cap": "white"
+                            }
+                        ]
+                    }
+                ]
+            },
+            {
+                "id": 11,
+                "title": "C조 여초 1학년 333M",
+                "isIceMaintenance": false,
+                "groups": [
+                    {
+                        "name": "1조",
+                        "athletes": [
+                            {
+                                "name": "배수빈",
+                                "school": "예일초",
+                                "cap": "white"
+                            }
+                        ]
+                    }
+                ]
+            },
+            {
+                "id": 12,
+                "title": "여자 유치부 111M",
+                "isIceMaintenance": false,
+                "groups": [
+                    {
+                        "name": "1조",
+                        "athletes": [
+                            {
+                                "name": "권유지",
+                                "school": "유정유치원",
+                                "cap": "white"
+                            },
+                            {
+                                "name": "김나연",
+                                "school": "한서유치원",
+                                "cap": "yellow"
+                            }
+                        ]
+                    }
+                ]
+            },
+            {
+                "id": 13,
+                "title": "남자 유치부 111M",
+                "isIceMaintenance": false,
+                "groups": [
+                    {
+                        "name": "1조",
+                        "athletes": [
+                            {
+                                "name": "황규하",
+                                "school": "꿈열매유치원",
+                                "cap": "white"
+                            },
+                            {
+                                "name": "정유안",
+                                "school": "김도원클럽",
+                                "cap": "yellow"
+                            }
+                        ]
+                    },
+                    {
+                        "name": "2조",
+                        "athletes": [
+                            {
+                                "name": "안교진",
+                                "school": "폴리유치원",
+                                "cap": "white"
+                            },
+                            {
+                                "name": "장유준",
+                                "school": "청운유치원",
+                                "cap": "yellow"
+                            }
+                        ]
+                    }
+                ]
+            },
+            {
+                "id": 14,
+                "title": "여자 유치부 222M",
+                "isIceMaintenance": false,
+                "groups": [
+                    {
+                        "name": "1조",
+                        "athletes": [
+                            {
+                                "name": "김서우",
+                                "school": "빈스타팀",
+                                "cap": "white"
+                            },
+                            {
+                                "name": "박서연",
+                                "school": "수현병설유치원",
+                                "cap": "yellow"
+                            }
+                        ]
+                    },
+                    {
+                        "name": "2조",
+                        "athletes": [
+                            {
+                                "name": "김태리",
+                                "school": "TEAM-UEP",
+                                "cap": "white"
+                            },
+                            {
+                                "name": "김율하",
+                                "school": "YMCA아기스포츠단",
+                                "cap": "yellow"
+                            }
+                        ]
+                    }
+                ]
+            },
+            {
+                "id": 15,
+                "title": "남자 유치부 222M",
+                "isIceMaintenance": false,
+                "groups": [
+                    {
+                        "name": "1조",
+                        "athletes": [
+                            {
+                                "name": "조유준",
+                                "school": "폴리어학원",
+                                "cap": "white"
+                            },
+                            {
+                                "name": "이상빈",
+                                "school": "꿈나래어린이집",
+                                "cap": "yellow"
+                            },
+                            {
+                                "name": "김재효",
+                                "school": "이대부속유치원",
+                                "cap": "red"
+                            }
+                        ]
+                    },
+                    {
+                        "name": "2조",
+                        "athletes": [
+                            {
+                                "name": "김진유",
+                                "school": "Knox어학원",
+                                "cap": "white"
+                            },
+                            {
+                                "name": "변지훈",
+                                "school": "목동다솜유치원",
+                                "cap": "yellow"
+                            }
+                        ]
+                    },
+                    {
+                        "name": "3조",
+                        "athletes": [
+                            {
+                                "name": "이시후",
+                                "school": "USC",
+                                "cap": "white"
+                            },
+                            {
+                                "name": "박이든",
+                                "school": "폴리어학원",
+                                "cap": "yellow"
+                            }
+                        ]
+                    }
+                ]
+            },
+            {
+                "id": 16,
+                "title": "여자 일반부 1000M",
+                "isIceMaintenance": false,
+                "groups": [
+                    {
+                        "name": "1조",
+                        "athletes": [
+                            {
+                                "name": "이은나",
+                                "school": "김도원클럽",
+                                "cap": "white"
+                            },
+                            {
+                                "name": "이재원",
+                                "school": "변우신팀",
+                                "cap": "yellow"
+                            },
+                            {
+                                "name": "김미림",
+                                "school": "USC",
+                                "cap": "red"
+                            }
+                        ]
+                    },
+                    {
+                        "name": "2조",
+                        "athletes": [
+                            {
+                                "name": "이은효",
+                                "school": "홍팀",
+                                "cap": "white"
+                            },
+                            {
+                                "name": "손지수",
+                                "school": "김도원클럽",
+                                "cap": "yellow"
+                            }
+                        ]
+                    },
+                    {
+                        "name": "3조",
+                        "athletes": [
+                            {
+                                "name": "계현수",
+                                "school": "과천이승환",
+                                "cap": "white"
+                            },
+                            {
+                                "name": "이금나",
+                                "school": "김도원클럽",
+                                "cap": "yellow"
+                            }
+                        ]
+                    }
+                ]
+            },
+            {
+                "id": 17,
+                "title": "남자 일반부 1000M",
+                "isIceMaintenance": false,
+                "groups": [
+                    {
+                        "name": "1조",
+                        "athletes": [
+                            {
+                                "name": "patrick R.G",
+                                "school": "과천이승환",
+                                "cap": "white"
+                            },
+                            {
+                                "name": "박한우",
+                                "school": "정일권팀",
+                                "cap": "yellow"
+                            },
+                            {
+                                "name": "김선욱",
+                                "school": "백곰스케이트",
+                                "cap": "red"
+                            }
+                        ]
+                    },
+                    {
+                        "name": "2조",
+                        "athletes": [
+                            {
+                                "name": "성화성",
+                                "school": "OK & 과천이준선",
+                                "cap": "white"
+                            },
+                            {
+                                "name": "신현우",
+                                "school": "김도원클럽",
+                                "cap": "yellow"
+                            }
+                        ]
+                    }
+                ]
+            },
+            {
+                "id": 18,
+                "title": "여자 중등부 1000M",
+                "isIceMaintenance": false,
+                "groups": [
+                    {
+                        "name": "1조",
+                        "athletes": [
+                            {
+                                "name": "김가람",
+                                "school": "USC",
+                                "cap": "white"
+                            },
+                            {
+                                "name": "배예원",
+                                "school": "김도원클럽",
+                                "cap": "yellow"
+                            }
+                        ]
+                    }
+                ]
+            },
+            {
+                "id": 19,
+                "title": "남자 중등부 1000M",
+                "isIceMaintenance": false,
+                "groups": [
+                    {
+                        "name": "1조",
+                        "athletes": [
+                            {
+                                "name": "한현우",
+                                "school": "경성중학교",
+                                "cap": "white"
+                            },
+                            {
+                                "name": "이택함",
+                                "school": "신송중학교",
+                                "cap": "yellow"
+                            }
+                        ]
+                    },
+                    {
+                        "name": "2조",
+                        "athletes": [
+                            {
+                                "name": "염승윤",
+                                "school": "TEAM-K",
+                                "cap": "white"
+                            },
+                            {
+                                "name": "김한슬",
+                                "school": "해솔중학교",
+                                "cap": "yellow"
+                            }
+                        ]
+                    }
+                ]
+            },
+            {
+                "id": 20,
+                "title": "남자 고등부 1000M",
+                "isIceMaintenance": false,
+                "groups": [
+                    {
+                        "name": "1조",
+                        "athletes": [
+                            {
+                                "name": "최현수",
+                                "school": "덕일전자공업고",
+                                "cap": "white"
+                            }
+                        ]
+                    }
+                ]
+            }
+        ]
+    },
+    {
+        "time": "⚫⚫⊙전 체 정 빙⊙⚫⚫",
+        "events": [
+            {
+                "id": 0,
+                "title": "정빙",
+                "isIceMaintenance": true,
+                "groups": []
+            }
+        ]
+    },
+    {
+        "time": "정빙 후",
+        "events": [
+            {
+                "id": 21,
+                "title": "B조 여초 1학년 333M",
+                "isIceMaintenance": false,
+                "groups": [
+                    {
+                        "name": "1조",
+                        "athletes": [
+                            {
+                                "name": "박서현",
+                                "school": "개포초",
+                                "cap": "white"
+                            },
+                            {
+                                "name": "김태리",
+                                "school": "TEAM-UEP",
+                                "cap": "yellow"
+                            },
+                            {
+                                "name": "이원",
+                                "school": "덕송초",
+                                "cap": "red"
+                            }
+                        ]
+                    },
+                    {
+                        "name": "2조",
+                        "athletes": [
+                            {
+                                "name": "강리아",
+                                "school": "청계초",
+                                "cap": "white"
+                            },
+                            {
+                                "name": "류가연",
+                                "school": "USC",
+                                "cap": "yellow"
+                            },
+                            {
+                                "name": "백송이",
+                                "school": "인천새봄초",
+                                "cap": "red"
+                            }
+                        ]
+                    },
+                    {
+                        "name": "3조",
+                        "athletes": [
+                            {
+                                "name": "이나은",
+                                "school": "정교초",
+                                "cap": "white"
+                            },
+                            {
+                                "name": "고예나",
+                                "school": "신상도초",
+                                "cap": "yellow"
+                            },
+                            {
+                                "name": "임가현",
+                                "school": "USC",
+                                "cap": "red"
+                            }
+                        ]
+                    }
+                ]
+            },
+            {
+                "id": 22,
+                "title": "B조 여초 2학년 333M",
+                "isIceMaintenance": false,
+                "groups": [
+                    {
+                        "name": "1조",
+                        "athletes": [
+                            {
+                                "name": "전지우",
+                                "school": "목동초",
+                                "cap": "white"
+                            },
+                            {
+                                "name": "이윤서",
+                                "school": "과천초",
+                                "cap": "yellow"
+                            }
+                        ]
+                    },
+                    {
+                        "name": "2조",
+                        "athletes": [
+                            {
+                                "name": "문소이",
+                                "school": "Team JHS",
+                                "cap": "white"
+                            },
+                            {
+                                "name": "이선우",
+                                "school": "서울강서초",
+                                "cap": "yellow"
+                            },
+                            {
+                                "name": "김태리",
+                                "school": "TEAM-K",
+                                "cap": "red"
+                            }
+                        ]
+                    },
+                    {
+                        "name": "3조",
+                        "athletes": [
+                            {
+                                "name": "김루나",
+                                "school": "이대부속초",
+                                "cap": "white"
+                            },
+                            {
+                                "name": "김유주",
+                                "school": "신동초",
+                                "cap": "yellow"
+                            },
+                            {
+                                "name": "최윤주",
+                                "school": "목동초",
+                                "cap": "red"
+                            }
+                        ]
+                    },
+                    {
+                        "name": "4조",
+                        "athletes": [
+                            {
+                                "name": "윤수아",
+                                "school": "TEAM-UEP",
+                                "cap": "white"
+                            },
+                            {
+                                "name": "민재이",
+                                "school": "버들초",
+                                "cap": "yellow"
+                            },
+                            {
+                                "name": "김은우",
+                                "school": "율목초",
+                                "cap": "red"
+                            }
+                        ]
+                    },
+                    {
+                        "name": "5조",
+                        "athletes": [
+                            {
+                                "name": "이다은",
+                                "school": "JHS TEAM",
+                                "cap": "white"
+                            },
+                            {
+                                "name": "김유나",
+                                "school": "범계초",
+                                "cap": "yellow"
+                            },
+                            {
+                                "name": "김수리",
+                                "school": "TEAM-K",
+                                "cap": "red"
+                            }
+                        ]
+                    },
+                    {
+                        "name": "6조",
+                        "athletes": [
+                            {
+                                "name": "이시율",
+                                "school": "USC",
+                                "cap": "white"
+                            },
+                            {
+                                "name": "신효림",
+                                "school": "성동초",
+                                "cap": "yellow"
+                            }
+                        ]
+                    }
+                ]
+            },
+            {
+                "id": 23,
+                "title": "B조 여초 3학년 333M",
+                "isIceMaintenance": false,
+                "groups": [
+                    {
+                        "name": "1조",
+                        "athletes": [
+                            {
+                                "name": "박시은",
+                                "school": "TEAM-K",
+                                "cap": "white"
+                            },
+                            {
+                                "name": "전세인",
+                                "school": "세종초",
+                                "cap": "yellow"
+                            },
+                            {
+                                "name": "박지유",
+                                "school": "민락초",
+                                "cap": "red"
+                            }
+                        ]
+                    },
+                    {
+                        "name": "2조",
+                        "athletes": [
+                            {
+                                "name": "최혜인",
+                                "school": "리라초",
+                                "cap": "white"
+                            },
+                            {
+                                "name": "김시연",
+                                "school": "USC",
+                                "cap": "yellow"
+                            },
+                            {
+                                "name": "이가윤",
+                                "school": "TEAM-K",
+                                "cap": "red"
+                            }
+                        ]
+                    },
+                    {
+                        "name": "3조",
+                        "athletes": [
+                            {
+                                "name": "강지아",
+                                "school": "월촌초",
+                                "cap": "white"
+                            },
+                            {
+                                "name": "남정민",
+                                "school": "성동초",
+                                "cap": "yellow"
+                            },
+                            {
+                                "name": "채우리",
+                                "school": "숙스포츠",
+                                "cap": "red"
+                            }
+                        ]
+                    },
+                    {
+                        "name": "4조",
+                        "athletes": [
+                            {
+                                "name": "이은재",
+                                "school": "USC",
+                                "cap": "white"
+                            },
+                            {
+                                "name": "이은서",
+                                "school": "안양신기초",
+                                "cap": "yellow"
+                            },
+                            {
+                                "name": "김채빈",
+                                "school": "지축초",
+                                "cap": "red"
+                            }
+                        ]
+                    },
+                    {
+                        "name": "5조",
+                        "athletes": [
+                            {
+                                "name": "정서은",
+                                "school": "부산남성초",
+                                "cap": "white"
+                            },
+                            {
+                                "name": "심예린",
+                                "school": "고일초",
+                                "cap": "yellow"
+                            },
+                            {
+                                "name": "유하진",
+                                "school": "성동초",
+                                "cap": "red"
+                            }
+                        ]
+                    },
+                    {
+                        "name": "6조",
+                        "athletes": [
+                            {
+                                "name": "조하연",
+                                "school": "예일초",
+                                "cap": "white"
+                            },
+                            {
+                                "name": "정소담",
+                                "school": "JHS_TEAM",
+                                "cap": "yellow"
+                            },
+                            {
+                                "name": "박이설",
+                                "school": "USC",
+                                "cap": "red"
+                            }
+                        ]
+                    },
+                    {
+                        "name": "7조",
+                        "athletes": [
+                            {
+                                "name": "김지우",
+                                "school": "둔촌초",
+                                "cap": "white"
+                            },
+                            {
+                                "name": "박하희",
+                                "school": "JHS_TEAM",
+                                "cap": "yellow"
+                            },
+                            {
+                                "name": "최지수",
+                                "school": "언남초",
+                                "cap": "red"
+                            }
+                        ]
+                    },
+                    {
+                        "name": "8조",
+                        "athletes": [
+                            {
+                                "name": "이제인",
+                                "school": "한별초",
+                                "cap": "white"
+                            },
+                            {
+                                "name": "김나운",
+                                "school": "문정초",
+                                "cap": "yellow"
+                            }
+                        ]
+                    }
+                ]
+            },
+            {
+                "id": 24,
+                "title": "B조 여초 4학년 333M",
+                "isIceMaintenance": false,
+                "groups": [
+                    {
+                        "name": "1조",
+                        "athletes": [
+                            {
+                                "name": "이효은",
+                                "school": "상명초",
+                                "cap": "white"
+                            },
+                            {
+                                "name": "손지온",
+                                "school": "염경초",
+                                "cap": "yellow"
+                            },
+                            {
+                                "name": "김세은",
+                                "school": "월촌초",
+                                "cap": "red"
+                            }
+                        ]
+                    },
+                    {
+                        "name": "2조",
+                        "athletes": [
+                            {
+                                "name": "박세아",
+                                "school": "빈스타",
+                                "cap": "white"
+                            },
+                            {
+                                "name": "안채원",
+                                "school": "신천초",
+                                "cap": "yellow"
+                            },
+                            {
+                                "name": "김하연",
+                                "school": "목동초",
+                                "cap": "red"
+                            }
+                        ]
+                    },
+                    {
+                        "name": "3조",
+                        "athletes": [
+                            {
+                                "name": "구소율",
+                                "school": "TEAM-UEP",
+                                "cap": "white"
+                            },
+                            {
+                                "name": "이로아",
+                                "school": "꿈미학교",
+                                "cap": "yellow"
+                            },
+                            {
+                                "name": "이지윤",
+                                "school": "중원초",
+                                "cap": "red"
+                            }
+                        ]
+                    },
+                    {
+                        "name": "4조",
+                        "athletes": [
+                            {
+                                "name": "신윤아",
+                                "school": "목운초",
+                                "cap": "white"
+                            },
+                            {
+                                "name": "한채은",
+                                "school": "효자초",
+                                "cap": "yellow"
+                            },
+                            {
+                                "name": "이서연",
+                                "school": "잠원초",
+                                "cap": "red"
+                            }
+                        ]
+                    }
+                ]
+            },
+            {
+                "id": 25,
+                "title": "B조 여초 5학년 333M",
+                "isIceMaintenance": false,
+                "groups": [
+                    {
+                        "name": "1조",
+                        "athletes": [
+                            {
+                                "name": "김소빈",
+                                "school": "가좌초",
+                                "cap": "white"
+                            },
+                            {
+                                "name": "김하솔",
+                                "school": "중계초",
+                                "cap": "yellow"
+                            },
+                            {
+                                "name": "허수영",
+                                "school": "목운초",
+                                "cap": "red"
+                            }
+                        ]
+                    },
+                    {
+                        "name": "2조",
+                        "athletes": [
+                            {
+                                "name": "김예원",
+                                "school": "청계초",
+                                "cap": "white"
+                            },
+                            {
+                                "name": "김채이",
+                                "school": "태안초",
+                                "cap": "yellow"
+                            },
+                            {
+                                "name": "권기현",
+                                "school": "청목초",
+                                "cap": "red"
+                            }
+                        ]
+                    },
+                    {
+                        "name": "3조",
+                        "athletes": [
+                            {
+                                "name": "김서율",
+                                "school": "서울위례초",
+                                "cap": "white"
+                            },
+                            {
+                                "name": "김나희",
+                                "school": "팀페이스",
+                                "cap": "yellow"
+                            }
+                        ]
+                    },
+                    {
+                        "name": "4조",
+                        "athletes": [
+                            {
+                                "name": "김세윤",
+                                "school": "목동초",
+                                "cap": "white"
+                            },
+                            {
+                                "name": "홍해진",
+                                "school": "연학초",
+                                "cap": "yellow"
+                            }
+                        ]
+                    }
+                ]
+            },
+            {
+                "id": 26,
+                "title": "B조 여초 6학년 333M",
+                "isIceMaintenance": false,
+                "groups": [
+                    {
+                        "name": "1조",
+                        "athletes": [
+                            {
+                                "name": "임제이",
+                                "school": "과천이승환",
+                                "cap": "white"
+                            },
+                            {
+                                "name": "김솔",
+                                "school": "서울왕북초",
+                                "cap": "yellow"
+                            },
+                            {
+                                "name": "이채원",
+                                "school": "갈현초",
+                                "cap": "red"
+                            }
+                        ]
+                    },
+                    {
+                        "name": "2조",
+                        "athletes": [
+                            {
+                                "name": "황재인",
+                                "school": "언북초",
+                                "cap": "white"
+                            },
+                            {
+                                "name": "안태하",
+                                "school": "USC",
+                                "cap": "yellow"
+                            },
+                            {
+                                "name": "김시은",
+                                "school": "신동초",
+                                "cap": "red"
+                            }
+                        ]
+                    },
+                    {
+                        "name": "3조",
+                        "athletes": [
+                            {
+                                "name": "이유리",
+                                "school": "갈산초",
+                                "cap": "white"
+                            },
+                            {
+                                "name": "이서현",
+                                "school": "목운초",
+                                "cap": "yellow"
+                            }
+                        ]
+                    }
+                ]
+            },
+            {
+                "id": 27,
+                "title": "B조 남초 1학년 333M",
+                "isIceMaintenance": false,
+                "groups": [
+                    {
+                        "name": "1조",
+                        "athletes": [
+                            {
+                                "name": "전민재",
+                                "school": "평촌초",
+                                "cap": "white"
+                            },
+                            {
+                                "name": "박수빈",
+                                "school": "공항초",
+                                "cap": "yellow"
+                            },
+                            {
+                                "name": "오유건",
+                                "school": "TEAM-K",
+                                "cap": "red"
+                            }
+                        ]
+                    },
+                    {
+                        "name": "2조",
+                        "athletes": [
+                            {
+                                "name": "유준모",
+                                "school": "우장초",
+                                "cap": "white"
+                            },
+                            {
+                                "name": "김윤후",
+                                "school": "KCIS",
+                                "cap": "yellow"
+                            },
+                            {
+                                "name": "정시원",
+                                "school": "가곡초",
+                                "cap": "red"
+                            }
+                        ]
+                    },
+                    {
+                        "name": "3조",
+                        "athletes": [
+                            {
+                                "name": "문준영",
+                                "school": "목운초",
+                                "cap": "white"
+                            },
+                            {
+                                "name": "유지완",
+                                "school": "유정글로벌학교",
+                                "cap": "yellow"
+                            },
+                            {
+                                "name": "박민준",
+                                "school": "team sun",
+                                "cap": "red"
+                            }
+                        ]
+                    },
+                    {
+                        "name": "4조",
+                        "athletes": [
+                            {
+                                "name": "William Yul Heo",
+                                "school": "Chadwick International",
+                                "cap": "white"
+                            },
+                            {
+                                "name": "이찬민",
+                                "school": "목운초",
+                                "cap": "yellow"
+                            },
+                            {
+                                "name": "방승찬",
+                                "school": "상명초",
+                                "cap": "red"
+                            }
+                        ]
+                    },
+                    {
+                        "name": "5조",
+                        "athletes": [
+                            {
+                                "name": "김건희",
+                                "school": "USC",
+                                "cap": "white"
+                            },
+                            {
+                                "name": "송차호",
+                                "school": "TEAM-K",
+                                "cap": "yellow"
+                            },
+                            {
+                                "name": "김성원",
+                                "school": "남성초",
+                                "cap": "red"
+                            }
+                        ]
+                    },
+                    {
+                        "name": "6조",
+                        "athletes": [
+                            {
+                                "name": "정태오",
+                                "school": "위례초",
+                                "cap": "white"
+                            },
+                            {
+                                "name": "이정빈",
+                                "school": "청주교대부설초",
+                                "cap": "yellow"
+                            },
+                            {
+                                "name": "정유창",
+                                "school": "지축초",
+                                "cap": "red"
+                            }
+                        ]
+                    }
+                ]
+            },
+            {
+                "id": 28,
+                "title": "B조 남초 2학년 333M",
+                "isIceMaintenance": false,
+                "groups": [
+                    {
+                        "name": "1조",
+                        "athletes": [
+                            {
+                                "name": "이현우",
+                                "school": "도농초",
+                                "cap": "white"
+                            },
+                            {
+                                "name": "김명준",
+                                "school": "매송초",
+                                "cap": "yellow"
+                            },
+                            {
+                                "name": "김은율",
+                                "school": "청수초",
+                                "cap": "red"
+                            }
+                        ]
+                    },
+                    {
+                        "name": "2조",
+                        "athletes": [
+                            {
+                                "name": "오윤",
+                                "school": "의왕초",
+                                "cap": "white"
+                            },
+                            {
+                                "name": "이로이",
+                                "school": "USC",
+                                "cap": "yellow"
+                            },
+                            {
+                                "name": "최재훈",
+                                "school": "부산남성초",
+                                "cap": "red"
+                            }
+                        ]
+                    },
+                    {
+                        "name": "3조",
+                        "athletes": [
+                            {
+                                "name": "오진서",
+                                "school": "팀페이스",
+                                "cap": "white"
+                            },
+                            {
+                                "name": "정현우",
+                                "school": "한빛초",
+                                "cap": "yellow"
+                            },
+                            {
+                                "name": "황희성",
+                                "school": "USC",
+                                "cap": "red"
+                            }
+                        ]
+                    },
+                    {
+                        "name": "4조",
+                        "athletes": [
+                            {
+                                "name": "김민수",
+                                "school": "덕송초",
+                                "cap": "white"
+                            },
+                            {
+                                "name": "이서원",
+                                "school": "안양초",
+                                "cap": "yellow"
+                            },
+                            {
+                                "name": "정하율",
+                                "school": "문래초",
+                                "cap": "red"
+                            }
+                        ]
+                    },
+                    {
+                        "name": "5조",
+                        "athletes": [
+                            {
+                                "name": "이도빈",
+                                "school": "가락초",
+                                "cap": "white"
+                            },
+                            {
+                                "name": "임건우",
+                                "school": "경복초",
+                                "cap": "yellow"
+                            },
+                            {
+                                "name": "김태평",
+                                "school": "TEAM-UEP",
+                                "cap": "red"
+                            }
+                        ]
+                    },
+                    {
+                        "name": "6조",
+                        "athletes": [
+                            {
+                                "name": "김도우",
+                                "school": "금나래초",
+                                "cap": "white"
+                            },
+                            {
+                                "name": "전준현",
+                                "school": "팀제이에이치",
+                                "cap": "yellow"
+                            },
+                            {
+                                "name": "신지우",
+                                "school": "USC",
+                                "cap": "red"
+                            }
+                        ]
+                    },
+                    {
+                        "name": "7조",
+                        "athletes": [
+                            {
+                                "name": "고은찬",
+                                "school": "마포초",
+                                "cap": "white"
+                            },
+                            {
+                                "name": "신윤우",
+                                "school": "남천초",
+                                "cap": "yellow"
+                            },
+                            {
+                                "name": "임유찬",
+                                "school": "신광초",
+                                "cap": "red"
+                            }
+                        ]
+                    },
+                    {
+                        "name": "8조",
+                        "athletes": [
+                            {
+                                "name": "현준후",
+                                "school": "재송초",
+                                "cap": "white"
+                            },
+                            {
+                                "name": "김재준",
+                                "school": "경인초",
+                                "cap": "yellow"
+                            },
+                            {
+                                "name": "안유준",
+                                "school": "USC",
+                                "cap": "red"
+                            }
+                        ]
+                    }
+                ]
+            },
+            {
+                "id": 29,
+                "title": "B조 남초 3학년 333M",
+                "isIceMaintenance": false,
+                "groups": [
+                    {
+                        "name": "1조",
+                        "athletes": [
+                            {
+                                "name": "김우리",
+                                "school": "북가좌초",
+                                "cap": "white"
+                            },
+                            {
+                                "name": "서지함",
+                                "school": "김도원클럽",
+                                "cap": "yellow"
+                            },
+                            {
+                                "name": "이준하",
+                                "school": "청계초",
+                                "cap": "red"
+                            }
+                        ]
+                    },
+                    {
+                        "name": "2조",
+                        "athletes": [
+                            {
+                                "name": "김태훈",
+                                "school": "TEAM-UEP",
+                                "cap": "white"
+                            },
+                            {
+                                "name": "김재웅",
+                                "school": "수리초",
+                                "cap": "yellow"
+                            },
+                            {
+                                "name": "박건우",
+                                "school": "신서초",
+                                "cap": "red"
+                            }
+                        ]
+                    },
+                    {
+                        "name": "3조",
+                        "athletes": [
+                            {
+                                "name": "이재빈",
+                                "school": "과천문원초",
+                                "cap": "white"
+                            },
+                            {
+                                "name": "강예건",
+                                "school": "TEAM-UEP",
+                                "cap": "yellow"
+                            },
+                            {
+                                "name": "김태운",
+                                "school": "문정초",
+                                "cap": "red"
+                            }
+                        ]
+                    },
+                    {
+                        "name": "4조",
+                        "athletes": [
+                            {
+                                "name": "김이겸",
+                                "school": "TEAM-K",
+                                "cap": "white"
+                            },
+                            {
+                                "name": "표재연",
+                                "school": "무원초",
+                                "cap": "yellow"
+                            },
+                            {
+                                "name": "정유찬",
+                                "school": "USC",
+                                "cap": "red"
+                            }
+                        ]
+                    },
+                    {
+                        "name": "5조",
+                        "athletes": [
+                            {
+                                "name": "김우주",
+                                "school": "내정초",
+                                "cap": "white"
+                            },
+                            {
+                                "name": "권민준",
+                                "school": "흥도초",
+                                "cap": "yellow"
+                            },
+                            {
+                                "name": "장준우",
+                                "school": "개현초",
+                                "cap": "red"
+                            }
+                        ]
+                    },
+                    {
+                        "name": "6조",
+                        "athletes": [
+                            {
+                                "name": "황정환",
+                                "school": "개봉초",
+                                "cap": "white"
+                            },
+                            {
+                                "name": "윤정빈",
+                                "school": "성신초",
+                                "cap": "yellow"
+                            },
+                            {
+                                "name": "오정민",
+                                "school": "대연초",
+                                "cap": "red"
+                            }
+                        ]
+                    },
+                    {
+                        "name": "7조",
+                        "athletes": [
+                            {
+                                "name": "이형우",
+                                "school": "리라초",
+                                "cap": "white"
+                            },
+                            {
+                                "name": "이필립",
+                                "school": "꿈미학교",
+                                "cap": "yellow"
+                            },
+                            {
+                                "name": "김태호",
+                                "school": "TEAM-UEP",
+                                "cap": "red"
+                            }
+                        ]
+                    },
+                    {
+                        "name": "8조",
+                        "athletes": [
+                            {
+                                "name": "이승준",
+                                "school": "산의초",
+                                "cap": "white"
+                            },
+                            {
+                                "name": "이경률",
+                                "school": "동북초",
+                                "cap": "yellow"
+                            },
+                            {
+                                "name": "김지오",
+                                "school": "USC",
+                                "cap": "red"
+                            }
+                        ]
+                    },
+                    {
+                        "name": "9조",
+                        "athletes": [
+                            {
+                                "name": "박이솔",
+                                "school": "USC",
+                                "cap": "white"
+                            },
+                            {
+                                "name": "박시한",
+                                "school": "여울초",
+                                "cap": "yellow"
+                            }
+                        ]
+                    },
+                    {
+                        "name": "10조",
+                        "athletes": [
+                            {
+                                "name": "금두원",
+                                "school": "광교호수초",
+                                "cap": "white"
+                            },
+                            {
+                                "name": "김정우",
+                                "school": "우촌초",
+                                "cap": "yellow"
+                            },
+                            {
+                                "name": "NOAH",
+                                "school": "프랑스국제학교",
+                                "cap": "red"
+                            }
+                        ]
+                    }
+                ]
+            },
+            {
+                "id": 30,
+                "title": "B조 남초 4학년 333M",
+                "isIceMaintenance": false,
+                "groups": [
+                    {
+                        "name": "1조",
+                        "athletes": [
+                            {
+                                "name": "심현보",
+                                "school": "화수초",
+                                "cap": "white"
+                            },
+                            {
+                                "name": "한결",
+                                "school": "버들초",
+                                "cap": "yellow"
+                            },
+                            {
+                                "name": "신시우",
+                                "school": "남천초",
+                                "cap": "red"
+                            }
+                        ]
+                    },
+                    {
+                        "name": "2조",
+                        "athletes": [
+                            {
+                                "name": "송지호",
+                                "school": "청수초",
+                                "cap": "white"
+                            },
+                            {
+                                "name": "안지원",
+                                "school": "양지초",
+                                "cap": "yellow"
+                            },
+                            {
+                                "name": "김시윤",
+                                "school": "USC",
+                                "cap": "red"
+                            }
+                        ]
+                    },
+                    {
+                        "name": "3조",
+                        "athletes": [
+                            {
+                                "name": "전유찬",
+                                "school": "USC",
+                                "cap": "white"
+                            },
+                            {
+                                "name": "윤현수",
+                                "school": "매원초",
+                                "cap": "yellow"
+                            },
+                            {
+                                "name": "류강민",
+                                "school": "성라초",
+                                "cap": "red"
+                            }
+                        ]
+                    },
+                    {
+                        "name": "4조",
+                        "athletes": [
+                            {
+                                "name": "김현준",
+                                "school": "경인초",
+                                "cap": "white"
+                            },
+                            {
+                                "name": "김채원",
+                                "school": "태안초",
+                                "cap": "yellow"
+                            },
+                            {
+                                "name": "송라호",
+                                "school": "TEAM-K",
+                                "cap": "red"
+                            }
+                        ]
+                    }
+                ]
+            },
+            {
+                "id": 31,
+                "title": "B조 남초 5학년 333M",
+                "isIceMaintenance": false,
+                "groups": [
+                    {
+                        "name": "1조",
+                        "athletes": [
+                            {
+                                "name": "백시원",
+                                "school": "한별초",
+                                "cap": "white"
+                            },
+                            {
+                                "name": "안정빈",
+                                "school": "TEAM-K",
+                                "cap": "yellow"
+                            },
+                            {
+                                "name": "김태이",
+                                "school": "TEAM-UEP",
+                                "cap": "red"
+                            }
+                        ]
+                    },
+                    {
+                        "name": "2조",
+                        "athletes": [
+                            {
+                                "name": "조서연",
+                                "school": "예일초",
+                                "cap": "white"
+                            },
+                            {
+                                "name": "이바름",
+                                "school": "상현초",
+                                "cap": "yellow"
+                            },
+                            {
+                                "name": "강예준",
+                                "school": "TEAM-UEP",
+                                "cap": "red"
+                            }
+                        ]
+                    },
+                    {
+                        "name": "3조",
+                        "athletes": [
+                            {
+                                "name": "황선우",
+                                "school": "USC",
+                                "cap": "white"
+                            },
+                            {
+                                "name": "권우진",
+                                "school": "인천먼우금초",
+                                "cap": "yellow"
+                            },
+                            {
+                                "name": "유은재",
+                                "school": "리라초",
+                                "cap": "red"
+                            }
+                        ]
+                    },
+                    {
+                        "name": "4조",
+                        "athletes": [
+                            {
+                                "name": "박정우",
+                                "school": "청원초",
+                                "cap": "white"
+                            },
+                            {
+                                "name": "김도균",
+                                "school": "둔촌초",
+                                "cap": "yellow"
+                            }
+                        ]
+                    },
+                    {
+                        "name": "5조",
+                        "athletes": [
+                            {
+                                "name": "최은수",
+                                "school": "가산초",
+                                "cap": "white"
+                            },
+                            {
+                                "name": "조현진",
+                                "school": "송전초",
+                                "cap": "yellow"
+                            }
+                        ]
+                    }
+                ]
+            },
+            {
+                "id": 32,
+                "title": "B조 남초 6학년 333M",
+                "isIceMaintenance": false,
+                "groups": [
+                    {
+                        "name": "1조",
+                        "athletes": [
+                            {
+                                "name": "안건우",
+                                "school": "문원초",
+                                "cap": "white"
+                            },
+                            {
+                                "name": "김수현",
+                                "school": "USC",
+                                "cap": "yellow"
+                            },
+                            {
+                                "name": "황인성",
+                                "school": "USC",
+                                "cap": "red"
+                            }
+                        ]
+                    }
+                ]
+            }
+        ]
+    },
+    {
+        "time": "⚫⚫⊙정 빙⊙⚫⚫",
+        "events": [
+            {
+                "id": 0,
+                "title": "정빙",
+                "isIceMaintenance": true,
+                "groups": []
+            }
+        ]
+    },
+    {
+        "time": "정빙 후",
+        "events": [
+            {
+                "id": 33,
+                "title": "B조 여초 1학년 500M",
+                "isIceMaintenance": false,
+                "groups": [
+                    {
+                        "name": "1조",
+                        "athletes": [
+                            {
+                                "name": "이나은",
+                                "school": "정교초",
+                                "cap": "white"
+                            },
+                            {
+                                "name": "백송이",
+                                "school": "인천새봄초",
+                                "cap": "yellow"
+                            }
+                        ]
+                    },
+                    {
+                        "name": "2조",
+                        "athletes": [
+                            {
+                                "name": "박서현",
+                                "school": "개포초",
+                                "cap": "white"
+                            },
+                            {
+                                "name": "김태리",
+                                "school": "TEAM-UEP",
+                                "cap": "yellow"
+                            },
+                            {
+                                "name": "류가연",
+                                "school": "USC",
+                                "cap": "red"
+                            }
+                        ]
+                    },
+                    {
+                        "name": "3조",
+                        "athletes": [
+                            {
+                                "name": "이원",
+                                "school": "덕송초",
+                                "cap": "white"
+                            },
+                            {
+                                "name": "임가현",
+                                "school": "USC",
+                                "cap": "yellow"
+                            },
+                            {
+                                "name": "고예나",
+                                "school": "신상도초",
+                                "cap": "red"
+                            }
+                        ]
+                    }
+                ]
+            },
+            {
+                "id": 34,
+                "title": "B조 여초 2학년 500M",
+                "isIceMaintenance": false,
+                "groups": [
+                    {
+                        "name": "1조",
+                        "athletes": [
+                            {
+                                "name": "김수리",
+                                "school": "TEAM-K",
+                                "cap": "white"
+                            },
+                            {
+                                "name": "김루나",
+                                "school": "이대부속초",
+                                "cap": "yellow"
+                            }
+                        ]
+                    },
+                    {
+                        "name": "2조",
+                        "athletes": [
+                            {
+                                "name": "윤수아",
+                                "school": "TEAM-UEP",
+                                "cap": "white"
+                            },
+                            {
+                                "name": "이선우",
+                                "school": "서울강서초",
+                                "cap": "yellow"
+                            },
+                            {
+                                "name": "민재이",
+                                "school": "버들초",
+                                "cap": "red"
+                            }
+                        ]
+                    },
+                    {
+                        "name": "3조",
+                        "athletes": [
+                            {
+                                "name": "최윤주",
+                                "school": "목동초",
+                                "cap": "white"
+                            },
+                            {
+                                "name": "이다은",
+                                "school": "JHS TEAM",
+                                "cap": "yellow"
+                            },
+                            {
+                                "name": "이시율",
+                                "school": "USC",
+                                "cap": "red"
+                            }
+                        ]
+                    },
+                    {
+                        "name": "4조",
+                        "athletes": [
+                            {
+                                "name": "김유주",
+                                "school": "신동초",
+                                "cap": "white"
+                            },
+                            {
+                                "name": "전지우",
+                                "school": "목동초",
+                                "cap": "yellow"
+                            },
+                            {
+                                "name": "김태리",
+                                "school": "TEAM-K",
+                                "cap": "red"
+                            }
+                        ]
+                    },
+                    {
+                        "name": "5조",
+                        "athletes": [
+                            {
+                                "name": "김은우",
+                                "school": "율목초",
+                                "cap": "white"
+                            },
+                            {
+                                "name": "신효림",
+                                "school": "성동초",
+                                "cap": "yellow"
+                            },
+                            {
+                                "name": "문소이",
+                                "school": "Team JHS",
+                                "cap": "red"
+                            }
+                        ]
+                    }
+                ]
+            },
+            {
+                "id": 35,
+                "title": "B조 여초 3학년 500M",
+                "isIceMaintenance": false,
+                "groups": [
+                    {
+                        "name": "1조",
+                        "athletes": [
+                            {
+                                "name": "박시은",
+                                "school": "TEAM-K",
+                                "cap": "white"
+                            },
+                            {
+                                "name": "조하연",
+                                "school": "예일초",
+                                "cap": "yellow"
+                            },
+                            {
+                                "name": "최혜인",
+                                "school": "리라초",
+                                "cap": "red"
+                            }
+                        ]
+                    },
+                    {
+                        "name": "2조",
+                        "athletes": [
+                            {
+                                "name": "최지수",
+                                "school": "언남초",
+                                "cap": "white"
+                            },
+                            {
+                                "name": "채우리",
+                                "school": "숙스포츠",
+                                "cap": "yellow"
+                            },
+                            {
+                                "name": "남정민",
+                                "school": "성동초",
+                                "cap": "red"
+                            }
+                        ]
+                    },
+                    {
+                        "name": "3조",
+                        "athletes": [
+                            {
+                                "name": "이제인",
+                                "school": "한별초",
+                                "cap": "white"
+                            },
+                            {
+                                "name": "박지유",
+                                "school": "민락초",
+                                "cap": "yellow"
+                            },
+                            {
+                                "name": "이은재",
+                                "school": "USC",
+                                "cap": "red"
+                            }
+                        ]
+                    },
+                    {
+                        "name": "4조",
+                        "athletes": [
+                            {
+                                "name": "정소담",
+                                "school": "JHS_TEAM",
+                                "cap": "white"
+                            },
+                            {
+                                "name": "심예린",
+                                "school": "고일초",
+                                "cap": "yellow"
+                            },
+                            {
+                                "name": "김시연",
+                                "school": "USC",
+                                "cap": "red"
+                            }
+                        ]
+                    },
+                    {
+                        "name": "5조",
+                        "athletes": [
+                            {
+                                "name": "이은서",
+                                "school": "안양신기초",
+                                "cap": "white"
+                            },
+                            {
+                                "name": "전세인",
+                                "school": "세종초",
+                                "cap": "yellow"
+                            },
+                            {
+                                "name": "강지아",
+                                "school": "월촌초",
+                                "cap": "red"
+                            }
+                        ]
+                    },
+                    {
+                        "name": "6조",
+                        "athletes": [
+                            {
+                                "name": "김지우",
+                                "school": "둔촌초",
+                                "cap": "white"
+                            },
+                            {
+                                "name": "김나운",
+                                "school": "문정초",
+                                "cap": "yellow"
+                            },
+                            {
+                                "name": "이가윤",
+                                "school": "TEAM-K",
+                                "cap": "red"
+                            }
+                        ]
+                    },
+                    {
+                        "name": "7조",
+                        "athletes": [
+                            {
+                                "name": "박이설",
+                                "school": "USC",
+                                "cap": "white"
+                            },
+                            {
+                                "name": "유하진",
+                                "school": "성동초",
+                                "cap": "yellow"
+                            },
+                            {
+                                "name": "박하희",
+                                "school": "JHS_TEAM",
+                                "cap": "red"
+                            }
+                        ]
+                    },
+                    {
+                        "name": "8조",
+                        "athletes": [
+                            {
+                                "name": "김채빈",
+                                "school": "지축초",
+                                "cap": "white"
+                            },
+                            {
+                                "name": "정서은",
+                                "school": "부산남성초",
+                                "cap": "yellow"
+                            }
+                        ]
+                    }
+                ]
+            },
+            {
+                "id": 36,
+                "title": "B조 여초 4학년 500M",
+                "isIceMaintenance": false,
+                "groups": [
+                    {
+                        "name": "1조",
+                        "athletes": [
+                            {
+                                "name": "구소율",
+                                "school": "TEAM-UEP",
+                                "cap": "white"
+                            },
+                            {
+                                "name": "한채은",
+                                "school": "효차초",
+                                "cap": "yellow"
+                            },
+                            {
+                                "name": "안채원",
+                                "school": "신천초",
+                                "cap": "red"
+                            }
+                        ]
+                    },
+                    {
+                        "name": "2조",
+                        "athletes": [
+                            {
+                                "name": "이효은",
+                                "school": "상명초",
+                                "cap": "white"
+                            },
+                            {
+                                "name": "김하연",
+                                "school": "목동초",
+                                "cap": "yellow"
+                            }
+                        ]
+                    },
+                    {
+                        "name": "3조",
+                        "athletes": [
+                            {
+                                "name": "김세은",
+                                "school": "월촌초",
+                                "cap": "white"
+                            },
+                            {
+                                "name": "이로아",
+                                "school": "꿈미학교",
+                                "cap": "yellow"
+                            },
+                            {
+                                "name": "이지윤",
+                                "school": "중원초",
+                                "cap": "red"
+                            }
+                        ]
+                    },
+                    {
+                        "name": "4조",
+                        "athletes": [
+                            {
+                                "name": "손지온",
+                                "school": "염경초",
+                                "cap": "white"
+                            },
+                            {
+                                "name": "박세아",
+                                "school": "빈스타",
+                                "cap": "yellow"
+                            }
+                        ]
+                    }
+                ]
+            },
+            {
+                "id": 37,
+                "title": "B조 여초 5학년 500M",
+                "isIceMaintenance": false,
+                "groups": [
+                    {
+                        "name": "1조",
+                        "athletes": [
+                            {
+                                "name": "홍해진",
+                                "school": "인천연학초",
+                                "cap": "white"
+                            },
+                            {
+                                "name": "김하솔",
+                                "school": "중계초",
+                                "cap": "yellow"
+                            },
+                            {
+                                "name": "김나희",
+                                "school": "팀페이스",
+                                "cap": "red"
+                            }
+                        ]
+                    },
+                    {
+                        "name": "2조",
+                        "athletes": [
+                            {
+                                "name": "권기현",
+                                "school": "청목초",
+                                "cap": "white"
+                            },
+                            {
+                                "name": "김서율",
+                                "school": "서울위례초",
+                                "cap": "yellow"
+                            },
+                            {
+                                "name": "허수영",
+                                "school": "목운초",
+                                "cap": "red"
+                            }
+                        ]
+                    },
+                    {
+                        "name": "3조",
+                        "athletes": [
+                            {
+                                "name": "김소빈",
+                                "school": "가좌초",
+                                "cap": "white"
+                            },
+                            {
+                                "name": "김채이",
+                                "school": "태안초",
+                                "cap": "yellow"
+                            }
+                        ]
+                    }
+                ]
+            },
+            {
+                "id": 38,
+                "title": "B조 여초 6학년 500M",
+                "isIceMaintenance": false,
+                "groups": [
+                    {
+                        "name": "1조",
+                        "athletes": [
+                            {
+                                "name": "임제이",
+                                "school": "과천이승환",
+                                "cap": "white"
+                            },
+                            {
+                                "name": "이서현",
+                                "school": "목운초",
+                                "cap": "yellow"
+                            },
+                            {
+                                "name": "안태하",
+                                "school": "(USC",
+                                "cap": "red"
+                            }
+                        ]
+                    },
+                    {
+                        "name": "2조",
+                        "athletes": [
+                            {
+                                "name": "김시은",
+                                "school": "신동초",
+                                "cap": "white"
+                            },
+                            {
+                                "name": "황재인",
+                                "school": "언북초",
+                                "cap": "yellow"
+                            }
+                        ]
+                    }
+                ]
+            },
+            {
+                "id": 39,
+                "title": "B조 남초 1학년 500M",
+                "isIceMaintenance": false,
+                "groups": [
+                    {
+                        "name": "1조",
+                        "athletes": [
+                            {
+                                "name": "김윤후",
+                                "school": "KCIS",
+                                "cap": "white"
+                            },
+                            {
+                                "name": "박수빈",
+                                "school": "공항초",
+                                "cap": "yellow"
+                            },
+                            {
+                                "name": "정유창",
+                                "school": "지축초",
+                                "cap": "red"
+                            }
+                        ]
+                    },
+                    {
+                        "name": "2조",
+                        "athletes": [
+                            {
+                                "name": "정시원",
+                                "school": "가곡초",
+                                "cap": "white"
+                            },
+                            {
+                                "name": "오유건",
+                                "school": "TEAM-K",
+                                "cap": "yellow"
+                            },
+                            {
+                                "name": "유지완",
+                                "school": "유정글로벌학교",
+                                "cap": "red"
+                            }
+                        ]
+                    }
+                ]
+            },
+            {
+                "id": 40,
+                "title": "B조 남초 2학년 500M",
+                "isIceMaintenance": false,
+                "groups": [
+                    {
+                        "name": "1조",
+                        "athletes": [
+                            {
+                                "name": "오윤",
+                                "school": "의왕초",
+                                "cap": "white"
+                            },
+                            {
+                                "name": "김명준",
+                                "school": "매송초",
+                                "cap": "yellow"
+                            },
+                            {
+                                "name": "현준후",
+                                "school": "재송초",
+                                "cap": "red"
+                            }
+                        ]
+                    },
+                    {
+                        "name": "2조",
+                        "athletes": [
+                            {
+                                "name": "김도우",
+                                "school": "금나래초",
+                                "cap": "white"
+                            },
+                            {
+                                "name": "신윤우",
+                                "school": "남천초",
+                                "cap": "yellow"
+                            },
+                            {
+                                "name": "이현우",
+                                "school": "도농초",
+                                "cap": "red"
+                            }
+                        ]
+                    },
+                    {
+                        "name": "3조",
+                        "athletes": [
+                            {
+                                "name": "이로이",
+                                "school": "USC",
+                                "cap": "white"
+                            },
+                            {
+                                "name": "이서원",
+                                "school": "안양초",
+                                "cap": "yellow"
+                            },
+                            {
+                                "name": "김재준",
+                                "school": "경인초",
+                                "cap": "red"
+                            }
+                        ]
+                    },
+                    {
+                        "name": "4조",
+                        "athletes": [
+                            {
+                                "name": "고은찬",
+                                "school": "마포초",
+                                "cap": "white"
+                            },
+                            {
+                                "name": "정하율",
+                                "school": "문래초",
+                                "cap": "yellow"
+                            },
+                            {
+                                "name": "임유찬",
+                                "school": "신광초",
+                                "cap": "red"
+                            }
+                        ]
+                    },
+                    {
+                        "name": "5조",
+                        "athletes": [
+                            {
+                                "name": "김태평",
+                                "school": "TEAM-UEP",
+                                "cap": "white"
+                            },
+                            {
+                                "name": "정현우",
+                                "school": "한빛초",
+                                "cap": "yellow"
+                            },
+                            {
+                                "name": "이도빈",
+                                "school": "서울가락초",
+                                "cap": "red"
+                            }
+                        ]
+                    },
+                    {
+                        "name": "6조",
+                        "athletes": [
+                            {
+                                "name": "오진서",
+                                "school": "팀페이스",
+                                "cap": "white"
+                            },
+                            {
+                                "name": "김민수",
+                                "school": "덕송초",
+                                "cap": "yellow"
+                            },
+                            {
+                                "name": "안유준",
+                                "school": "USC",
+                                "cap": "red"
+                            }
+                        ]
+                    },
+                    {
+                        "name": "7조",
+                        "athletes": [
+                            {
+                                "name": "김은율",
+                                "school": "청수초",
+                                "cap": "white"
+                            },
+                            {
+                                "name": "최재훈",
+                                "school": "부산남성초",
+                                "cap": "yellow"
+                            }
+                        ]
+                    },
+                    {
+                        "name": "8조",
+                        "athletes": [
+                            {
+                                "name": "전준현",
+                                "school": "팀제이에이치",
+                                "cap": "white"
+                            },
+                            {
+                                "name": "황희성",
+                                "school": "USC",
+                                "cap": "yellow"
+                            }
+                        ]
+                    }
+                ]
+            },
+            {
+                "id": 41,
+                "title": "B조 남초 3학년 500M",
+                "isIceMaintenance": false,
+                "groups": [
+                    {
+                        "name": "1조",
+                        "athletes": [
+                            {
+                                "name": "김우리",
+                                "school": "북가좌초",
+                                "cap": "white"
+                            },
+                            {
+                                "name": "이준하",
+                                "school": "청계초",
+                                "cap": "yellow"
+                            },
+                            {
+                                "name": "김지오",
+                                "school": "USC",
+                                "cap": "red"
+                            }
+                        ]
+                    },
+                    {
+                        "name": "2조",
+                        "athletes": [
+                            {
+                                "name": "이재빈",
+                                "school": "과천문원초",
+                                "cap": "white"
+                            },
+                            {
+                                "name": "김우주",
+                                "school": "내정초",
+                                "cap": "yellow"
+                            },
+                            {
+                                "name": "박건우",
+                                "school": "신서초",
+                                "cap": "red"
+                            }
+                        ]
+                    },
+                    {
+                        "name": "3조",
+                        "athletes": [
+                            {
+                                "name": "김태운",
+                                "school": "문정초",
+                                "cap": "white"
+                            },
+                            {
+                                "name": "박시한",
+                                "school": "여울초",
+                                "cap": "yellow"
+                            },
+                            {
+                                "name": "이형우",
+                                "school": "리라초",
+                                "cap": "red"
+                            }
+                        ]
+                    },
+                    {
+                        "name": "4조",
+                        "athletes": [
+                            {
+                                "name": "김이겸",
+                                "school": "TEAM-K",
+                                "cap": "white"
+                            },
+                            {
+                                "name": "표재연",
+                                "school": "무원초",
+                                "cap": "yellow"
+                            },
+                            {
+                                "name": "윤정빈",
+                                "school": "성신초",
+                                "cap": "red"
+                            }
+                        ]
+                    },
+                    {
+                        "name": "5조",
+                        "athletes": [
+                            {
+                                "name": "오정민",
+                                "school": "대연초",
+                                "cap": "white"
+                            },
+                            {
+                                "name": "이필립",
+                                "school": "꿈미학교",
+                                "cap": "yellow"
+                            },
+                            {
+                                "name": "김태호",
+                                "school": "TEAM-UEP",
+                                "cap": "red"
+                            }
+                        ]
+                    },
+                    {
+                        "name": "6조",
+                        "athletes": [
+                            {
+                                "name": "김재웅",
+                                "school": "수리초",
+                                "cap": "white"
+                            },
+                            {
+                                "name": "황정환",
+                                "school": "개봉초",
+                                "cap": "yellow"
+                            },
+                            {
+                                "name": "김태훈",
+                                "school": "TEAM-UEP",
+                                "cap": "red"
+                            }
+                        ]
+                    },
+                    {
+                        "name": "7조",
+                        "athletes": [
+                            {
+                                "name": "강예건",
+                                "school": "TEAM-UEP",
+                                "cap": "white"
+                            },
+                            {
+                                "name": "권민준",
+                                "school": "흥도초",
+                                "cap": "yellow"
+                            },
+                            {
+                                "name": "정유찬",
+                                "school": "USC",
+                                "cap": "red"
+                            }
+                        ]
+                    },
+                    {
+                        "name": "8조",
+                        "athletes": [
+                            {
+                                "name": "이경률",
+                                "school": "동북초",
+                                "cap": "white"
+                            },
+                            {
+                                "name": "금두원",
+                                "school": "광교호수초",
+                                "cap": "yellow"
+                            },
+                            {
+                                "name": "박이솔",
+                                "school": "USC",
+                                "cap": "red"
+                            }
+                        ]
+                    }
+                ]
+            },
+            {
+                "id": 42,
+                "title": "B조 남초 4학년 500M",
+                "isIceMaintenance": false,
+                "groups": [
+                    {
+                        "name": "1조",
+                        "athletes": [
+                            {
+                                "name": "임지온",
+                                "school": "충암초",
+                                "cap": "white"
+                            },
+                            {
+                                "name": "전유찬",
+                                "school": "USC",
+                                "cap": "yellow"
+                            },
+                            {
+                                "name": "안지원",
+                                "school": "양지초",
+                                "cap": "red"
+                            }
+                        ]
+                    },
+                    {
+                        "name": "2조",
+                        "athletes": [
+                            {
+                                "name": "심현보",
+                                "school": "화수초",
+                                "cap": "white"
+                            },
+                            {
+                                "name": "김채원",
+                                "school": "태안초",
+                                "cap": "yellow"
+                            },
+                            {
+                                "name": "송지호",
+                                "school": "청수초",
+                                "cap": "red"
+                            }
+                        ]
+                    },
+                    {
+                        "name": "3조",
+                        "athletes": [
+                            {
+                                "name": "김도현",
+                                "school": "USC",
+                                "cap": "white"
+                            },
+                            {
+                                "name": "김현준",
+                                "school": "경인초",
+                                "cap": "yellow"
+                            },
+                            {
+                                "name": "송라호",
+                                "school": "TEAM-K",
+                                "cap": "red"
+                            }
+                        ]
+                    },
+                    {
+                        "name": "4조",
+                        "athletes": [
+                            {
+                                "name": "안창민",
+                                "school": "경복초",
+                                "cap": "white"
+                            },
+                            {
+                                "name": "박준우",
+                                "school": "동백초",
+                                "cap": "yellow"
+                            },
+                            {
+                                "name": "배태양",
+                                "school": "인천미송초",
+                                "cap": "red"
+                            }
+                        ]
+                    }
+                ]
+            },
+            {
+                "id": 43,
+                "title": "B조 남초 5학년 500M",
+                "isIceMaintenance": false,
+                "groups": [
+                    {
+                        "name": "1조",
+                        "athletes": [
+                            {
+                                "name": "강예준",
+                                "school": "TEAM-UEP",
+                                "cap": "white"
+                            },
+                            {
+                                "name": "유은재",
+                                "school": "리라초",
+                                "cap": "yellow"
+                            },
+                            {
+                                "name": "권우진",
+                                "school": "인천먼우금초",
+                                "cap": "red"
+                            }
+                        ]
+                    },
+                    {
+                        "name": "2조",
+                        "athletes": [
+                            {
+                                "name": "안정빈",
+                                "school": "TEAM-K",
+                                "cap": "white"
+                            },
+                            {
+                                "name": "백시원",
+                                "school": "한별초",
+                                "cap": "yellow"
+                            }
+                        ]
+                    },
+                    {
+                        "name": "3조",
+                        "athletes": [
+                            {
+                                "name": "박정우",
+                                "school": "청원초",
+                                "cap": "white"
+                            },
+                            {
+                                "name": "황선우",
+                                "school": "USC",
+                                "cap": "yellow"
+                            },
+                            {
+                                "name": "김도균",
+                                "school": "둔촌초",
+                                "cap": "red"
+                            }
+                        ]
+                    },
+                    {
+                        "name": "4조",
+                        "athletes": [
+                            {
+                                "name": "조서연",
+                                "school": "예일초",
+                                "cap": "white"
+                            },
+                            {
+                                "name": "최은수",
+                                "school": "가산초",
+                                "cap": "yellow"
+                            },
+                            {
+                                "name": "이바름",
+                                "school": "상현초",
+                                "cap": "red"
+                            }
+                        ]
+                    },
+                    {
+                        "name": "5조",
+                        "athletes": [
+                            {
+                                "name": "김태이",
+                                "school": "TEAM-UEP",
+                                "cap": "white"
+                            },
+                            {
+                                "name": "조현진",
+                                "school": "송전초",
+                                "cap": "yellow"
+                            }
+                        ]
+                    }
+                ]
+            },
+            {
+                "id": 44,
+                "title": "B조 남초 6학년 500M",
+                "isIceMaintenance": false,
+                "groups": [
+                    {
+                        "name": "1조",
+                        "athletes": [
+                            {
+                                "name": "김수현",
+                                "school": "USC",
+                                "cap": "white"
+                            },
+                            {
+                                "name": "황인성",
+                                "school": "USC",
+                                "cap": "yellow"
+                            }
+                        ]
+                    }
+                ]
+            }
+        ]
+    },
+    {
+        "time": "⚫⚫⊙전 체 정 빙⊙⚫⚫",
+        "events": [
+            {
+                "id": 0,
+                "title": "정빙",
+                "isIceMaintenance": true,
+                "groups": []
+            }
+        ]
+    },
+    {
+        "time": "SF",
+        "events": [
+            {
+                "id": 45,
+                "title": "B조 여초1~3학년 500M SF",
+                "isIceMaintenance": false,
+                "groups": [
+                    {
+                        "name": "1조",
+                        "athletes": []
+                    }
+                ]
+            },
+            {
+                "id": 46,
+                "title": "B조 여초4~6학년 500M SF",
+                "isIceMaintenance": false,
+                "groups": [
+                    {
+                        "name": "1조",
+                        "athletes": []
+                    }
+                ]
+            },
+            {
+                "id": 47,
+                "title": "B조 남초1~3학년 500M SF",
+                "isIceMaintenance": false,
+                "groups": [
+                    {
+                        "name": "1조",
+                        "athletes": []
+                    }
+                ]
+            },
+            {
+                "id": 48,
+                "title": "B조 남초4~6학년 500M SF",
+                "isIceMaintenance": false,
+                "groups": [
+                    {
+                        "name": "1조",
+                        "athletes": []
+                    }
+                ]
+            }
+        ]
+    }
+];
+
+        function getCapClass(cap) {
+            const capMap = {
+                'white': 'cap-white',
+                'yellow': 'cap-yellow', 
+                'red': 'cap-red',
+                'blue': 'cap-blue',
+                'purple': 'cap-purple',
+                'black': 'cap-black',
+                'orange': 'cap-orange'
+            };
+            return capMap[cap] || 'cap-white';
+        }
+
+        function renderSchedule() {
+            const scheduleContainer = document.getElementById('schedule');
+            scheduleContainer.innerHTML = '';
+
+            scheduleData.forEach((timeSlot, index) => {
+                const scheduleItem = document.createElement('div');
+                scheduleItem.className = 'schedule-item';
+                
+                const isIceMaintenance = timeSlot.events.some(event => event.isIceMaintenance);
+                
+                const eventsList = timeSlot.events.map(event => event.title).join(', ');
+                
+                scheduleItem.innerHTML = `
+                    <div class="schedule-header ${isIceMaintenance ? 'ice-maintenance' : ''}" onclick="toggleSchedule(${index})">
+                        <div>
+                            <div class="schedule-time">${timeSlot.time}</div>
+                            <div class="schedule-events">${eventsList}</div>
+                        </div>
+                        <div class="toggle-icon" id="toggle-${index}" ${isIceMaintenance ? 'style="display: none;"' : ''}>▼</div>
+                    </div>
+                    <div class="schedule-content ${isIceMaintenance ? 'collapsed' : ''}" id="content-${index}">
+                        ${timeSlot.events.map(event => {
+                            if (event.isIceMaintenance) {
+                                return '';  // 빙판정리는 내용 없음
+                            }
+                            
+                            return `
+                                <div class="event-section">
+                                    <div class="event-title">${event.id}. ${event.title}</div>
+                                    ${event.groups.map(group => `
+                                        <div class="group">
+                                            <div class="group-title">${group.name}</div>
+                                            <div class="athletes">
+                                                ${group.athletes.map(athlete => `
+                                                    <div class="athlete" data-name="${athlete.name}">
+                                                        <span class="athlete-cap ${getCapClass(athlete.cap)}"></span>
+                                                        <strong>${athlete.name}</strong> ${athlete.school}
+                                                    </div>
+                                                `).join('')}
+                                                ${group.athletes.length === 0 ? '<div class="athlete">선수 배정 대기중</div>' : ''}
+                                            </div>
+                                        </div>
+                                    `).join('')}
+                                </div>
+                            `;
+                        }).join('')}
+                    </div>
+                `;
+                
+                scheduleContainer.appendChild(scheduleItem);
+            });
+            
+            // 초기 높이 설정 (펼쳐진 상태의 높이 계산)
+            setTimeout(() => {
+                const contents = document.querySelectorAll('.schedule-content:not(.collapsed)');
+                contents.forEach(content => {
+                    const scrollHeight = content.scrollHeight;
+                    content.style.maxHeight = (scrollHeight + 100) + 'px';
+                });
+            }, 100);
+        }
+
+        function toggleSchedule(index) {
+            const content = document.getElementById(`content-${index}`);
+            const toggle = document.getElementById(`toggle-${index}`);
+            const header = document.querySelector(`[onclick="toggleSchedule(${index})"]`);
+            
+            // 빙판정리는 토글 기능 없음
+            if (header && header.classList.contains('ice-maintenance')) return;
+            
+            content.classList.toggle('collapsed');
+            toggle.classList.toggle('rotated');
+            
+            // 펼칠 때 동적 높이 계산
+            if (!content.classList.contains('collapsed')) {
+                setTimeout(() => {
+                    const scrollHeight = content.scrollHeight;
+                    content.style.maxHeight = (scrollHeight + 100) + 'px';
+                }, 10);
+            } else {
+                content.style.maxHeight = '0';
+            }
+        }
+
+        function populateAthleteSelect() {
+            const athleteSelect = document.getElementById('athleteSelect');
+            const athletes = [];
+            
+            // 모든 선수 정보 수집
+            scheduleData.forEach(timeSlot => {
+                timeSlot.events.forEach(event => {
+                    if (!event.isIceMaintenance && event.groups) {
+                        event.groups.forEach(group => {
+                            group.athletes.forEach(athlete => {
+                                if (athlete.name) {
+                                    athletes.push({
+                                        name: athlete.name,
+                                        school: athlete.school,
+                                        displayText: `${athlete.name} (${athlete.school})`
+                                    });
+                                }
+                            });
+                        });
+                    }
+                });
+            });
+            
+            // 선수명으로 정렬 (중복 제거)
+            const uniqueAthletes = athletes.filter((athlete, index, self) => 
+                index === self.findIndex(a => a.name === athlete.name && a.school === athlete.school)
+            ).sort((a, b) => a.name.localeCompare(b.name));
+            
+            // 옵션 추가
+            uniqueAthletes.forEach(athlete => {
+                const option = document.createElement('option');
+                option.value = athlete.name;
+                option.textContent = athlete.displayText;
+                athleteSelect.appendChild(option);
+            });
+        }
+
+        function searchFromSelect() {
+            const athleteSelect = document.getElementById('athleteSelect');
+            const selectedName = athleteSelect.value;
+            
+            if (!selectedName) {
+                clearHighlights();
+                return;
+            }
+            
+            searchAthlete(selectedName);
+        }
+
+        function searchAthlete(searchTerm = null) {
+            if (!searchTerm) {
+                const athleteSelect = document.getElementById('athleteSelect');
+                searchTerm = athleteSelect.value;
+            }
+            
+            if (!searchTerm) return;
+
+            clearHighlights();
+            currentSearchIndex = 0;
+            searchResults = [];
+            
+            const athletes = document.querySelectorAll('.athlete[data-name]');
+            
+            athletes.forEach((athlete) => {
+                if (athlete.dataset.name === searchTerm) {
+                    searchResults.push(athlete);
+                }
+            });
+            
+            if (searchResults.length === 0) {
+                alert('해당 선수를 찾을 수 없습니다.');
+                return;
+            }
+            
+            highlightCurrentResult();
+        }
+
+        function highlightCurrentResult() {
+            if (searchResults.length === 0) return;
+            
+            // 이전 하이라이트 제거
+            searchResults.forEach(athlete => {
+                athlete.classList.remove('highlight');
+                const nextBtn = athlete.querySelector('.next-search-btn');
+                if (nextBtn) nextBtn.remove();
+            });
+            
+            // 현재 결과 하이라이트
+            const currentResult = searchResults[currentSearchIndex];
+            currentResult.classList.add('highlight');
+            
+            // 여러 결과가 있으면 다음 버튼 추가
+            if (searchResults.length > 1) {
+                const nextBtn = document.createElement('button');
+                nextBtn.className = 'next-search-btn';
+                nextBtn.textContent = `다음 ${currentSearchIndex + 1}/${searchResults.length}`;
+                nextBtn.onclick = (e) => {
+                    e.stopPropagation();
+                    nextSearchResult();
+                };
+                currentResult.appendChild(nextBtn);
+            }
+            
+            // 해당 섹션 펼치기
+            let scheduleItem = currentResult.closest('.schedule-item');
+            let content = scheduleItem.querySelector('.schedule-content');
+            let toggle = scheduleItem.querySelector('.toggle-icon');
+            
+            content.classList.remove('collapsed');
+            toggle.classList.add('rotated');
+            
+            // 스크롤
+            currentResult.scrollIntoView({ behavior: 'smooth', block: 'center' });
+        }
+
+        function nextSearchResult() {
+            if (searchResults.length <= 1) return;
+            
+            currentSearchIndex = (currentSearchIndex + 1) % searchResults.length;
+            highlightCurrentResult();
+        }
+
+        function clearSearch() {
+            const athleteSelect = document.getElementById('athleteSelect');
+            athleteSelect.selectedIndex = 0;
+            clearHighlights();
+        }
+
+        function clearHighlights() {
+            const highlightedAthletes = document.querySelectorAll('.athlete.highlight');
+            highlightedAthletes.forEach(athlete => {
+                athlete.classList.remove('highlight');
+                const nextBtn = athlete.querySelector('.next-search-btn');
+                if (nextBtn) nextBtn.remove();
+            });
+            searchResults = [];
+            currentSearchIndex = 0;
+        }
+
+            function toggleAllSchedules() {
+            const contents = document.querySelectorAll('.schedule-content');
+            const toggles = document.querySelectorAll('.toggle-icon');
+            const btn = document.getElementById('expandAllBtn');
+            
+            if (allExpanded) {
+                // 모두 접기
+                contents.forEach(content => {
+                    content.classList.add('collapsed');
+                    content.style.maxHeight = '0';
+                });
+                toggles.forEach(toggle => toggle.classList.remove('rotated'));
+                btn.textContent = '모두 펼치기';
+                allExpanded = false;
+            } else {
+                // 모두 펼치기
+                contents.forEach(content => {
+                    content.classList.remove('collapsed');
+                    setTimeout(() => {
+                        const scrollHeight = content.scrollHeight;
+                        content.style.maxHeight = (scrollHeight + 100) + 'px';
+                    }, 10);
+                });
+                toggles.forEach(toggle => toggle.classList.add('rotated'));
+                btn.textContent = '모두 접기';
+                allExpanded = true;
+            }
+        }
+
+        function handleEnterKey(event) {
+            if (event.key === 'Enter') {
+                searchAthlete();
+            }
+        }
+
+        // 페이지 로드 시 스케줄 렌더링
+        document.addEventListener('DOMContentLoaded', function() {
+            renderSchedule();
+            populateAthleteSelect();
+        });
+    </script>
+</body>
+</html>
