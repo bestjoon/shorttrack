@@ -414,6 +414,7 @@
   .lane-violet { background: #9b5de5; }
   .lane-black { background: #3a3a4a; }
   .lane-orange { background: #f4823a; }
+  .lane-green { background: #2dc653; }
 
   /* Ice resurfacing row */
   .ice-break {
@@ -567,6 +568,7 @@ const LANE_COLORS = {
   '보V': { cls: 'lane-violet', label: '보(V)' },
   '검B': { cls: 'lane-black', label: '검(B)' },
   '주O': { cls: 'lane-orange', label: '주(O)' },
+  '초G': { cls: 'lane-green', label: '초(G)' },
 };
 
 // schedule data structure:
@@ -1092,22 +1094,67 @@ const scheduleData = [
     {
       time: '16:05', name: '여자고등부 1500M 결승', meta: '결승 A/B',
       heats: [
-        { heatName: '결승B', athletes: [] },
-        { heatName: '결승A', athletes: [] },
+        { heatName: '결승B', athletes: [
+          {lane:'흰W',name:'김지호',org:'연수여자고등학교'},
+          {lane:'노Y',name:'나환희',org:'연수여자고등학교'},
+          {lane:'빨R',name:'김민채',org:'천천고등학교'},
+          {lane:'파B',name:'김지원',org:'화정고등학교'},
+          {lane:'보V',name:'김채현',org:'정화여자고등학교'},
+          {lane:'검B',name:'하정현',org:'서울여자고등학교'},
+        ]},
+        { heatName: '결승A', athletes: [
+          {lane:'흰W',name:'배정윤',org:'부흥고등학교'},
+          {lane:'노Y',name:'유수민',org:'천천고등학교'},
+          {lane:'빨R',name:'정서연',org:'서울신정고등학교'},
+          {lane:'파B',name:'오승아',org:'인덕원고등학교'},
+          {lane:'보V',name:'강윤하',org:'연수여자고등학교'},
+          {lane:'검B',name:'주시하',org:'서현고등학교'},
+          {lane:'주O',name:'정재희',org:'반포고등학교'},
+          {lane:'초G',name:'김도희',org:'서현고등학교'},
+        ]},
       ]
     },
     {
       time: '16:05', name: '여자대학부 1500M 결승', meta: '결승 A/B',
       heats: [
-        { heatName: '결승B', athletes: [] },
-        { heatName: '결승A', athletes: [] },
+        { heatName: '결승B', athletes: [
+          {lane:'흰W',name:'이나을',org:'용인대학교'},
+          {lane:'노Y',name:'박하윤',org:'단국대학교'},
+          {lane:'빨R',name:'윤단하',org:'한양사이버대학교'},
+          {lane:'파B',name:'김지원',org:'한국체육대학교'},
+        ]},
+        { heatName: '결승A', athletes: [
+          {lane:'흰W',name:'김민지',org:'한국체육대학교'},
+          {lane:'노Y',name:'김세아',org:'용인대학교'},
+          {lane:'빨R',name:'이은빈',org:'한국체육대학교'},
+          {lane:'파B',name:'지윤서',org:'경희대학교'},
+          {lane:'보V',name:'박지유',org:'동의대학교'},
+          {lane:'검B',name:'오송미',org:'단국대학교'},
+          {lane:'주O',name:'최하랑',org:'용인대학교'},
+        ]},
       ]
     },
     {
       time: '16:05', name: '여자일반부 1500M 결승', meta: '결승 A/B',
       heats: [
-        { heatName: '결승B', athletes: [] },
-        { heatName: '결승A', athletes: [] },
+        { heatName: '결승B', athletes: [
+          {lane:'흰W',name:'이유빈',org:'고양시청'},
+          {lane:'노Y',name:'노아름',org:'전북특별자치도청'},
+          {lane:'빨R',name:'유현민',org:'전북특별자치도청'},
+          {lane:'파B',name:'최지현',org:'전북특별자치도청'},
+          {lane:'보V',name:'심석희',org:'서울시청'},
+          {lane:'검B',name:'노도희',org:'화성시청'},
+          {lane:'주O',name:'김건희',org:'성남시청'},
+        ]},
+        { heatName: '결승A', athletes: [
+          {lane:'흰W',name:'김지유',org:'화성시청'},
+          {lane:'노Y',name:'박지윤',org:'서울시청'},
+          {lane:'빨R',name:'박지원',org:'전북특별자치도청'},
+          {lane:'파B',name:'김혜빈',org:'화성시청'},
+          {lane:'보V',name:'이소연',org:'한국스포츠레저(스포츠토토)'},
+          {lane:'검B',name:'장연재',org:'화성시청'},
+          {lane:'주O',name:'서휘민',org:'성남시청'},
+        ]},
       ]
     },
     {
