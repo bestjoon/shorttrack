@@ -45,7 +45,11 @@
     z-index: 0;
   }
 
-  .container { position: relative; z-index: 1; max-width: 1100px; margin: 0 auto; padding: 0 16px 60px; }
+  .container { position: relative; z-index: 1; max-width: 1100px; margin: 0 auto; padding: 0 8px 60px; }
+
+  @media (min-width: 600px) {
+    .container { padding: 0 16px 60px; }
+  }
 
   /* Header */
   header {
@@ -278,8 +282,8 @@
   .time-group-header {
     display: flex;
     align-items: center;
-    gap: 14px;
-    padding: 13px 18px;
+    gap: 8px;
+    padding: 10px 12px;
     background: var(--card);
     cursor: pointer;
     user-select: none;
@@ -288,10 +292,27 @@
 
   .time-group-header:hover { background: rgba(255,255,255,0.04); }
 
+  .event-num {
+    font-size: 10px;
+    font-weight: 800;
+    color: var(--muted);
+    flex-shrink: 0;
+    letter-spacing: 0.3px;
+    min-width: 22px;
+  }
+
+  .event-header-main {
+    flex: 1;
+    min-width: 0;
+    display: flex;
+    flex-direction: column;
+    gap: 2px;
+  }
+
   .time-badge {
-    font-size: 12px;
+    font-size: 11px;
     font-weight: 700;
-    padding: 3px 10px;
+    padding: 2px 7px;
     border-radius: 6px;
     letter-spacing: 0.5px;
     flex-shrink: 0;
@@ -301,16 +322,36 @@
   .day-section.d3 .time-badge { background: rgba(124,63,168,0.25); color: #d0a8f0; }
 
   .event-name {
-    font-size: 14px;
+    font-size: 13px;
     font-weight: 600;
     color: white;
-    flex: 1;
+    line-height: 1.35;
+    white-space: normal;
+    word-break: keep-all;
   }
 
   .event-meta {
-    font-size: 11px;
+    font-size: 10px;
     color: var(--muted);
+    display: flex;
+    flex-direction: column;
+    align-items: flex-end;
+    flex-shrink: 0;
+    gap: 1px;
     text-align: right;
+  }
+
+  .event-meta-round {
+    font-size: 10px;
+    color: var(--muted);
+    white-space: nowrap;
+  }
+
+  .event-meta-detail {
+    font-size: 10px;
+    color: var(--muted);
+    opacity: 0.7;
+    white-space: nowrap;
   }
 
   .toggle-icon {
@@ -324,9 +365,13 @@
 
   .time-group-body {
     display: none;
-    padding: 0 18px 16px;
+    padding: 0 8px 12px;
     background: rgba(10,22,40,0.5);
     border-top: 1px solid var(--border);
+  }
+
+  @media (min-width: 600px) {
+    .time-group-body { padding: 0 18px 16px; }
   }
 
   .time-group.open .time-group-body { display: block; }
@@ -399,11 +444,26 @@
   }
 
   .athlete-org {
-    font-size: 11px;
+    font-size: 10px;
     color: var(--muted);
     text-align: right;
-    max-width: 110px;
+    max-width: 90px;
     line-height: 1.3;
+  }
+
+  .athlete-record {
+    font-size: 11px;
+    font-weight: 700;
+    color: var(--accent);
+    white-space: nowrap;
+    flex-shrink: 0;
+    min-width: 72px;
+    text-align: right;
+  }
+
+  .athlete-record.dnf {
+    color: #e63946;
+    font-size: 10px;
   }
 
   /* Lane colors */
@@ -517,7 +577,10 @@
   @media (max-width: 600px) {
     .heats-grid { grid-template-columns: 1fr; }
     header h1 { font-size: 20px; }
-    .time-group-header { padding: 11px 14px; }
+    header { padding: 28px 0 20px; }
+    .search-inner { padding: 0 8px; }
+    .day-tabs { gap: 6px; }
+    .day-tab { padding: 7px 14px; font-size: 12px; }
   }
 </style>
 </head>
@@ -707,39 +770,39 @@ const scheduleData = [
       time: '10:40', name: '남자대학부 1500M 준준결승', meta: '5조 (T3+3)',
       heats: [
         { heatName: '준준결승 1조', athletes: [
-          {lane:'흰W',name:'남윤창',org:'한국체육대학교'},
-          {lane:'노Y',name:'이성민',org:'경희사이버대학교'},
-          {lane:'빨R',name:'김원빈',org:'단국대학교'},
-          {lane:'파B',name:'김동원',org:'디지털서울문화예술대학교'},
-          {lane:'보V',name:'김민서',org:'한국체육대학교'},
+          {lane:'흰W',name:'남윤창',org:'한국체육대학교',record:'02:20.134'},
+          {lane:'빨R',name:'김원빈',org:'단국대학교',record:'02:20.203'},
+          {lane:'노Y',name:'이성민',org:'경희사이버대학교',record:'02:20.518'},
+          {lane:'보V',name:'김민서',org:'한국체육대학교',record:'02:20.935'},
+          {lane:'파B',name:'김동원',org:'디지털서울문화예술대학교',record:'DNF'},
         ]},
         { heatName: '준준결승 2조', athletes: [
-          {lane:'흰W',name:'이규호',org:'한국체육대학교'},
-          {lane:'노Y',name:'이선호',org:'단국대학교'},
-          {lane:'빨R',name:'최원석',org:'서울디지털대학교'},
-          {lane:'파B',name:'이승훈',org:'한국체육대학교'},
-          {lane:'보V',name:'김기현',org:'단국대학교'},
+          {lane:'흰W',name:'이규호',org:'한국체육대학교',record:'02:47.346'},
+          {lane:'보V',name:'김기현',org:'단국대학교',record:'02:47.607'},
+          {lane:'빨R',name:'최원석',org:'서울디지털대학교',record:'02:49.764'},
+          {lane:'파B',name:'이승훈',org:'한국체육대학교',record:'03:20.350'},
+          {lane:'노Y',name:'이선호',org:'단국대학교',record:'PEN(S2)'},
         ]},
         { heatName: '준준결승 3조', athletes: [
-          {lane:'흰W',name:'이동현',org:'단국대학교'},
-          {lane:'노Y',name:'최성연',org:'한국체육대학교'},
-          {lane:'빨R',name:'박서준',org:'단국대학교'},
-          {lane:'파B',name:'이정민',org:'경희대학교'},
-          {lane:'보V',name:'이종훈',org:'한국체육대학교'},
+          {lane:'흰W',name:'이동현',org:'단국대학교',record:'02:31.023'},
+          {lane:'파B',name:'이정민',org:'경희대학교',record:'02:31.043'},
+          {lane:'노Y',name:'최성연',org:'한국체육대학교',record:'02:31.075'},
+          {lane:'보V',name:'이종훈',org:'한국체육대학교',record:'02:56.131'},
+          {lane:'빨R',name:'박서준',org:'단국대학교',record:'PEN(S6)'},
         ]},
         { heatName: '준준결승 4조', athletes: [
-          {lane:'흰W',name:'주재희',org:'한국체육대학교'},
-          {lane:'노Y',name:'한병찬',org:'단국대학교'},
-          {lane:'빨R',name:'이동민',org:'고려대학교'},
-          {lane:'파B',name:'장윤성',org:'경희사이버대학교'},
-          {lane:'보V',name:'구민승',org:'단국대학교'},
+          {lane:'보V',name:'구민승',org:'단국대학교',record:'02:53.059'},
+          {lane:'흰W',name:'주재희',org:'한국체육대학교',record:'02:53.241'},
+          {lane:'노Y',name:'한병찬',org:'단국대학교',record:'02:53.409'},
+          {lane:'빨R',name:'이동민',org:'고려대학교',record:'02:53.854'},
+          {lane:'파B',name:'장윤성',org:'국민대학교',record:'02:54.106'},
         ]},
         { heatName: '준준결승 5조', athletes: [
-          {lane:'흰W',name:'이광호',org:'단국대학교'},
-          {lane:'노Y',name:'진동혁',org:'경희대학교'},
-          {lane:'빨R',name:'김유성',org:'한국체육대학교'},
-          {lane:'파B',name:'김상우',org:'한국체육대학교'},
-          {lane:'보V',name:'김민우',org:'단국대학교'},
+          {lane:'흰W',name:'이광호',org:'단국대학교',record:'02:38.252'},
+          {lane:'보V',name:'김민우',org:'단국대학교',record:'02:38.295'},
+          {lane:'노Y',name:'진동혁',org:'경희대학교',record:'02:38.351'},
+          {lane:'파B',name:'김상우',org:'한국체육대학교',record:'02:38.406'},
+          {lane:'빨R',name:'김유성',org:'한국체육대학교',record:'02:38.458'},
         ]},
       ]
     },
@@ -747,26 +810,26 @@ const scheduleData = [
       time: '11:15', name: '여자초등 3,4학년 1500M 준결승', meta: '3조 (T2+1)',
       heats: [
         { heatName: '준결승 1조', athletes: [
-          {lane:'흰W',name:'김연솔',org:'서울영도초등학교'},
-          {lane:'노Y',name:'양서윤',org:'서울아카데미 압구정'},
-          {lane:'빨R',name:'이나윤',org:'서울목동초등학교'},
-          {lane:'파B',name:'곽다혜',org:'서울정수초등학교'},
-          {lane:'보V',name:'한지아',org:'이매초등학교'},
+          {lane:'흰W',name:'김연솔',org:'서울영도초등학교',record:'02:46.801'},
+          {lane:'보V',name:'한지아',org:'이매초등학교',record:'02:47.446'},
+          {lane:'파B',name:'곽다혜',org:'서울정수초등학교',record:'02:47.795'},
+          {lane:'빨R',name:'이나윤',org:'서울목동초등학교',record:'02:49.030'},
+          {lane:'노Y',name:'양서윤',org:'서울아카데미 압구정',record:'02:51.125'},
         ]},
         { heatName: '준결승 2조', athletes: [
-          {lane:'흰W',name:'강소민',org:'서울신사초등학교'},
-          {lane:'노Y',name:'추하은',org:'운흥초등학교'},
-          {lane:'빨R',name:'서이엘',org:'서울거원초등학교'},
-          {lane:'파B',name:'박서아',org:'성남매송초등학교'},
-          {lane:'보V',name:'김태희',org:'성남송현초등학교'},
+          {lane:'노Y',name:'추하은',org:'운흥초등학교',record:'02:53.749'},
+          {lane:'흰W',name:'강소민',org:'서울신사초등학교',record:'02:54.114'},
+          {lane:'보V',name:'김태희',org:'성남송현초등학교',record:'02:54.140'},
+          {lane:'파B',name:'박서아',org:'성남매송초등학교',record:'02:54.528'},
+          {lane:'빨R',name:'서이엘',org:'서울거원초등학교',record:'03:01.831'},
         ]},
         { heatName: '준결승 3조', athletes: [
-          {lane:'흰W',name:'이유주',org:'세곡초등학교'},
-          {lane:'노Y',name:'고다흰',org:'강릉교동초등학교'},
-          {lane:'빨R',name:'이설희',org:'동산초등학교'},
-          {lane:'파B',name:'이민아',org:'유안초등학교'},
-          {lane:'보V',name:'박가현',org:'리라초등학교'},
-          {lane:'검B',name:'이가은',org:'인천해원초등학교'},
+          {lane:'흰W',name:'이유주',org:'세곡초등학교',record:'03:00.490'},
+          {lane:'보V',name:'박가현',org:'리라초등학교',record:'03:00.592'},
+          {lane:'검B',name:'이가은',org:'인천해원초등학교',record:'03:09.179'},
+          {lane:'빨R',name:'이설희',org:'동산초등학교',record:'03:14.135'},
+          {lane:'노Y',name:'고다흰',org:'강릉교동초등학교',record:'03:19.773'},
+          {lane:'파B',name:'이민아',org:'유안초등학교',record:'NO TIME'},
         ]},
       ]
     },
@@ -774,68 +837,110 @@ const scheduleData = [
       time: '11:15', name: '여자초등 5,6학년 1500M 준결승', meta: '3조 (T2+1)',
       heats: [
         { heatName: '준결승 1조', athletes: [
-          {lane:'흰W',name:'김연우',org:'평촌초등학교'},
-          {lane:'노Y',name:'김가빈',org:'서울목동초등학교'},
-          {lane:'빨R',name:'유지안',org:'과천갈현초등학교'},
-          {lane:'파B',name:'장서윤',org:'서울영도초등학교'},
-          {lane:'보V',name:'강윤서',org:'인천장아초등학교'},
-          {lane:'검B',name:'양지유',org:'각화초등학교'},
-          {lane:'주O',name:'유채은',org:'양동초등학교'},
+          {lane:'흰W',name:'김연우',org:'평촌초등학교',record:'02:46.239'},
+          {lane:'보V',name:'강윤서',org:'인천장아초등학교',record:'02:47.934'},
+          {lane:'노Y',name:'김가빈',org:'서울목동초등학교',record:'02:48.055'},
+          {lane:'빨R',name:'유지안',org:'과천갈현초등학교',record:'02:48.784'},
+          {lane:'주O',name:'유채은',org:'양동초등학교',record:'02:49.192'},
+          {lane:'파B',name:'장서윤',org:'서울영도초등학교',record:'02:49.559'},
+          {lane:'검B',name:'양지유',org:'각화초등학교',record:'02:49.853'},
         ]},
         { heatName: '준결승 2조', athletes: [
-          {lane:'흰W',name:'백이슬',org:'서울우신초등학교'},
-          {lane:'노Y',name:'남연후',org:'대자초등학교'},
-          {lane:'빨R',name:'윤재아',org:'인천도담초등학교'},
-          {lane:'파B',name:'고다하',org:'강릉교동초등학교'},
-          {lane:'보V',name:'곽혜원',org:'안일초등학교'},
-          {lane:'검B',name:'홍이재',org:'서울연희초등학교'},
+          {lane:'빨R',name:'윤재아',org:'인천도담초등학교',record:'02:34.017'},
+          {lane:'흰W',name:'백이슬',org:'서울우신초등학교',record:'02:34.127'},
+          {lane:'검B',name:'홍이재',org:'서울연희초등학교',record:'02:34.249'},
+          {lane:'보V',name:'곽혜원',org:'안일초등학교',record:'02:34.299'},
+          {lane:'파B',name:'고다하',org:'강릉교동초등학교',record:'02:34.449'},
+          {lane:'노Y',name:'남연후',org:'대자초등학교',record:'02:36.754'},
         ]},
         { heatName: '준결승 3조', athletes: [
-          {lane:'흰W',name:'김세원',org:'곡정초등학교'},
-          {lane:'노Y',name:'이채아',org:'박달초등학교'},
-          {lane:'빨R',name:'이소윤',org:'죽전초등학교'},
-          {lane:'파B',name:'김지안',org:'용문초등학교'},
-          {lane:'보V',name:'김소율',org:'서경초등학교'},
-          {lane:'검B',name:'박하랑',org:'서울정목초등학교'},
+          {lane:'흰W',name:'김세원',org:'곡정초등학교',record:'02:40.784'},
+          {lane:'파B',name:'김지안',org:'용문초등학교',record:'02:40.957'},
+          {lane:'노Y',name:'이채아',org:'박달초등학교',record:'02:41.059'},
+          {lane:'보V',name:'김소율',org:'서경초등학교',record:'02:44.028'},
+          {lane:'검B',name:'박하랑',org:'서울정목초등학교',record:'02:44.362'},
+          {lane:'빨R',name:'이소윤',org:'죽전초등학교',record:'02:47.526'},
         ]},
       ]
     },
     {
       time: '11:15', name: '여자중학부 1500M 준결승', meta: '3조 (T2+1)',
       heats: [
-        { heatName: '준결승 1조', athletes: [] },
-        { heatName: '준결승 2조', athletes: [] },
-        { heatName: '준결승 3조', athletes: [] },
+        { heatName: '준결승 1조', athletes: [
+          {lane:'검B',name:'정하온',org:'염창중학교',record:'02:29.876'},
+          {lane:'빨R',name:'조예음',org:'인천정각중학교',record:'02:29.887'},
+          {lane:'파B',name:'김채율',org:'김포신곡중학교',record:'02:30.005'},
+          {lane:'노Y',name:'최운서',org:'낙원중학교',record:'02:30.141'},
+          {lane:'흰W',name:'조수빈',org:'명일중학교',record:'02:30.280'},
+          {lane:'보V',name:'원서진',org:'명진중학교',record:'02:39.430'},
+        ]},
+        { heatName: '준결승 2조', athletes: [
+          {lane:'검B',name:'권유하',org:'서초중학교',record:'02:24.452'},
+          {lane:'보V',name:'임채민',org:'부림중학교',record:'02:24.616'},
+          {lane:'노Y',name:'정지유',org:'목동중학교',record:'02:24.746'},
+          {lane:'흰W',name:'이은채',org:'양도중학교',record:'02:30.448'},
+          {lane:'빨R',name:'이채영',org:'박달중학교',record:'02:31.328'},
+          {lane:'파B',name:'이하율',org:'인천성리중학교',record:'02:42.123'},
+        ]},
+        { heatName: '준결승 3조', athletes: [
+          {lane:'빨R',name:'황세은',org:'신목중학교',record:'03:24.842'},
+          {lane:'노Y',name:'박보민',org:'서현중학교',record:'03:25.109'},
+          {lane:'파B',name:'이서윤',org:'인천신정중학교',record:'03:25.545'},
+          {lane:'검B',name:'김태린',org:'부림중학교',record:'03:25.566'},
+          {lane:'보V',name:'강다연',org:'송호중학교',record:'03:25.704'},
+          {lane:'흰W',name:'이아인',org:'송례중학교',record:'03:26.461'},
+        ]},
       ]
     },
     {
       time: '12:10', name: '여자고등부 1500M 준결승', meta: '3조 (T2+1)',
       heats: [
-        { heatName: '준결승 1조', athletes: [] },
-        { heatName: '준결승 2조', athletes: [] },
-        { heatName: '준결승 3조', athletes: [] },
+        { heatName: '준결승 1조', athletes: [
+          {lane:'파B',name:'강윤하',org:'연수여자고등학교',record:'03:16.679'},
+          {lane:'빨R',name:'주시하',org:'서현고등학교',record:'03:16.905'},
+          {lane:'노Y',name:'김지원',org:'화정고등학교',record:'03:16.975'},
+          {lane:'보V',name:'김채현',org:'정화여자고등학교',record:'03:18.540'},
+          {lane:'검B',name:'하정현',org:'서울여자고등학교',record:'03:18.571'},
+          {lane:'흰W',name:'김수빈',org:'목동고등학교',record:'03:38.351'},
+        ]},
+        { heatName: '준결승 2조', athletes: [
+          {lane:'보V',name:'정서연',org:'서울신정고등학교',record:'02:54.509'},
+          {lane:'빨R',name:'오승아',org:'인덕원고등학교',record:'02:54.743'},
+          {lane:'파B',name:'김민채',org:'천천고등학교',record:'02:55.111'},
+          {lane:'흰W',name:'정재희',org:'반포고등학교',record:'03:18.316'},
+          {lane:'노Y',name:'김도희',org:'서현고등학교',record:'03:38.785'},
+          {lane:'검B',name:'박가은',org:'천천고등학교',record:'PEN(S2)'},
+        ]},
+        { heatName: '준결승 3조', athletes: [
+          {lane:'파B',name:'배정윤',org:'부흥고등학교',record:'02:47.880'},
+          {lane:'빨R',name:'유수민',org:'천천고등학교',record:'02:47.917'},
+          {lane:'보V',name:'김지호',org:'연수여자고등학교',record:'02:48.475'},
+          {lane:'흰W',name:'나환희',org:'연수여자고등학교',record:'02:48.896'},
+          {lane:'노Y',name:'고금비',org:'인천여자고등학교',record:'03:36.897'},
+          {lane:'검B',name:'유지수',org:'진명여자고등학교',record:'04:11.181'},
+        ]},
       ]
     },
     {
       time: '12:10', name: '여자대학부 1500M 준결승', meta: '2조 (T2+1)',
       heats: [
         { heatName: '준결승 1조', athletes: [
-          {lane:'흰W',name:'이은빈',org:'한국체육대학교'},
-          {lane:'노Y',name:'이나을',org:'용인대학교'},
-          {lane:'빨R',name:'박하윤',org:'단국대학교'},
-          {lane:'파B',name:'윤단하',org:'한양사이버대학교'},
-          {lane:'보V',name:'김민지',org:'한국체육대학교'},
-          {lane:'검B',name:'김세아',org:'용인대학교'},
-          {lane:'주O',name:'지윤서',org:'경희대학교'},
+          {lane:'보V',name:'김민지',org:'한국체육대학교',record:'02:38.084'},
+          {lane:'검B',name:'김세아',org:'용인대학교',record:'02:38.382'},
+          {lane:'흰W',name:'이은빈',org:'한국체육대학교',record:'02:38.903'},
+          {lane:'주O',name:'지윤서',org:'경희대학교',record:'02:39.023'},
+          {lane:'노Y',name:'이나을',org:'용인대학교',record:'02:39.115'},
+          {lane:'빨R',name:'박하윤',org:'단국대학교',record:'02:42.632'},
+          {lane:'파B',name:'윤단하',org:'한양사이버대학교',record:'03:34.492'},
         ]},
         { heatName: '준결승 2조', athletes: [
-          {lane:'흰W',name:'김도연',org:'경희사이버대학교'},
-          {lane:'노Y',name:'김지원',org:'한국체육대학교'},
-          {lane:'빨R',name:'하민정',org:'용인대학교'},
-          {lane:'파B',name:'이지아',org:'경희대학교'},
-          {lane:'보V',name:'최하랑',org:'용인대학교'},
-          {lane:'검B',name:'오송미',org:'단국대학교'},
-          {lane:'주O',name:'박지유',org:'동의대학교'},
+          {lane:'주O',name:'박지유',org:'동의대학교',record:'02:43.160'},
+          {lane:'검B',name:'오송미',org:'단국대학교',record:'02:58.011'},
+          {lane:'보V',name:'최하랑',org:'용인대학교',record:'03:03.989'},
+          {lane:'노Y',name:'김지원',org:'한국체육대학교',record:'NO TIME'},
+          {lane:'흰W',name:'김도연',org:'경희사이버대학교',record:'PEN(S6)'},
+          {lane:'빨R',name:'하민정',org:'용인대학교',record:'PEN(S6)'},
+          {lane:'파B',name:'이지아',org:'경희대학교',record:'DNS'},
         ]},
       ]
     },
@@ -843,25 +948,25 @@ const scheduleData = [
       time: '12:10', name: '여자일반부 1500M 준결승', meta: '3조 (T2+1)',
       heats: [
         { heatName: '준결승 1조', athletes: [
-          {lane:'흰W',name:'김혜빈',org:'화성시청'},
-          {lane:'노Y',name:'김건희',org:'성남시청'},
-          {lane:'빨R',name:'유현민',org:'전북특별자치도청'},
-          {lane:'파B',name:'이소연',org:'한국스포츠레저(스포츠토토)'},
-          {lane:'보V',name:'김은서',org:'화성시청'},
+          {lane:'흰W',name:'김혜빈',org:'화성시청',record:'02:56.518'},
+          {lane:'파B',name:'이소연',org:'한국스포츠레저(스포츠토토)',record:'02:56.666'},
+          {lane:'빨R',name:'유현민',org:'전북특별자치도청',record:'02:56.872'},
+          {lane:'노Y',name:'김건희',org:'성남시청',record:'03:43.195'},
+          {lane:'보V',name:'김은서',org:'화성시청',record:'03:43.701'},
         ]},
         { heatName: '준결승 2조', athletes: [
-          {lane:'흰W',name:'노도희',org:'화성시청'},
-          {lane:'노Y',name:'최지현',org:'전북특별자치도청'},
-          {lane:'빨R',name:'서휘민',org:'성남시청'},
-          {lane:'파B',name:'장연재',org:'화성시청'},
-          {lane:'보V',name:'심석희',org:'서울시청'},
+          {lane:'파B',name:'장연재',org:'화성시청',record:'03:12.467'},
+          {lane:'빨R',name:'서휘민',org:'성남시청',record:'03:12.531'},
+          {lane:'노Y',name:'최지현',org:'전북특별자치도청',record:'03:13.021'},
+          {lane:'보V',name:'심석희',org:'서울시청',record:'03:13.041'},
+          {lane:'흰W',name:'노도희',org:'화성시청',record:'03:20.090'},
         ]},
         { heatName: '준결승 3조', athletes: [
-          {lane:'흰W',name:'이유빈',org:'고양시청'},
-          {lane:'노Y',name:'노아름',org:'전북특별자치도청'},
-          {lane:'빨R',name:'김지유',org:'화성시청'},
-          {lane:'파B',name:'박지윤',org:'서울시청'},
-          {lane:'보V',name:'박지원',org:'전북특별자치도청'},
+          {lane:'빨R',name:'김지유',org:'화성시청',record:'02:45.154'},
+          {lane:'파B',name:'박지윤',org:'서울시청',record:'02:45.297'},
+          {lane:'보V',name:'박지원',org:'전북특별자치도청',record:'02:45.306'},
+          {lane:'흰W',name:'이유빈',org:'고양시청',record:'02:45.439'},
+          {lane:'노Y',name:'노아름',org:'전북특별자치도청',record:'02:45.604'},
         ]},
       ]
     },
@@ -869,19 +974,19 @@ const scheduleData = [
       time: '13:25', name: '남자초등 3,4학년 1500M 준결승', meta: '2조 (T3+1)',
       heats: [
         { heatName: '준결승 1조', athletes: [
-          {lane:'흰W',name:'안준현',org:'개일초등학교'},
-          {lane:'노Y',name:'기건우',org:'부천일신초등학교'},
-          {lane:'빨R',name:'전이준',org:'서울금북초등학교'},
-          {lane:'파B',name:'이강우',org:'용인둔전초등학교'},
-          {lane:'보V',name:'김태윤',org:'성남송현초등학교'},
+          {lane:'흰W',name:'안준현',org:'개일초등학교',record:'02:53.496'},
+          {lane:'보V',name:'김태윤',org:'성남송현초등학교',record:'02:53.594'},
+          {lane:'빨R',name:'전이준',org:'서울금북초등학교',record:'02:54.938'},
+          {lane:'노Y',name:'기건우',org:'부천일신초등학교',record:'02:58.538'},
+          {lane:'파B',name:'이강우',org:'용인둔전초등학교',record:'03:30.864'},
         ]},
         { heatName: '준결승 2조', athletes: [
-          {lane:'흰W',name:'백준우',org:'용인한얼초등학교'},
-          {lane:'노Y',name:'조준형',org:'안양부안초등학교'},
-          {lane:'빨R',name:'박건우',org:'고양화수초등학교'},
-          {lane:'파B',name:'진은성',org:'서울구암초등학교'},
-          {lane:'보V',name:'김민준',org:'한별초등학교'},
-          {lane:'검B',name:'전장현',org:'성라초등학교'},
+          {lane:'흰W',name:'백준우',org:'용인한얼초등학교',record:'02:51.241'},
+          {lane:'보V',name:'김민준',org:'한별초등학교',record:'02:51.256'},
+          {lane:'빨R',name:'박건우',org:'고양화수초등학교',record:'03:01.748'},
+          {lane:'파B',name:'진은성',org:'서울구암초등학교',record:'03:02.159'},
+          {lane:'검B',name:'전장현',org:'성라초등학교',record:'03:08.968'},
+          {lane:'노Y',name:'조준형',org:'안양부안초등학교',record:'PEN(S1)'},
         ]},
       ]
     },
@@ -889,30 +994,30 @@ const scheduleData = [
       time: '13:25', name: '남자초등 5,6학년 1500M 준결승', meta: '3조 (T2+1)',
       heats: [
         { heatName: '준결승 1조', athletes: [
-          {lane:'흰W',name:'박단빈',org:'목운초등학교'},
-          {lane:'노Y',name:'이루한',org:'인천봉수초등학교'},
-          {lane:'빨R',name:'유지안',org:'의정부송산초등학교'},
-          {lane:'파B',name:'김시환',org:'청수초등학교'},
-          {lane:'보V',name:'이승호',org:'한마음초등학교'},
-          {lane:'검B',name:'조윤',org:'대구국제학교'},
-          {lane:'주O',name:'최지안',org:'원일초등학교'},
+          {lane:'주O',name:'최지안',org:'원일초등학교',record:'02:35.552'},
+          {lane:'흰W',name:'박단빈',org:'목운초등학교',record:'02:35.690'},
+          {lane:'노Y',name:'이루한',org:'인천봉수초등학교',record:'02:36.139'},
+          {lane:'빨R',name:'유지안',org:'의정부송산초등학교',record:'02:37.048'},
+          {lane:'검B',name:'조윤',org:'대구국제학교',record:'02:37.975'},
+          {lane:'파B',name:'김시환',org:'청수초등학교',record:'02:38.148'},
+          {lane:'보V',name:'이승호',org:'한마음초등학교',record:'02:43.076'},
         ]},
         { heatName: '준결승 2조', athletes: [
-          {lane:'흰W',name:'문서준',org:'서울세륜초등학교'},
-          {lane:'노Y',name:'허태영',org:'목운초등학교'},
-          {lane:'빨R',name:'유세윤',org:'이솔초등학교'},
-          {lane:'파B',name:'김민재',org:'송빛초등학교'},
-          {lane:'보V',name:'김하준',org:'명지초등학교'},
-          {lane:'검B',name:'김현종',org:'과천갈현초등학교'},
-          {lane:'주O',name:'전승헌',org:'영훈초등학교'},
+          {lane:'노Y',name:'허태영',org:'목운초등학교',record:'03:03.785'},
+          {lane:'흰W',name:'문서준',org:'서울세륜초등학교',record:'03:03.859'},
+          {lane:'빨R',name:'유세윤',org:'이솔초등학교',record:'03:03.951'},
+          {lane:'주O',name:'전승헌',org:'영훈초등학교',record:'03:04.090'},
+          {lane:'검B',name:'김현종',org:'과천갈현초등학교',record:'03:04.099'},
+          {lane:'파B',name:'김민재',org:'송빛초등학교',record:'03:04.729'},
+          {lane:'보V',name:'김하준',org:'명지초등학교',record:'03:04.997'},
         ]},
         { heatName: '준결승 3조', athletes: [
-          {lane:'흰W',name:'김범준',org:'한별초등학교'},
-          {lane:'노Y',name:'김하루',org:'원흥초등학교'},
-          {lane:'빨R',name:'강주안',org:'서울서정초등학교'},
-          {lane:'파B',name:'한서진',org:'내손초등학교'},
-          {lane:'보V',name:'노현우',org:'부민초등학교'},
-          {lane:'검B',name:'최동빈',org:'CIYA 국제학교'},
+          {lane:'파B',name:'한서진',org:'내손초등학교',record:'02:51.899'},
+          {lane:'노Y',name:'김하루',org:'원흥초등학교',record:'02:51.957'},
+          {lane:'검B',name:'최동빈',org:'CIYA 국제학교',record:'02:52.013'},
+          {lane:'흰W',name:'김범준',org:'한별초등학교',record:'02:52.079'},
+          {lane:'빨R',name:'강주안',org:'서울서정초등학교',record:'02:52.151'},
+          {lane:'보V',name:'노현우',org:'부민초등학교',record:'02:53.373'},
         ]},
       ]
     },
@@ -1168,15 +1273,43 @@ const scheduleData = [
     {
       time: '16:45', name: '남자초등 3,4학년 1500M 결승', meta: '결승 A/B',
       heats: [
-        { heatName: '결승B', athletes: [] },
-        { heatName: '결승A', athletes: [] },
+        { heatName: '결승B', athletes: [
+          {lane:'흰W',name:'진은성',org:'서울구암초등학교'},
+          {lane:'노Y',name:'전장현',org:'성라초등학교'},
+          {lane:'빨R',name:'이강우',org:'용인둔전초등학교'},
+        ]},
+        { heatName: '결승A', athletes: [
+          {lane:'흰W',name:'백준우',org:'용인한얼초등학교'},
+          {lane:'노Y',name:'김민준',org:'한별초등학교'},
+          {lane:'빨R',name:'안준현',org:'개일초등학교'},
+          {lane:'파B',name:'김태윤',org:'성남송현초등학교'},
+          {lane:'보V',name:'전이준',org:'서울금북초등학교'},
+          {lane:'검B',name:'기건우',org:'부천일신초등학교'},
+          {lane:'주O',name:'박건우',org:'고양화수초등학교'},
+        ]},
       ]
     },
     {
       time: '16:45', name: '남자초등 5,6학년 1500M 결승', meta: '결승 A/B',
       heats: [
-        { heatName: '결승B', athletes: [] },
-        { heatName: '결승A', athletes: [] },
+        { heatName: '결승B', athletes: [
+          {lane:'흰W',name:'유지안',org:'의정부송산초등학교'},
+          {lane:'노Y',name:'조윤',org:'대구국제학교'},
+          {lane:'빨R',name:'최동빈',org:'CIYA 국제학교'},
+          {lane:'파B',name:'김범준',org:'한별초등학교'},
+          {lane:'보V',name:'강주안',org:'서울서정초등학교'},
+          {lane:'검B',name:'유세윤',org:'이솔초등학교'},
+          {lane:'주O',name:'전승헌',org:'영훈초등학교'},
+        ]},
+        { heatName: '결승A', athletes: [
+          {lane:'흰W',name:'최지안',org:'원일초등학교'},
+          {lane:'노Y',name:'박단빈',org:'목운초등학교'},
+          {lane:'빨R',name:'이루한',org:'인천봉수초등학교'},
+          {lane:'파B',name:'한서진',org:'내손초등학교'},
+          {lane:'보V',name:'김하루',org:'원흥초등학교'},
+          {lane:'검B',name:'허태영',org:'목운초등학교'},
+          {lane:'주O',name:'문서준',org:'서울세륜초등학교'},
+        ]},
       ]
     },
     {
@@ -2153,8 +2286,85 @@ const scheduleData = [
 }
 ];
 
-// Build athlete index for search
-// Ice break schedule by day (time → inserted after the last event starting before this time)
+// ============================================================
+// EVENT NUMBER MAPPING (날짜별, 원본 일정표 기준)
+// ============================================================
+const EVENT_NUMS = {
+  day1: {
+    '여자중학부 1500M 준준결승':1, '여자고등부 1500M 준준결승':2,
+    '남자고등부 1500M 준준결승':3, '남자대학부 1500M 준준결승':4,
+    '여자초등 3,4학년 1500M 준결승':5, '여자초등 5,6학년 1500M 준결승':6,
+    '여자중학부 1500M 준결승':7, '여자고등부 1500M 준결승':8,
+    '여자대학부 1500M 준결승':9, '여자일반부 1500M 준결승':10,
+    '남자초등 3,4학년 1500M 준결승':11, '남자초등 5,6학년 1500M 준결승':12,
+    '남자중학부 1500M 준결승':13, '남자고등부 1500M 준결승':14,
+    '남자대학부 1500M 준결승':15, '남자일반부 1500M 준결승':16,
+    '여자초등 1,2학년 1500M 결승':17, '여자초등 3,4학년 1500M 결승':18,
+    '여자초등 5,6학년 1500M 결승':19, '여자중학부 1500M 결승':20,
+    '여자고등부 1500M 결승':21, '여자대학부 1500M 결승':22,
+    '여자일반부 1500M 결승':23, '남자초등 1,2학년 1500M 결승':24,
+    '남자초등 3,4학년 1500M 결승':25, '남자초등 5,6학년 1500M 결승':26,
+    '남자중학부 1500M 결승':27, '남자고등부 1500M 결승':28,
+    '남자대학부 1500M 결승':29, '남자일반부 1500M 결승':30,
+  },
+  day2: {
+    '여자중학부 500M 예선':1, '여자고등부 500M 예선':2,
+    '남자고등부 500M 예선':4, '남자대학부 500M 예선':5,
+    '여자초등 3,4학년 500M 준준결승':6, '여자초등 5,6학년 500M 준준결승':7,
+    '여자중학부 500M 준준결승':8, '여자고등부 500M 준준결승':9,
+    '여자대학부 500M 준준결승':10, '여자일반부 500M 준준결승':11,
+    '남자초등 3,4학년 500M 준준결승':12, '남자초등 5,6학년 500M 준준결승':13,
+    '남자중학부 500M 준준결승':14, '남자고등부 500M 준준결승':15,
+    '남자대학부 500M 준준결승':16, '남자일반부 500M 준준결승':17,
+    '여자초등 3,4학년 500M 준결승':18, '여자초등 5,6학년 500M 준결승':19,
+    '여자중학부 500M 준결승':20, '여자고등부 500M 준결승':21,
+    '여자대학부 500M 준결승':22, '여자일반부 500M 준결승':23,
+    '남자초등 3,4학년 500M 준결승':24, '남자초등 5,6학년 500M 준결승':25,
+    '남자중학부 500M 준결승':26, '남자고등부 500M 준결승':27,
+    '남자대학부 500M 준결승':28, '남자일반부 500M 준결승':29,
+    '여자초등 1,2학년 500M 결승':30, '여자초등 3,4학년 500M 결승':31,
+    '여자초등 5,6학년 500M 결승':32, '여자중학부 500M 결승':33,
+    '여자고등부 500M 결승':34, '여자대학부 500M 결승':35,
+    '여자일반부 500M 결승':36, '남자초등 1,2학년 500M 결승':37,
+    '남자초등 3,4학년 500M 결승':38, '남자초등 5,6학년 500M 결승':39,
+    '남자중학부 500M 결승':40, '남자고등부 500M 결승':41,
+    '남자대학부 500M 결승':42, '남자일반부 500M 결승':43,
+  },
+  day3: {
+    '여자중학부 1000M 예선':1, '여자고등부 1000M 예선':2,
+    '남자고등부 1000M 예선':4, '남자대학부 1000M 예선':5,
+    '여자초등 3,4학년 1000M 준준결승':6, '여자초등 5,6학년 1000M 준준결승':7,
+    '여자중학부 1000M 준준결승':8, '여자고등부 1000M 준준결승':9,
+    '여자대학부 1000M 준준결승':10, '여자일반부 1000M 준준결승':11,
+    '남자초등 3,4학년 1000M 준준결승':12, '남자초등 5,6학년 1000M 준준결승':13,
+    '남자중학부 1000M 준준결승':14, '남자고등부 1000M 준준결승':15,
+    '남자대학부 1000M 준준결승':16, '남자일반부 1000M 준준결승':17,
+    '여자초등 3,4학년 1000M 준결승':18, '여자초등 5,6학년 1000M 준결승':19,
+    '여자중학부 1000M 준결승':20, '여자고등부 1000M 준결승':21,
+    '여자대학부 1000M 준결승':22, '여자일반부 1000M 준결승':23,
+    '남자초등 3,4학년 1000M 준결승':24, '남자초등 5,6학년 1000M 준결승':25,
+    '남자중학부 1000M 준결승':26, '남자고등부 1000M 준결승':27,
+    '남자대학부 1000M 준결승':28, '남자일반부 1000M 준결승':29,
+    '여자초등 1,2학년 1000M 결승':30, '여자초등 3,4학년 1000M 결승':31,
+    '여자초등 5,6학년 1000M 결승':32, '여자중학부 1000M 결승':33,
+    '여자고등부 1000M 결승':34, '여자대학부 1000M 결승':35,
+    '여자일반부 1000M 결승':36, '남자초등 1,2학년 1000M 결승':37,
+    '남자초등 3,4학년 1000M 결승':38, '남자초등 5,6학년 1000M 결승':39,
+    '남자중학부 1000M 결승':40, '남자고등부 1000M 결승':41,
+    '남자대학부 1000M 결승':42, '남자일반부 1000M 결승':43,
+  },
+};
+
+// Assign num to each event from the mapping table
+scheduleData.forEach(day => {
+  const numMap = EVENT_NUMS[day.day] || {};
+  day.events.forEach(event => {
+    if (event.type === 'ice') return;
+    if (numMap[event.name] !== undefined) event.num = numMap[event.name];
+  });
+});
+
+
 const ICE_BREAKS = {
   day1: ['09:50','10:30','11:05','12:00','12:55','13:50','14:30','15:10','15:55','16:35','17:20'],
   day2: ['09:30','10:00','10:28','11:14','11:54','12:24','13:18','13:52','14:20','14:48','15:16','15:44','16:15','16:33','17:04'],
@@ -2256,12 +2466,22 @@ function renderSchedule() {
       const roundLabel = event.name.includes('결승') && !event.name.includes('준') ? '🏆 결승' :
                          event.name.includes('준결승') && !event.name.includes('준준') ? '🥈 준결승' :
                          event.name.includes('준준결승') ? '🔹 준준결승' : '🔸 예선';
+      // meta split: e.g. "3조 (T2+1)"
+      const metaParts = event.meta.split(' ');
+      const metaLine1 = roundLabel;
+      const metaLine2 = event.meta;
 
       tg.innerHTML = `
         <div class="time-group-header" onclick="toggleGroup(this.parentElement)">
           <span class="time-badge">${event.time}</span>
-          <span class="event-name">${event.name}</span>
-          <span class="event-meta">${roundLabel} · ${event.meta}</span>
+          <span class="event-num">${event.num ? event.num + '.' : ''}</span>
+          <div class="event-header-main">
+            <span class="event-name">${event.name}</span>
+          </div>
+          <div class="event-meta">
+            <span class="event-meta-round">${metaLine1}</span>
+            <span class="event-meta-detail">${metaLine2}</span>
+          </div>
           <span class="toggle-icon">▼</span>
         </div>
         <div class="time-group-body">
@@ -2275,9 +2495,17 @@ function renderSchedule() {
   });
 }
 
+function parseRecord(rec) {
+  if (!rec) return Infinity;
+  if (typeof rec === 'string' && (rec.includes('DNF') || rec.includes('PEN') || rec.includes('DSQ'))) return Infinity;
+  // format: mm:ss.mmm
+  const m = String(rec).match(/^(\d+):(\d+\.\d+)$/);
+  if (m) return parseFloat(m[1]) * 60 + parseFloat(m[2]);
+  return Infinity;
+}
+
 function renderHeats(heats, hasData) {
   if (!hasData) {
-    // all heats empty
     const allEmpty = heats.every(h => h.athletes.length === 0);
     if (allEmpty) return `<div class="tbd-note">✦ 해당 조편성은 이전 라운드 결과에 따라 결정됩니다</div>`;
   }
@@ -2289,13 +2517,24 @@ function renderHeats(heats, hasData) {
     if (heat.athletes.length === 0) {
       html += `<div class="tbd-note">결과에 따라 결정</div>`;
     } else {
+      // Sort by record if any athlete has a record
+      const hasRecords = heat.athletes.some(a => a.record);
+      let athletes = [...heat.athletes];
+      if (hasRecords) {
+        athletes.sort((a, b) => parseRecord(a.record) - parseRecord(b.record));
+      }
       html += `<ul class="heat-athletes">`;
-      heat.athletes.forEach(a => {
+      athletes.forEach((a, i) => {
         const lc = LANE_COLORS[a.lane] || { cls: 'lane-white', label: a.lane };
+        const isSpecial = a.record && (String(a.record).includes('DNF') || String(a.record).includes('PEN') || String(a.record).includes('DSQ'));
+        const recHtml = a.record
+          ? `<span class="athlete-record${isSpecial ? ' dnf' : ''}">${a.record}</span>`
+          : '';
         html += `<li class="heat-athlete" data-name="${a.name}">
           <span class="lane-dot ${lc.cls}" title="${lc.label}"></span>
           <span class="athlete-name">${a.name}</span>
           <span class="athlete-org">${a.org}</span>
+          ${recHtml}
         </li>`;
       });
       html += `</ul>`;
