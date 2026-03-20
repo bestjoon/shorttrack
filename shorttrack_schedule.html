@@ -94,20 +94,18 @@
     display: flex;
     justify-content: center;
     gap: 10px;
-    margin-top: 18px;
+    margin-top: 14px;
     flex-wrap: wrap;
   }
 
   .date-chip {
-    padding: 6px 18px;
+    padding: 5px 18px;
     border-radius: 20px;
-    font-size: 12px;
-    font-weight: 700;
-    letter-spacing: 1px;
+    font-size: 13px;
+    font-weight: 500;
+    color: var(--muted);
+    letter-spacing: 0.5px;
   }
-  .date-chip.d1 { background: rgba(26,111,168,0.2); border: 1px solid var(--day1); color: #7ec8f0; }
-  .date-chip.d2 { background: rgba(14,138,110,0.2); border: 1px solid var(--day2); color: #7ef0d4; }
-  .date-chip.d3 { background: rgba(124,63,168,0.2); border: 1px solid var(--day3); color: #d0a8f0; }
 
   /* Search */
   .search-wrap {
@@ -209,20 +207,27 @@
   /* Day tabs */
   .day-tabs {
     display: flex;
-    gap: 8px;
+    gap: 6px;
     margin-bottom: 24px;
-    flex-wrap: wrap;
+    flex-wrap: nowrap;
   }
 
   .day-tab {
-    padding: 9px 22px;
+    padding: 8px 0;
     border-radius: 8px;
-    font-size: 13px;
+    font-size: 12px;
     font-weight: 700;
     cursor: pointer;
     border: 1px solid transparent;
     transition: all 0.2s;
-    letter-spacing: 0.5px;
+    letter-spacing: 0.3px;
+    white-space: nowrap;
+    flex: 2;
+    text-align: center;
+  }
+
+  .day-tab.all {
+    flex: 1;
   }
 
   .day-tab.d1 { color: #7ec8f0; border-color: var(--day1); background: rgba(26,111,168,0.1); }
@@ -579,8 +584,6 @@
     header h1 { font-size: 20px; }
     header { padding: 28px 0 20px; }
     .search-inner { padding: 0 8px; }
-    .day-tabs { gap: 6px; }
-    .day-tab { padding: 7px 14px; font-size: 12px; }
   }
 </style>
 </head>
@@ -599,21 +602,18 @@
 
 <div class="container">
   <header>
-    <div class="header-badge">KISU · Short Track Speed Skating</div>
     <h1>제40회 전국남녀 종별종합<br>쇼트트랙 스피드스케이팅 선수권대회</h1>
     <div class="header-sub">대한빙상경기연맹 주관</div>
     <div class="date-chips">
-      <span class="date-chip d1">1일차 · 3월 20일 (금)</span>
-      <span class="date-chip d2">2일차 · 3월 21일 (토)</span>
-      <span class="date-chip d3">3일차 · 3월 22일 (일)</span>
+      <span class="date-chip d1">2026년 3월 20일(금) ~ 22일(일)</span>
     </div>
   </header>
 
   <div class="day-tabs">
-    <button class="day-tab all active" onclick="filterDay('all', this)">전체 보기</button>
-    <button class="day-tab d1" onclick="filterDay('day1', this)">1일차 (3/20 금)</button>
-    <button class="day-tab d2" onclick="filterDay('day2', this)">2일차 (3/21 토)</button>
-    <button class="day-tab d3" onclick="filterDay('day3', this)">3일차 (3/22 일)</button>
+    <button class="day-tab all active" onclick="filterDay('all', this)">전체</button>
+    <button class="day-tab d1" onclick="filterDay('day1', this)">1일차 · 1500M</button>
+    <button class="day-tab d2" onclick="filterDay('day2', this)">2일차 · 500M</button>
+    <button class="day-tab d3" onclick="filterDay('day3', this)">3일차 · 1000M</button>
   </div>
 
   <div id="schedule"></div>
