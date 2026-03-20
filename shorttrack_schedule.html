@@ -479,7 +479,18 @@
   .lane-violet { background: #9b5de5; }
   .lane-black { background: #3a3a4a; }
   .lane-orange { background: #f4823a; }
-  .lane-green { background: #2dc653; }
+  .athlete-name.seongnam {
+    color: #ffe066;
+    font-weight: 700;
+  }
+
+  .athlete-name.seongnam::after {
+    content: ' ✓';
+    font-size: 11px;
+    font-weight: 900;
+    color: #ffe066;
+    vertical-align: middle;
+  }
 
   /* Ice resurfacing row */
   .ice-break {
@@ -623,6 +634,14 @@
 // ============================================================
 // DATA
 // ============================================================
+// 성남팀 선수 명단
+const SEONGNAM_TEAM = new Set([
+  '한지아','이소윤','백준우','최동빈','최하빈','정예은','황서우','임정현',
+  '임채민','주시하','김윤후','박보민','용지윤','조수빈','서하원','유지수',
+  '이제인','지윤서','이세움','임지우','우서진','정지흔','한호','정현우',
+  '서범석','이도규','서휘민','김건희','이나을','김한별','최민정','김길리','이준서',
+]);
+
 const LANE_COLORS = {
   '흰W': { cls: 'lane-white', label: '흰(W)' },
   '노Y': { cls: 'lane-yellow', label: '노(Y)' },
@@ -1087,28 +1106,28 @@ const scheduleData = [
       time: '14:40', name: '남자대학부 1500M 준결승', meta: '3조 (T2+1)',
       heats: [
         { heatName: '준결승 1조', athletes: [
-          {lane:'흰W',name:'남윤창',org:'한국체육대학교'},
-          {lane:'노Y',name:'김원빈',org:'단국대학교'},
-          {lane:'빨R',name:'이정민',org:'경희대학교'},
-          {lane:'파B',name:'최성연',org:'한국체육대학교'},
-          {lane:'보V',name:'진동혁',org:'경희대학교'},
-          {lane:'검B',name:'이승훈',org:'한국체육대학교'},
+          {lane:'흰W',name:'남윤창',org:'한국체육대학교',record:'02:28.060'},
+          {lane:'빨R',name:'이정민',org:'경희대학교',record:'02:28.360'},
+          {lane:'보V',name:'진동혁',org:'경희대학교',record:'02:28.790'},
+          {lane:'검B',name:'이승훈',org:'한국체육대학교',record:'02:32.180'},
+          {lane:'노Y',name:'김원빈',org:'단국대학교',record:'02:32.400'},
+          {lane:'파B',name:'최성연',org:'한국체육대학교',record:'PEN(C3)'},
         ]},
         { heatName: '준결승 2조', athletes: [
-          {lane:'흰W',name:'이성민',org:'경희사이버대학교'},
-          {lane:'노Y',name:'이동현',org:'단국대학교'},
-          {lane:'빨R',name:'김민우',org:'단국대학교'},
-          {lane:'파B',name:'김상우',org:'한국체육대학교'},
-          {lane:'보V',name:'최원석',org:'서울디지털대학교'},
-          {lane:'검B',name:'구민승',org:'단국대학교'},
+          {lane:'검B',name:'구민승',org:'단국대학교',record:'02:34.910'},
+          {lane:'빨R',name:'김민우',org:'단국대학교',record:'02:35.120'},
+          {lane:'흰W',name:'이성민',org:'경희사이버대학교',record:'02:35.310'},
+          {lane:'파B',name:'김상우',org:'한국체육대학교',record:'02:35.480'},
+          {lane:'보V',name:'최원석',org:'서울디지털대학교',record:'02:35.650'},
+          {lane:'노Y',name:'이동현',org:'단국대학교',record:'02:35.830'},
         ]},
         { heatName: '준결승 3조', athletes: [
-          {lane:'흰W',name:'김민서',org:'한국체육대학교'},
-          {lane:'노Y',name:'이광호',org:'단국대학교'},
-          {lane:'빨R',name:'이규호',org:'한국체육대학교'},
-          {lane:'파B',name:'김기현',org:'단국대학교'},
-          {lane:'보V',name:'주재희',org:'한국체육대학교'},
-          {lane:'검B',name:'한병찬',org:'단국대학교'},
+          {lane:'빨R',name:'이규호',org:'한국체육대학교',record:'02:56.874'},
+          {lane:'노Y',name:'이광호',org:'단국대학교',record:'02:56.888'},
+          {lane:'파B',name:'김기현',org:'단국대학교',record:'02:57.100'},
+          {lane:'흰W',name:'김민서',org:'한국체육대학교',record:'02:57.256'},
+          {lane:'보V',name:'주재희',org:'한국체육대학교',record:'02:57.265'},
+          {lane:'검B',name:'한병찬',org:'단국대학교',record:'PEN(S3)'},
         ]},
       ]
     },
@@ -1116,30 +1135,30 @@ const scheduleData = [
       time: '14:40', name: '남자일반부 1500M 준결승', meta: '3조 (T2+1)',
       heats: [
         { heatName: '준결승 1조', athletes: [
-          {lane:'흰W',name:'박지원',org:'서울시청'},
-          {lane:'노Y',name:'서범석',org:'성남시청'},
-          {lane:'빨R',name:'정원식',org:'한국스포츠레저(스포츠토토)'},
-          {lane:'파B',name:'박건녕',org:'화성시청'},
-          {lane:'보V',name:'박장혁',org:'한국스포츠레저(스포츠토토)'},
-          {lane:'검B',name:'신동민',org:'화성시청'},
+          {lane:'흰W',name:'박지원',org:'서울시청',record:'02:24.327'},
+          {lane:'파B',name:'박건녕',org:'화성시청',record:'02:24.631'},
+          {lane:'노Y',name:'서범석',org:'성남시청',record:'02:24.947'},
+          {lane:'빨R',name:'정원식',org:'한국스포츠레저(스포츠토토)',record:'02:25.460'},
+          {lane:'보V',name:'박장혁',org:'한국스포츠레저(스포츠토토)',record:'02:27.324'},
+          {lane:'검B',name:'신동민',org:'화성시청',record:'02:30.686'},
         ]},
         { heatName: '준결승 2조', athletes: [
-          {lane:'흰W',name:'김한별',org:'성남시청'},
-          {lane:'노Y',name:'배서찬',org:'고양시청'},
-          {lane:'빨R',name:'홍인규',org:'서울시청'},
-          {lane:'파B',name:'김동욱',org:'한국스포츠레저(스포츠토토)'},
-          {lane:'보V',name:'심준철',org:'화성시청'},
-          {lane:'검B',name:'김태성',org:'화성시청'},
-          {lane:'주O',name:'이은재',org:'한국스포츠레저(스포츠토토)'},
+          {lane:'빨R',name:'홍인규',org:'서울시청',record:'02:28.522'},
+          {lane:'파B',name:'김동욱',org:'한국스포츠레저(스포츠토토)',record:'02:28.798'},
+          {lane:'흰W',name:'김한별',org:'성남시청',record:'02:43.768'},
+          {lane:'보V',name:'심준철',org:'화성시청',record:'03:16.943'},
+          {lane:'노Y',name:'배서찬',org:'고양시청',record:'03:30.758'},
+          {lane:'검B',name:'김태성',org:'화성시청',record:'PEN(C3)'},
+          {lane:'주O',name:'이은재',org:'한국스포츠레저(스포츠토토)',record:'PEN(S6)'},
         ]},
         { heatName: '준결승 3조', athletes: [
-          {lane:'흰W',name:'홍경환',org:'고양시청'},
-          {lane:'노Y',name:'이성우',org:'한국스포츠레저(스포츠토토)'},
-          {lane:'빨R',name:'장성우',org:'화성시청'},
-          {lane:'파B',name:'박노원',org:'서울시청'},
-          {lane:'보V',name:'윤선회',org:'전북연맹'},
-          {lane:'검B',name:'서이라',org:'화성시청'},
-          {lane:'주O',name:'이도규',org:'성남시청'},
+          {lane:'흰W',name:'홍경환',org:'고양시청',record:'02:21.342'},
+          {lane:'주O',name:'이도규',org:'성남시청',record:'02:22.146'},
+          {lane:'노Y',name:'이성우',org:'한국스포츠레저(스포츠토토)',record:'02:23.504'},
+          {lane:'보V',name:'윤선회',org:'전북연맹',record:'02:31.568'},
+          {lane:'검B',name:'서이라',org:'화성시청',record:'02:35.040'},
+          {lane:'빨R',name:'장성우',org:'화성시청',record:'DNF'},
+          {lane:'파B',name:'박노원',org:'서울시청',record:'PEN(C5)'},
         ]},
       ]
     },
@@ -1385,15 +1404,47 @@ const scheduleData = [
     {
       time: '17:30', name: '남자대학부 1500M 결승', meta: '결승 A/B',
       heats: [
-        { heatName: '결승B', athletes: [] },
-        { heatName: '결승A', athletes: [] },
+        { heatName: '결승B', athletes: [
+          {lane:'흰W',name:'진동혁',org:'경희대학교'},
+          {lane:'노Y',name:'이승훈',org:'한국체육대학교'},
+          {lane:'빨R',name:'이성민',org:'경희사이버대학교'},
+          {lane:'파B',name:'김상우',org:'한국체육대학교'},
+          {lane:'보V',name:'김기현',org:'단국대학교'},
+          {lane:'검B',name:'김민서',org:'한국체육대학교'},
+        ]},
+        { heatName: '결승A', athletes: [
+          {lane:'흰W',name:'남윤창',org:'한국체육대학교'},
+          {lane:'노Y',name:'이정민',org:'경희대학교'},
+          {lane:'빨R',name:'김원빈',org:'단국대학교'},
+          {lane:'파B',name:'구민승',org:'단국대학교'},
+          {lane:'보V',name:'김민우',org:'단국대학교'},
+          {lane:'검B',name:'이규호',org:'한국체육대학교'},
+          {lane:'주O',name:'이광호',org:'단국대학교'},
+          {lane:'초G',name:'주재희',org:'한국체육대학교'},
+        ]},
       ]
     },
     {
       time: '17:30', name: '남자일반부 1500M 결승', meta: '결승 A/B',
       heats: [
-        { heatName: '결승B', athletes: [] },
-        { heatName: '결승A', athletes: [] },
+        { heatName: '결승B', athletes: [
+          {lane:'흰W',name:'이성우',org:'한국스포츠레저(스포츠토토)'},
+          {lane:'노Y',name:'서범석',org:'성남시청'},
+          {lane:'빨R',name:'정원식',org:'한국스포츠레저(스포츠토토)'},
+          {lane:'파B',name:'윤선회',org:'전북연맹'},
+          {lane:'보V',name:'김한별',org:'성남시청'},
+          {lane:'검B',name:'심준철',org:'화성시청'},
+          {lane:'주O',name:'배서찬',org:'고양시청'},
+        ]},
+        { heatName: '결승A', athletes: [
+          {lane:'흰W',name:'홍경환',org:'고양시청'},
+          {lane:'노Y',name:'이도규',org:'성남시청'},
+          {lane:'빨R',name:'박지원',org:'서울시청'},
+          {lane:'파B',name:'박건녕',org:'화성시청'},
+          {lane:'보V',name:'홍인규',org:'서울시청'},
+          {lane:'검B',name:'김동욱',org:'한국스포츠레저(스포츠토토)'},
+          {lane:'주O',name:'장성우',org:'화성시청'},
+        ]},
       ]
     },
   ]
@@ -2588,7 +2639,7 @@ function renderHeats(heats, hasData) {
           : '';
         html += `<li class="heat-athlete" data-name="${a.name}">
           <span class="lane-dot ${lc.cls}" title="${lc.label}"></span>
-          <span class="athlete-name">${a.name}</span>
+          <span class="athlete-name${SEONGNAM_TEAM.has(a.name) ? ' seongnam' : ''}">${a.name}</span>
           <span class="athlete-org">${a.org}</span>
           ${recHtml}
         </li>`;
