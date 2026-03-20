@@ -269,15 +269,22 @@
     border: 1px solid var(--border);
     border-radius: 12px;
     overflow: hidden;
-    transition: box-shadow 0.2s;
+    transition: box-shadow 0.2s, border-color 0.2s;
   }
 
   .time-group:hover { box-shadow: 0 4px 20px rgba(0,201,255,0.06); }
 
-  .day-section.d2 .time-group { border-color: rgba(14,138,110,0.35); }
-  .day-section.d2 .time-group:hover { box-shadow: 0 4px 20px rgba(14,138,110,0.12); }
-  .day-section.d3 .time-group { border-color: rgba(124,63,168,0.35); }
-  .day-section.d3 .time-group:hover { box-shadow: 0 4px 20px rgba(124,63,168,0.12); }
+  .day-section.d1 .time-group, .time-group.d1 { border-color: rgba(26,111,168,0.5); }
+  .day-section.d1 .time-group:hover, .time-group.d1:hover { box-shadow: 0 4px 20px rgba(26,111,168,0.14); }
+  .day-section.d2 .time-group, .time-group.d2 { border-color: rgba(14,138,110,0.55); }
+  .day-section.d2 .time-group:hover, .time-group.d2:hover { box-shadow: 0 4px 20px rgba(14,138,110,0.15); }
+  .day-section.d3 .time-group, .time-group.d3 { border-color: rgba(124,63,168,0.55); }
+  .day-section.d3 .time-group:hover, .time-group.d3:hover { box-shadow: 0 4px 20px rgba(124,63,168,0.15); }
+
+  /* heat-card border also day-tinted */
+  .day-section.d1 .heat-card { border-color: rgba(26,111,168,0.3); }
+  .day-section.d2 .heat-card { border-color: rgba(14,138,110,0.3); }
+  .day-section.d3 .heat-card { border-color: rgba(124,63,168,0.3); }
 
   .time-group-header {
     display: flex;
@@ -2553,7 +2560,7 @@ function renderSchedule() {
       }
 
       const tg = document.createElement('div');
-      tg.className = 'time-group highlight-target';
+      tg.className = `time-group highlight-target ${day.day}`;
       tg.id = event._uid;
 
       const hasData = event.heats.some(h => h.athletes.length > 0);
