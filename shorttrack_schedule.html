@@ -54,57 +54,47 @@
   /* Header */
   header {
     text-align: center;
-    padding: 48px 0 36px;
+    padding: 22px 0 18px;
     border-bottom: 1px solid var(--border);
-    margin-bottom: 32px;
-  }
-
-  .header-badge {
-    display: inline-block;
-    background: linear-gradient(135deg, var(--accent), var(--blue));
-    color: white;
-    font-size: 11px;
-    font-weight: 700;
-    letter-spacing: 3px;
-    padding: 4px 14px;
-    border-radius: 20px;
-    margin-bottom: 16px;
-    text-transform: uppercase;
+    margin-bottom: 24px;
   }
 
   header h1 {
     font-family: 'Black Han Sans', sans-serif;
-    font-size: clamp(22px, 4vw, 36px);
+    font-size: clamp(18px, 3.5vw, 28px);
     letter-spacing: -0.5px;
     line-height: 1.3;
     background: linear-gradient(135deg, #fff 0%, var(--accent) 100%);
     -webkit-background-clip: text;
     -webkit-text-fill-color: transparent;
     background-clip: text;
-    margin-bottom: 12px;
-  }
-
-  .header-sub {
-    color: var(--muted);
-    font-size: 13px;
-    letter-spacing: 1px;
+    margin-bottom: 8px;
   }
 
   .date-chips {
     display: flex;
     justify-content: center;
     gap: 10px;
-    margin-top: 14px;
+    margin-top: 8px;
     flex-wrap: wrap;
   }
 
   .date-chip {
-    padding: 5px 18px;
+    padding: 3px 14px;
     border-radius: 20px;
-    font-size: 13px;
+    font-size: 12px;
     font-weight: 500;
     color: var(--muted);
     letter-spacing: 0.5px;
+  }
+
+  .cheer-text {
+    margin-top: 6px;
+    font-size: 11px;
+    color: #ffe066;
+    letter-spacing: 1px;
+    font-weight: 700;
+    opacity: 0.85;
   }
 
   /* Search */
@@ -283,6 +273,11 @@
   }
 
   .time-group:hover { box-shadow: 0 4px 20px rgba(0,201,255,0.06); }
+
+  .day-section.d2 .time-group { border-color: rgba(14,138,110,0.35); }
+  .day-section.d2 .time-group:hover { box-shadow: 0 4px 20px rgba(14,138,110,0.12); }
+  .day-section.d3 .time-group { border-color: rgba(124,63,168,0.35); }
+  .day-section.d3 .time-group:hover { box-shadow: 0 4px 20px rgba(124,63,168,0.12); }
 
   .time-group-header {
     display: flex;
@@ -614,16 +609,16 @@
 <div class="container">
   <header>
     <h1>제40회 전국남녀 종별종합<br>쇼트트랙 스피드스케이팅 선수권대회</h1>
-    <div class="header-sub">대한빙상경기연맹 주관</div>
     <div class="date-chips">
-      <span class="date-chip d1">2026년 3월 20일(금) ~ 22일(일)</span>
+      <span class="date-chip">2026년 3월 20일(금) ~ 22일(일)</span>
     </div>
+    <div class="cheer-text">🏆 탄천종합운동장 · 성남팀 화이팅!!</div>
   </header>
 
   <div class="day-tabs">
-    <button class="day-tab all active" onclick="filterDay('all', this)">전체</button>
+    <button class="day-tab all" onclick="filterDay('all', this)">전체</button>
     <button class="day-tab d1" onclick="filterDay('day1', this)">1일차 · 1500M</button>
-    <button class="day-tab d2" onclick="filterDay('day2', this)">2일차 · 500M</button>
+    <button class="day-tab d2 active" onclick="filterDay('day2', this)">2일차 · 500M</button>
     <button class="day-tab d3" onclick="filterDay('day3', this)">3일차 · 1000M</button>
   </div>
 
@@ -2767,6 +2762,8 @@ function closeSearch() {
 // INIT
 // ============================================================
 renderSchedule();
+// 2일차를 기본 선택
+filterDay('day2', document.querySelector('.day-tab.d2'));
 </script>
 </body>
 </html>
