@@ -97,6 +97,28 @@
     opacity: 0.85;
   }
 
+  .youtube-link {
+    margin-top: 6px;
+  }
+
+  .youtube-link a {
+    font-size: 12px;
+    color: #ff6b6b;
+    text-decoration: none;
+    font-weight: 600;
+    letter-spacing: 0.5px;
+    padding: 3px 10px;
+    border: 1px solid rgba(255,107,107,0.4);
+    border-radius: 12px;
+    transition: background 0.2s, color 0.2s;
+    display: inline-block;
+  }
+
+  .youtube-link a:hover {
+    background: rgba(255,107,107,0.15);
+    color: #ff9999;
+  }
+
   /* Search */
   .search-wrap {
     position: sticky;
@@ -620,13 +642,16 @@
       <span class="date-chip">2026년 3월 20일(금) ~ 22일(일)</span>
     </div>
     <div class="cheer-text">🏆 탄천종합운동장 · 성남팀 화이팅!!</div>
+    <div class="youtube-link">
+      <a href="https://youtube.com/playlist?list=PLmClaYLALQShKYrKeQnllC1wE2rb0m4eP&si=OkXyIfgyudyHqOqo" target="_blank" rel="noopener noreferrer">▶ 성남팀 대회영상 보기</a>
+    </div>
   </header>
 
   <div class="day-tabs">
     <button class="day-tab all" onclick="filterDay('all', this)">전체</button>
     <button class="day-tab d1" onclick="filterDay('day1', this)">1일차 · 1500M</button>
-    <button class="day-tab d2 active" onclick="filterDay('day2', this)">2일차 · 500M</button>
-    <button class="day-tab d3" onclick="filterDay('day3', this)">3일차 · 1000M</button>
+    <button class="day-tab d2" onclick="filterDay('day2', this)">2일차 · 500M</button>
+    <button class="day-tab d3 active" onclick="filterDay('day3', this)">3일차 · 1000M</button>
   </div>
 
   <div id="schedule"></div>
@@ -3196,8 +3221,8 @@ function closeSearch() {
 // INIT
 // ============================================================
 renderSchedule();
-// 2일차를 기본 선택
-filterDay('day2', document.querySelector('.day-tab.d2'));
+// 3일차를 기본 선택
+filterDay('day3', document.querySelector('.day-tab.d3'));
 </script>
 </body>
 </html>
