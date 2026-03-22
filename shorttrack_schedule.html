@@ -2705,28 +2705,6 @@ const scheduleData = [
       ]
     },
     {
-      time: '13:10', name: '남자초등 3,4학년 1000M 준준결승', meta: '3조 (T2+2)',
-      heats: [
-        { heatName: '준준결승 1조', athletes: [
-          {lane:'흰W',name:'이강우',org:'용인둔전초등학교'},
-          {lane:'노Y',name:'안준현',org:'개일초등학교'},
-          {lane:'빨R',name:'진은성',org:'서울구암초등학교'},
-        ]},
-        { heatName: '준준결승 2조', athletes: [
-          {lane:'흰W',name:'김민준',org:'한별초등학교'},
-          {lane:'노Y',name:'김태윤',org:'성남송현초등학교'},
-          {lane:'빨R',name:'백준우',org:'용인한얼초등학교'},
-          {lane:'파B',name:'조준형',org:'안양부안초등학교'},
-        ]},
-        { heatName: '준준결승 3조', athletes: [
-          {lane:'흰W',name:'전이준',org:'서울금북초등학교'},
-          {lane:'노Y',name:'전장현',org:'성라초등학교'},
-          {lane:'빨R',name:'기건우',org:'부천일신초등학교'},
-          {lane:'파B',name:'박건우',org:'고양화수초등학교'},
-        ]},
-      ]
-    },
-    {
       time: '13:10', name: '남자초등 5,6학년 1000M 준준결승', meta: '4조 (T2+2)',
       heats: [
         { heatName: '준준결승 1조', athletes: [
@@ -2871,7 +2849,22 @@ const scheduleData = [
     { time: '15:46', name: '여자고등부 1000M 준결승', meta: '2조 (T2+1)', heats: [{heatName:'준결승 1조',athletes:[]},{heatName:'준결승 2조',athletes:[]}] },
     { time: '15:46', name: '여자대학부 1000M 준결승', meta: '2조 (T2+1)', heats: [{heatName:'준결승 1조',athletes:[]},{heatName:'준결승 2조',athletes:[]}] },
     { time: '15:46', name: '여자일반부 1000M 준결승', meta: '2조 (T2+1)', heats: [{heatName:'준결승 1조',athletes:[]},{heatName:'준결승 2조',athletes:[]}] },
-    { time: '16:20', name: '남자초등 3,4학년 1000M 준결승', meta: '2조 (T2+1)', heats: [{heatName:'준결승 1조',athletes:[]},{heatName:'준결승 2조',athletes:[]}] },
+    { time: '16:20', name: '남자초등 3,4학년 1000M 준결승', meta: '2조 (T2+1)', heats: [
+        { heatName: '준결승 1조', athletes: [
+          {lane:'흰W',name:'이강우',org:'용인둔전초등학교'},
+          {lane:'노Y',name:'전장현',org:'성라초등학교'},
+          {lane:'빨R',name:'김태윤',org:'성남송현초등학교'},
+          {lane:'파B',name:'기건우',org:'부천일신초등학교'},
+          {lane:'보V',name:'박건우',org:'고양화수초등학교'},
+        ]},
+        { heatName: '준결승 2조', athletes: [
+          {lane:'흰W',name:'김민준',org:'한별초등학교'},
+          {lane:'노Y',name:'전이준',org:'서울금북초등학교'},
+          {lane:'빨R',name:'안준현',org:'개일초등학교'},
+          {lane:'파B',name:'백준우',org:'용인한얼초등학교'},
+          {lane:'보V',name:'조준형',org:'안양부안초등학교'},
+        ]},
+      ]},
     { time: '16:20', name: '남자초등 5,6학년 1000M 준결승', meta: '2조 (T2+1)', heats: [{heatName:'준결승 1조',athletes:[]},{heatName:'준결승 2조',athletes:[]}] },
     { time: '16:20', name: '남자중학부 1000M 준결승', meta: '2조 (T2+1)', heats: [{heatName:'준결승 1조',athletes:[]},{heatName:'준결승 2조',athletes:[]}] },
     { time: '16:54', name: '남자고등부 1000M 준결승', meta: '2조 (T2+1)', heats: [{heatName:'준결승 1조',athletes:[]},{heatName:'준결승 2조',athletes:[]}] },
@@ -2951,7 +2944,7 @@ const EVENT_NUMS = {
     '여자초등 3,4학년 1000M 준준결승':6, '여자초등 5,6학년 1000M 준준결승':7,
     '여자중학부 1000M 준준결승':8, '여자고등부 1000M 준준결승':9,
     '여자대학부 1000M 준준결승':10, '여자일반부 1000M 준준결승':11,
-    '남자초등 3,4학년 1000M 준준결승':12, '남자초등 5,6학년 1000M 준준결승':13,
+    '남자초등 5,6학년 1000M 준준결승':13,
     '남자중학부 1000M 준준결승':14, '남자고등부 1000M 준준결승':15,
     '남자대학부 1000M 준준결승':16, '남자일반부 1000M 준준결승':17,
     '여자초등 3,4학년 1000M 준결승':18, '여자초등 5,6학년 1000M 준결승':19,
