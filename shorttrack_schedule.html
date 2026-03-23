@@ -605,11 +605,172 @@
   }
   .ctrl-btn:hover { background: rgba(255,255,255,0.1); color: var(--text); }
 
+  .ctrl-btn.seongnam-btn {
+    border-color: rgba(255,224,102,0.4);
+    color: #ffe066;
+    background: rgba(255,224,102,0.06);
+    margin-left: auto;
+  }
+  .ctrl-btn.seongnam-btn:hover { background: rgba(255,224,102,0.15); color: #ffe066; }
+  .ctrl-btn.seongnam-btn.active {
+    background: rgba(255,224,102,0.22);
+    border-color: #ffe066;
+    color: #ffe066;
+    box-shadow: 0 0 8px rgba(255,224,102,0.25);
+  }
+
   /* Scrollbar */
   ::-webkit-scrollbar { width: 6px; height: 6px; }
   ::-webkit-scrollbar-track { background: var(--deep); }
   ::-webkit-scrollbar-thumb { background: var(--border); border-radius: 3px; }
   ::-webkit-scrollbar-thumb:hover { background: var(--blue); }
+
+  /* Medal Summary */
+  .medal-section {
+    margin: 20px 0 28px;
+    display: flex;
+    flex-direction: column;
+    gap: 16px;
+  }
+
+  .medal-cards {
+    display: flex;
+    gap: 10px;
+    justify-content: center;
+  }
+
+  .medal-card {
+    flex: 1;
+    max-width: 180px;
+    background: var(--card);
+    border: 1px solid var(--border);
+    border-radius: 14px;
+    padding: 16px 10px 14px;
+    text-align: center;
+    display: flex;
+    flex-direction: column;
+    align-items: center;
+    gap: 6px;
+  }
+
+  .medal-card.gold   { border-color: rgba(245,200,66,0.5); background: rgba(245,200,66,0.07); }
+  .medal-card.silver { border-color: rgba(184,196,204,0.5); background: rgba(184,196,204,0.07); }
+  .medal-card.bronze { border-color: rgba(205,127,50,0.5); background: rgba(205,127,50,0.07); }
+
+  .medal-icon { font-size: 28px; line-height: 1; }
+
+  .medal-count {
+    font-family: 'Black Han Sans', sans-serif;
+    font-size: 36px;
+    line-height: 1;
+  }
+  .medal-card.gold   .medal-count { color: #f5c842; }
+  .medal-card.silver .medal-count { color: #b8c4cc; }
+  .medal-card.bronze .medal-count { color: #cd7f32; }
+
+  .medal-label {
+    font-size: 11px;
+    font-weight: 600;
+    color: var(--muted);
+    letter-spacing: 0.5px;
+  }
+
+  /* Player medal table */
+  .player-medal-wrap {
+    background: var(--card);
+    border: 1px solid var(--border);
+    border-radius: 14px;
+    overflow: hidden;
+  }
+
+  .player-medal-title {
+    padding: 12px 16px;
+    font-size: 13px;
+    font-weight: 700;
+    color: var(--accent);
+    border-bottom: 1px solid var(--border);
+    letter-spacing: 0.5px;
+  }
+
+  .player-medal-table {
+    width: 100%;
+    border-collapse: collapse;
+  }
+
+  .player-medal-table thead tr {
+    background: rgba(255,255,255,0.03);
+  }
+
+  .player-medal-table th {
+    padding: 8px 12px;
+    font-size: 11px;
+    font-weight: 600;
+    color: var(--muted);
+    text-align: left;
+    border-bottom: 1px solid var(--border);
+    letter-spacing: 0.5px;
+  }
+
+  .player-medal-table td {
+    padding: 9px 12px;
+    font-size: 13px;
+    border-bottom: 1px solid rgba(30,63,98,0.4);
+    vertical-align: middle;
+  }
+
+  .player-medal-table tr:last-child td { border-bottom: none; }
+  .player-medal-table tr:hover td { background: rgba(255,255,255,0.03); }
+
+  .pmt-name {
+    font-weight: 700;
+    color: #ffe066;
+    white-space: nowrap;
+  }
+
+  .pmt-org {
+    font-size: 11px;
+    color: var(--muted);
+    white-space: nowrap;
+  }
+
+  .pmt-medals {
+    display: flex;
+    gap: 2px;
+    flex-wrap: wrap;
+    width: 58px;
+    flex-shrink: 0;
+  }
+
+  .medal-pip {
+    width: 16px; height: 16px;
+    border-radius: 50%;
+    font-size: 8px;
+    display: flex; align-items: center; justify-content: center;
+    font-weight: 900;
+    flex-shrink: 0;
+  }
+  .medal-pip.g { background: rgba(245,200,66,0.25); color: #f5c842; border: 1.5px solid rgba(245,200,66,0.5); }
+  .medal-pip.s { background: rgba(184,196,204,0.2); color: #b8c4cc; border: 1.5px solid rgba(184,196,204,0.4); }
+  .medal-pip.b { background: rgba(205,127,50,0.2); color: #cd7f32; border: 1.5px solid rgba(205,127,50,0.4); }
+
+  .pmt-detail {
+    font-size: 11px;
+    color: var(--muted);
+    line-height: 1.7;
+  }
+
+  .pmt-detail-item { white-space: nowrap; }
+  .pmt-detail-item .rec { color: var(--accent); font-weight: 600; margin-left: 4px; }
+  .pmt-detail-item .mg { color: #f5c842; }
+  .pmt-detail-item .ms { color: #b8c4cc; }
+  .pmt-detail-item .mb { color: #cd7f32; }
+
+  @media (max-width: 600px) {
+    .medal-card { padding: 12px 6px 10px; }
+    .medal-count { font-size: 28px; }
+    .player-medal-table th, .player-medal-table td { padding: 7px 8px; }
+    .pmt-detail { font-size: 10px; }
+  }
 
   /* hidden */
   .hidden { display: none !important; }
@@ -645,13 +806,48 @@
     <div class="youtube-link">
       <a href="https://youtube.com/playlist?list=PLmClaYLALQShKYrKeQnllC1wE2rb0m4eP&si=OkXyIfgyudyHqOqo" target="_blank" rel="noopener noreferrer">▶ 성남팀 대회영상 보기</a>
     </div>
+
   </header>
 
+  <!-- 메달 집계 -->
+  <div class="medal-section" id="medalSection">
+    <div class="medal-cards">
+      <div class="medal-card gold">
+        <div class="medal-icon">🥇</div>
+        <div class="medal-count" id="cntGold">-</div>
+        <div class="medal-label">금메달</div>
+      </div>
+      <div class="medal-card silver">
+        <div class="medal-icon">🥈</div>
+        <div class="medal-count" id="cntSilver">-</div>
+        <div class="medal-label">은메달</div>
+      </div>
+      <div class="medal-card bronze">
+        <div class="medal-icon">🥉</div>
+        <div class="medal-count" id="cntBronze">-</div>
+        <div class="medal-label">동메달</div>
+      </div>
+    </div>
+    <div class="player-medal-wrap">
+      <div class="player-medal-title">🏅 선수별 메달 집계</div>
+      <table class="player-medal-table">
+        <thead>
+          <tr>
+            <th style="width:80px">선수</th>
+            <th style="width:62px">메달</th>
+            <th>수상 종목 / 기록</th>
+          </tr>
+        </thead>
+        <tbody id="playerMedalBody"></tbody>
+      </table>
+    </div>
+  </div>
+
   <div class="day-tabs">
-    <button class="day-tab all" onclick="filterDay('all', this)">전체</button>
+    <button class="day-tab all active" onclick="filterDay('all', this)">전체</button>
     <button class="day-tab d1" onclick="filterDay('day1', this)">1일차 · 1500M</button>
     <button class="day-tab d2" onclick="filterDay('day2', this)">2일차 · 500M</button>
-    <button class="day-tab d3 active" onclick="filterDay('day3', this)">3일차 · 1000M</button>
+    <button class="day-tab d3" onclick="filterDay('day3', this)">3일차 · 1000M</button>
   </div>
 
   <div id="schedule"></div>
@@ -3400,6 +3596,7 @@ function renderSchedule() {
       <div class="section-controls">
         <button class="ctrl-btn" onclick="toggleAll('${day.day}', true)">▼ 모두 펼치기</button>
         <button class="ctrl-btn" onclick="toggleAll('${day.day}', false)">▲ 모두 접기</button>
+        <button class="ctrl-btn seongnam-btn" id="seongnam-btn-${day.day}" onclick="toggleSeongnamOnly('${day.day}', this)">⭐ 성남팀 only</button>
       </div>
     `;
 
@@ -3521,6 +3718,39 @@ function toggleAll(dayId, open) {
 }
 
 // ============================================================
+// SEONGNAM ONLY FILTER
+// ============================================================
+const seongnamOnlyState = {}; // dayId → boolean
+
+function toggleSeongnamOnly(dayId, btn) {
+  seongnamOnlyState[dayId] = !seongnamOnlyState[dayId];
+  const isOn = seongnamOnlyState[dayId];
+  btn.classList.toggle('active', isOn);
+  btn.textContent = isOn ? '⭐ 성남팀 only ON' : '⭐ 성남팀 only';
+  applySeongnamFilter(dayId, isOn);
+}
+
+function applySeongnamFilter(dayId, isOn) {
+  const section = document.getElementById(dayId);
+  if (!section) return;
+
+  section.querySelectorAll('.time-group').forEach(tg => {
+    if (!isOn) {
+      tg.classList.remove('hidden');
+      return;
+    }
+    // 이 경기에 성남팀 선수가 있는지 확인
+    const hasSeongnam = Array.from(tg.querySelectorAll('.athlete-name.seongnam')).length > 0;
+    if (hasSeongnam) {
+      tg.classList.remove('hidden');
+      tg.classList.add('open'); // 자동 펼치기
+    } else {
+      tg.classList.add('hidden');
+    }
+  });
+}
+
+// ============================================================
 // DAY FILTER
 // ============================================================
 function filterDay(day, btn) {
@@ -3530,6 +3760,8 @@ function filterDay(day, btn) {
   document.querySelectorAll('.day-section').forEach(s => {
     if (day === 'all' || s.id === day) {
       s.classList.remove('hidden');
+      // 성남팀 only 상태 유지 재적용
+      if (seongnamOnlyState[s.id]) applySeongnamFilter(s.id, true);
     } else {
       s.classList.add('hidden');
     }
@@ -3624,11 +3856,144 @@ function closeSearch() {
 }
 
 // ============================================================
-// INIT
+// MEDAL SUMMARY
 // ============================================================
+const MEDAL_SUMMARY = [
+  {
+    name: '우서진', org: '서현중학교',
+    medals: [
+      { type: 'G', event: '[1500M] 남자중학부', record: '02:27.593' },
+      { type: 'G', event: '[1000M] 남자중학부', record: '01:32.491' },
+    ]
+  },
+  {
+    name: '박보민', org: '서현중학교',
+    medals: [
+      { type: 'G', event: '[500M] 여자중학부',  record: '00:45.812' },
+      { type: 'G', event: '[1000M] 여자중학부', record: '01:37.748' },
+    ]
+  },
+  {
+    name: '백준우', org: '용인한얼초등학교',
+    medals: [
+      { type: 'S', event: '[500M] 남자초등3,4학년',  record: '00:49.954' },
+      { type: 'S', event: '[1000M] 남자초등3,4학년', record: '01:44.530' },
+      { type: 'B', event: '[1500M] 남자초등3,4학년', record: '02:56.632' },
+    ]
+  },
+  {
+    name: '지윤서', org: '경희대학교',
+    medals: [
+      { type: 'S', event: '[1500M] 여자대학부', record: '02:44.765' },
+      { type: 'S', event: '[1000M] 여자대학부', record: '01:38.394' },
+    ]
+  },
+  {
+    name: '김윤후', org: '인천논현중학교',
+    medals: [
+      { type: 'S', event: '[1000M] 남자중학부', record: '01:33.116' },
+      { type: 'B', event: '[500M] 남자중학부',  record: '00:44.292' },
+    ]
+  },
+  {
+    name: '서휘민', org: '성남시청',
+    medals: [
+      { type: 'S', event: '[500M] 여자일반부', record: '00:45.194' },
+    ]
+  },
+  {
+    name: '이소윤', org: '죽전초등학교',
+    medals: [
+      { type: 'S', event: '[1000M] 여초5,6학년', record: '01:38.024' },
+    ]
+  },
+  {
+    name: '임채민', org: '부림중학교',
+    medals: [
+      { type: 'B', event: '[1500M] 여자중학부', record: '02:57.813' },
+      { type: 'B', event: '[500M] 여자중학부',  record: '00:46.148' },
+    ]
+  },
+  {
+    name: '주시하', org: '서현고등학교',
+    medals: [
+      { type: 'B', event: '[1500M] 여자고등부', record: '02:31.313' },
+    ]
+  },
+  {
+    name: '한지아', org: '이매초등학교',
+    medals: [
+      { type: 'B', event: '[1000M] 여초3,4학년', record: '01:45.333' },
+    ]
+  },
+  {
+    name: '정지흔', org: '배명중학교',
+    medals: [
+      { type: 'B', event: '[1000M] 남자중학부', record: '01:33.302' },
+    ]
+  },
+  {
+    name: '김건희', org: '성남시청',
+    medals: [
+      { type: 'B', event: '[500M] 여자일반부', record: '00:45.272' },
+    ]
+  },
+];
+
+function renderMedalSummary() {
+  // 총 메달 집계
+  let gold = 0, silver = 0, bronze = 0;
+  MEDAL_SUMMARY.forEach(p => {
+    p.medals.forEach(m => {
+      if (m.type === 'G') gold++;
+      else if (m.type === 'S') silver++;
+      else if (m.type === 'B') bronze++;
+    });
+  });
+  document.getElementById('cntGold').textContent   = gold;
+  document.getElementById('cntSilver').textContent = silver;
+  document.getElementById('cntBronze').textContent = bronze;
+
+  // 선수별 테이블
+  const tbody = document.getElementById('playerMedalBody');
+  tbody.innerHTML = '';
+
+  // 금 많은 순 → 은 → 동 → 이름 정렬
+  const sorted = [...MEDAL_SUMMARY].sort((a, b) => {
+    const score = p => p.medals.filter(m=>m.type==='G').length * 100
+                     + p.medals.filter(m=>m.type==='S').length * 10
+                     + p.medals.filter(m=>m.type==='B').length;
+    return score(b) - score(a);
+  });
+
+  sorted.forEach(p => {
+    const pipsHtml = p.medals.map(m =>
+      `<span class="medal-pip ${m.type.toLowerCase()}">${m.type==='G'?'金':m.type==='S'?'銀':'銅'}</span>`
+    ).join('');
+
+    const detailHtml = p.medals.map(m => {
+      const cls = m.type==='G'?'mg':m.type==='S'?'ms':'mb';
+      const medal = m.type==='G'?'🥇':m.type==='S'?'🥈':'🥉';
+      return `<div class="pmt-detail-item"><span class="${cls}">${medal} ${m.event}</span>${m.record?`<span class="rec">${m.record}</span>`:''}</div>`;
+    }).join('');
+
+    tbody.innerHTML += `
+      <tr>
+        <td>
+          <div class="pmt-name">${p.name}</div>
+          <div class="pmt-org">${p.org}</div>
+        </td>
+        <td style="white-space:nowrap; width:62px; vertical-align:middle"><div class="pmt-medals">${pipsHtml}</div></td>
+        <td><div class="pmt-detail">${detailHtml}</div></td>
+      </tr>`;
+  });
+}
+
+
 renderSchedule();
-// 3일차를 기본 선택
-filterDay('day3', document.querySelector('.day-tab.d3'));
+// 전체를 기본 선택
+filterDay('all', document.querySelector('.day-tab.all'));
+renderMedalSummary();
 </script>
 </body>
 </html>
