@@ -17,11 +17,12 @@ import argparse
 # ─────────────────────────────────────────────
 # 로깅 설정
 # ─────────────────────────────────────────────
+import sys
 logging.basicConfig(
     level=logging.INFO,
     format="%(asctime)s [%(levelname)s] %(message)s",
     handlers=[
-        logging.StreamHandler(),
+        logging.StreamHandler(stream=open(sys.stdout.fileno(), mode='w', encoding='utf-8', closefd=False)),
         logging.FileHandler("scraping.log", encoding="utf-8"),
     ],
 )
