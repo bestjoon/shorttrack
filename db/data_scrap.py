@@ -446,11 +446,62 @@ def get_player_detail(
 # ─────────────────────────────────────────────
 # DB 저장 함수
 # ─────────────────────────────────────────────
-def save_player(conn: sqlite3.Connection, player: dict) -> bool:
+def save_player(conn: sqlite3.Connection, player: dict) -> str:
+    """
+    선수 마스터 정보를 저장한다.
+
+    Returns:
+        "new"     : 신규 선수로 INSERT됨
+        "updated" : 기존 선수이나 last_reg_year가 더 최신이어서 UPDATE됨
+        "skipped" : 기존 선수이고 last_reg_year가 같거나 이전이어서 skip됨
+    """
     cur = conn.cursor()
-    cur.execute("SELECT player_id FROM player WHERE player_id = ?", (player["player_id"],))
-    if cur.fetchone():
-        return False
+    cur.execute(
+        "SELECT player_id, last_reg_year FROM player WHERE player_id = ?",
+        (player["player_id"],)
+    )
+    existing = cur.fetchone()
+
+    if existing:
+        # 기존 선수 존재 - last_reg_year 비교
+        db_last_reg_year = existing[1] or ""
+        new_last_reg_year = player.get("last_reg_year", "")
+
+        # 스크랩된 정보의 last_reg_year가 더 최신인 경우 UPDATE
+        if new_last_reg_year and new_last_reg_year > db_last_reg_year:
+            cur.execute(
+                """
+                UPDATE player
+                SET name = ?,
+                    gender = ?,
+                    birth_year = ?,
+                    kind_nm = ?,
+                    team_nm = ?,
+                    team_cd = ?,
+                    sido = ?,
+                    last_reg_year = ?,
+                    reg_type = ?,
+                    updated_at = datetime('now','localtime')
+                WHERE player_id = ?
+                """,
+                (
+                    player.get("name", ""),
+                    player.get("gender", ""),
+                    player.get("birth_year", ""),
+                    player.get("kind_nm", ""),
+                    player.get("team_nm", ""),
+                    player.get("team_cd", ""),
+                    player.get("sido", ""),
+                    new_last_reg_year,
+                    player.get("reg_type", ""),
+                    player["player_id"],
+                ),
+            )
+            conn.commit()
+            return "updated"
+        return "skipped"
+
+    # 신규 선수 INSERT
     cur.execute(
         """
         INSERT INTO player
@@ -472,7 +523,7 @@ def save_player(conn: sqlite3.Connection, player: dict) -> bool:
         ),
     )
     conn.commit()
-    return True
+    return "new"
 
 
 def save_history(conn: sqlite3.Connection, history_rows: list[dict]) -> int:
@@ -566,9 +617,10 @@ def collect(
 
     각 종별+종목 조합에 대해:
       1) 라운드 목록을 우선순위(예선→준준결승→준결승→결승B→결승A→결승) 순으로 정렬
-      2) 라운드를 순차 시도하며 선수 수 > 0인 첫 라운드를 채택  ← 핵심 변경
+      2) 라운드를 순차 시도하며 선수 수 > 0인 첫 라운드를 채택
       3) 채택된 라운드의 선수 각각에 대해 상세정보 조회 후 DB 저장
-      4) 이미 수집한 선수(player_id 중복)는 skip
+      4) 신규 선수는 INSERT, 기존 선수는 last_reg_year 비교 후 UPDATE 또는 skip
+      5) 같은 대회 내 중복 처리된 선수는 skip (seen_player_ids)
     """
     conn = init_db(db_path)
     session = make_session()
@@ -580,15 +632,12 @@ def collect(
     event_list = get_event_list(session, class_cd, to_cd)
     time.sleep(delay)
 
-    # DB에 이미 있는 선수 ID 로드
+    # 현재 세션에서 처리한 선수 ID 추적 (같은 대회 내 중복 처리 방지)
     seen_player_ids: set[str] = set()
-    cur = conn.cursor()
-    cur.execute("SELECT player_id FROM player")
-    for (pid,) in cur.fetchall():
-        seen_player_ids.add(pid)
 
-    total_new  = 0
-    total_skip = 0
+    total_new     = 0
+    total_updated = 0
+    total_skip    = 0
 
     for event in event_list:
         kind_nm  = event["kind_nm"]
@@ -628,6 +677,7 @@ def collect(
         logger.info(f"  채택 라운드: {rh_nm} | 선수 {len(players)}명")
 
         new_count     = 0
+        updated_count = 0
         skipped_count = 0
 
         for p in players:
@@ -650,17 +700,24 @@ def collect(
                 logger.warning(f"  상세정보 조회 실패: {pid}")
                 continue
 
-            is_new = save_player(conn, detail["player"])
+            save_result = save_player(conn, detail["player"])
 
             if detail["history"]:
                 save_history(conn, detail["history"])
 
-            if is_new:
+            if save_result == "new":
                 new_count += 1
                 total_new += 1
                 logger.info(
                     f"  NEW: {detail['player'].get('name','?')} ({pid}) "
                     f"이력 {len(detail['history'])}건"
+                )
+            elif save_result == "updated":
+                updated_count += 1
+                total_updated += 1
+                logger.info(
+                    f"  UPDATED: {detail['player'].get('name','?')} ({pid}) "
+                    f"last_reg_year={detail['player'].get('last_reg_year','?')}"
                 )
             else:
                 skipped_count += 1
@@ -671,10 +728,10 @@ def collect(
             kind_nm, event_nm, rh_nm,
             len(players), new_count, skipped_count,
         )
-        logger.info(f"  완료: 신규={new_count}, 중복skip={skipped_count}")
+        logger.info(f"  완료: 신규={new_count}, 갱신={updated_count}, 중복skip={skipped_count}")
 
     logger.info(
-        f"\n===== 수집 완료 ===== 총 신규={total_new}, 총 skip={total_skip}"
+        f"\n===== 수집 완료 ===== 총 신규={total_new}, 총 갱신={total_updated}, 총 skip={total_skip}"
     )
     conn.close()
 
