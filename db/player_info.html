@@ -456,6 +456,10 @@ body {
 }
 .result-table tr:last-child td { border-bottom:none; }
 .result-table tr:hover td { background:rgba(255,255,255,0.02); }
+.result-table tr.clickable { cursor:pointer; }
+.result-table tr.clickable:hover td { background:rgba(34,211,238,0.06); }
+.result-table tr.clickable:active td { background:rgba(34,211,238,0.12); }
+
 .result-table td.record-val {
   font-weight:900; color:var(--cyan); font-family:'Rajdhani',sans-serif; font-size:0.9rem;
 }
@@ -1648,7 +1652,10 @@ function renderResultTable(rows) {
       ? `<span class="round-tag ${roundClass}">${roundShort}</span>`
       : `<span style="color:var(--muted);font-size:0.68rem">″</span>`;
 
-    html += `<tr>
+    const pid = h.player_id||'';
+    const hasPlayer = pid && playerMap[pid];
+
+    html += `<tr${hasPlayer ? ` class="clickable" onclick="openPlayerDetail('${pid}')"` : ''}>
       <td>${roundDisplay}</td>
       <td style="text-align:center">${rankCell}</td>
       <td style="font-weight:700;color:var(--cyan)">${h._playerName||'–'}</td>
