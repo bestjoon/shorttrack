@@ -1,0 +1,1667 @@
+<!DOCTYPE html>
+<html lang="ko">
+<head>
+<meta charset="UTF-8">
+<meta name="viewport" content="width=device-width, initial-scale=1.0">
+<title>⛸ 쇼트트랙 선수 기록 뷰어</title>
+<link rel="preconnect" href="https://fonts.googleapis.com">
+<link href="https://fonts.googleapis.com/css2?family=Noto+Sans+KR:wght@300;400;500;700;900&family=Space+Mono:wght@400;700&display=swap" rel="stylesheet">
+<style>
+:root {
+  --ice: #e8f4fd;
+  --ice-mid: #b8d9f0;
+  --blue-deep: #0a2a5e;
+  --blue-main: #1a4fa8;
+  --blue-bright: #2575fc;
+  --blue-glow: #4fa3ff;
+  --accent-cyan: #00d4ff;
+  --accent-gold: #ffd34e;
+  --surface: #ffffff;
+  --surface-2: #f4f8fe;
+  --surface-3: #eaf2fb;
+  --border: #d0e3f4;
+  --border-soft: #e8f0f8;
+  --text-primary: #0d1b3e;
+  --text-secondary: #3a5580;
+  --text-muted: #7a99c0;
+  --red: #e53935;
+  --green: #00897b;
+  --shadow-sm: 0 1px 4px rgba(10,42,94,0.08);
+  --shadow-md: 0 4px 20px rgba(10,42,94,0.12);
+  --shadow-lg: 0 12px 40px rgba(10,42,94,0.18);
+  --radius: 12px;
+  --radius-sm: 8px;
+}
+
+* { box-sizing: border-box; margin: 0; padding: 0; }
+
+body {
+  font-family: 'Noto Sans KR', sans-serif;
+  background: var(--ice);
+  color: var(--text-primary);
+  min-height: 100vh;
+}
+
+/* ── 배경 패턴 ── */
+body::before {
+  content: '';
+  position: fixed;
+  inset: 0;
+  background:
+    radial-gradient(ellipse 80% 50% at 50% -10%, rgba(37,117,252,0.12) 0%, transparent 70%),
+    radial-gradient(ellipse 40% 30% at 90% 80%, rgba(0,212,255,0.06) 0%, transparent 60%);
+  pointer-events: none;
+  z-index: 0;
+}
+
+/* ══════════ 헤더 ══════════ */
+header {
+  position: sticky;
+  top: 0;
+  z-index: 100;
+  background: linear-gradient(135deg, var(--blue-deep) 0%, var(--blue-main) 60%, #1e5fb8 100%);
+  padding: 0 28px;
+  display: flex;
+  align-items: center;
+  gap: 16px;
+  min-height: 64px;
+  box-shadow: var(--shadow-lg);
+  border-bottom: 1px solid rgba(79,163,255,0.3);
+}
+
+.header-brand {
+  display: flex;
+  align-items: center;
+  gap: 12px;
+  flex-shrink: 0;
+}
+
+.header-brand .logo-icon {
+  font-size: 1.8rem;
+  filter: drop-shadow(0 0 8px rgba(0,212,255,0.7));
+  animation: skate 4s ease-in-out infinite;
+}
+
+@keyframes skate {
+  0%, 100% { transform: rotate(-5deg); }
+  50% { transform: rotate(5deg); }
+}
+
+.header-brand h1 {
+  font-size: 1.1rem;
+  font-weight: 700;
+  color: #fff;
+  letter-spacing: -0.3px;
+}
+
+.header-brand .sub {
+  font-size: 0.72rem;
+  color: rgba(255,255,255,0.6);
+  margin-top: 1px;
+  font-family: 'Space Mono', monospace;
+}
+
+.header-spacer { flex: 1; }
+
+.file-status-bar {
+  display: flex;
+  align-items: center;
+  gap: 16px;
+}
+
+.data-badge {
+  display: flex;
+  align-items: center;
+  gap: 6px;
+  background: rgba(255,255,255,0.1);
+  border: 1px solid rgba(255,255,255,0.2);
+  border-radius: 20px;
+  padding: 5px 14px;
+  font-size: 0.78rem;
+  color: rgba(255,255,255,0.85);
+  font-family: 'Space Mono', monospace;
+}
+
+.data-badge .dot {
+  width: 6px; height: 6px;
+  border-radius: 50%;
+  background: var(--accent-gold);
+  box-shadow: 0 0 6px var(--accent-gold);
+}
+
+.data-badge.loaded .dot {
+  background: #4cfc7a;
+  box-shadow: 0 0 6px #4cfc7a;
+  animation: pulse 2s infinite;
+}
+
+@keyframes pulse {
+  0%, 100% { opacity: 1; }
+  50% { opacity: 0.4; }
+}
+
+.load-btn {
+  display: flex;
+  align-items: center;
+  gap: 7px;
+  background: var(--accent-cyan);
+  color: var(--blue-deep);
+  border: none;
+  border-radius: 24px;
+  padding: 8px 20px;
+  font-size: 0.85rem;
+  font-weight: 700;
+  cursor: pointer;
+  font-family: 'Noto Sans KR', sans-serif;
+  transition: all 0.2s;
+  box-shadow: 0 0 16px rgba(0,212,255,0.35);
+  white-space: nowrap;
+  flex-shrink: 0;
+}
+
+.load-btn:hover {
+  background: #fff;
+  box-shadow: 0 0 24px rgba(0,212,255,0.5);
+  transform: translateY(-1px);
+}
+
+#jsonFileInput { display: none; }
+
+/* ══════════ 탭 네비게이션 ══════════ */
+.tab-nav {
+  background: var(--surface);
+  border-bottom: 1px solid var(--border);
+  padding: 0 28px;
+  display: flex;
+  gap: 4px;
+  box-shadow: var(--shadow-sm);
+  position: relative;
+  z-index: 50;
+}
+
+.tab-btn {
+  display: flex;
+  align-items: center;
+  gap: 7px;
+  padding: 14px 20px;
+  border: none;
+  background: none;
+  font-family: 'Noto Sans KR', sans-serif;
+  font-size: 0.9rem;
+  font-weight: 500;
+  color: var(--text-muted);
+  cursor: pointer;
+  border-bottom: 3px solid transparent;
+  margin-bottom: -1px;
+  transition: all 0.2s;
+  white-space: nowrap;
+}
+
+.tab-btn:hover { color: var(--blue-main); }
+.tab-btn.active {
+  color: var(--blue-main);
+  border-bottom-color: var(--blue-bright);
+  font-weight: 700;
+}
+
+/* ══════════ 레이아웃 ══════════ */
+.page { position: relative; z-index: 1; }
+
+.tab-content {
+  display: none;
+  padding: 24px 28px;
+  animation: fadeIn 0.25s ease;
+}
+
+.tab-content.active { display: block; }
+
+@keyframes fadeIn {
+  from { opacity: 0; transform: translateY(6px); }
+  to   { opacity: 1; transform: translateY(0); }
+}
+
+/* ══════════ 필터 카드 ══════════ */
+.filter-card {
+  background: var(--surface);
+  border-radius: var(--radius);
+  padding: 20px 24px;
+  box-shadow: var(--shadow-sm);
+  border: 1px solid var(--border-soft);
+  margin-bottom: 18px;
+}
+
+.filter-title {
+  font-size: 0.8rem;
+  font-weight: 700;
+  color: var(--text-secondary);
+  text-transform: uppercase;
+  letter-spacing: 0.8px;
+  margin-bottom: 14px;
+  display: flex;
+  align-items: center;
+  gap: 7px;
+}
+
+.filter-title span { font-size: 1rem; }
+
+.filter-row {
+  display: flex;
+  flex-wrap: wrap;
+  gap: 12px;
+  align-items: flex-end;
+}
+
+.filter-group {
+  display: flex;
+  flex-direction: column;
+  gap: 5px;
+  flex: 1;
+  min-width: 150px;
+}
+
+.filter-group label {
+  font-size: 0.72rem;
+  font-weight: 700;
+  color: var(--text-muted);
+  text-transform: uppercase;
+  letter-spacing: 0.5px;
+}
+
+.filter-group select,
+.filter-group input[type=text] {
+  padding: 9px 12px;
+  border: 1.5px solid var(--border);
+  border-radius: var(--radius-sm);
+  font-size: 0.875rem;
+  font-family: 'Noto Sans KR', sans-serif;
+  color: var(--text-primary);
+  background: var(--surface-2);
+  transition: border 0.2s, box-shadow 0.2s;
+  -webkit-appearance: none;
+  appearance: none;
+}
+
+.filter-group select {
+  background-image: url("data:image/svg+xml,%3Csvg xmlns='http://www.w3.org/2000/svg' width='12' height='12' viewBox='0 0 12 12'%3E%3Cpath fill='%237a99c0' d='M6 8L1 3h10z'/%3E%3C/svg%3E");
+  background-repeat: no-repeat;
+  background-position: right 10px center;
+  padding-right: 30px;
+}
+
+.filter-group select:focus,
+.filter-group input[type=text]:focus {
+  outline: none;
+  border-color: var(--blue-bright);
+  box-shadow: 0 0 0 3px rgba(37,117,252,0.12);
+  background: var(--surface);
+}
+
+.filter-actions {
+  display: flex;
+  gap: 8px;
+  margin-top: 14px;
+  justify-content: flex-end;
+}
+
+.btn-search {
+  display: flex;
+  align-items: center;
+  gap: 6px;
+  padding: 9px 22px;
+  background: var(--blue-main);
+  color: #fff;
+  border: none;
+  border-radius: var(--radius-sm);
+  font-size: 0.875rem;
+  font-weight: 700;
+  cursor: pointer;
+  font-family: 'Noto Sans KR', sans-serif;
+  transition: all 0.2s;
+}
+
+.btn-search:hover {
+  background: var(--blue-bright);
+  box-shadow: 0 4px 14px rgba(37,117,252,0.3);
+  transform: translateY(-1px);
+}
+
+.btn-reset {
+  padding: 9px 16px;
+  background: var(--surface-3);
+  color: var(--text-secondary);
+  border: 1.5px solid var(--border);
+  border-radius: var(--radius-sm);
+  font-size: 0.875rem;
+  cursor: pointer;
+  font-family: 'Noto Sans KR', sans-serif;
+  transition: all 0.2s;
+}
+
+.btn-reset:hover {
+  background: var(--border);
+  color: var(--text-primary);
+}
+
+/* ══════════ 결과 카드 ══════════ */
+.result-card {
+  background: var(--surface);
+  border-radius: var(--radius);
+  box-shadow: var(--shadow-sm);
+  border: 1px solid var(--border-soft);
+  overflow: hidden;
+}
+
+.result-header {
+  padding: 14px 20px;
+  border-bottom: 1px solid var(--border-soft);
+  display: flex;
+  align-items: center;
+  justify-content: space-between;
+  background: var(--surface-2);
+}
+
+.result-count {
+  font-size: 0.85rem;
+  color: var(--text-secondary);
+  display: flex;
+  align-items: center;
+  gap: 6px;
+}
+
+.result-count b {
+  font-size: 1rem;
+  color: var(--blue-bright);
+  font-family: 'Space Mono', monospace;
+}
+
+.btn-export {
+  display: flex;
+  align-items: center;
+  gap: 6px;
+  padding: 6px 14px;
+  background: #e8f5e9;
+  color: #2e7d32;
+  border: 1px solid #a5d6a7;
+  border-radius: 6px;
+  font-size: 0.78rem;
+  font-weight: 600;
+  cursor: pointer;
+  font-family: 'Noto Sans KR', sans-serif;
+  transition: all 0.2s;
+}
+
+.btn-export:hover { background: #c8e6c9; }
+
+/* ══════════ 테이블 ══════════ */
+.table-wrap { overflow-x: auto; }
+
+table {
+  width: 100%;
+  border-collapse: collapse;
+  font-size: 0.855rem;
+}
+
+thead th {
+  background: var(--surface-2);
+  color: var(--text-secondary);
+  font-weight: 700;
+  padding: 11px 14px;
+  text-align: left;
+  border-bottom: 2px solid var(--border);
+  white-space: nowrap;
+  cursor: pointer;
+  user-select: none;
+  font-size: 0.8rem;
+  letter-spacing: 0.2px;
+  transition: background 0.15s;
+}
+
+thead th:hover { background: var(--ice-mid); }
+thead th.sorted-asc,
+thead th.sorted-desc { color: var(--blue-bright); }
+
+thead th .sort-icon { margin-left: 4px; opacity: 0.4; font-size: 0.7rem; }
+thead th.sorted-asc .sort-icon::after  { content: '▲'; opacity: 1; }
+thead th.sorted-desc .sort-icon::after { content: '▼'; opacity: 1; }
+thead th:not(.sorted-asc):not(.sorted-desc) .sort-icon::after { content: '⇅'; }
+
+tbody tr {
+  border-bottom: 1px solid var(--border-soft);
+  transition: background 0.12s;
+}
+
+tbody tr:hover { background: var(--ice); }
+
+tbody tr.clickable { cursor: pointer; }
+tbody tr.clickable:hover { background: #ebf3ff; }
+
+tbody td {
+  padding: 10px 14px;
+  color: var(--text-primary);
+  white-space: nowrap;
+}
+
+td.num {
+  text-align: right;
+  font-family: 'Space Mono', monospace;
+  font-size: 0.82rem;
+}
+
+/* 순위 뱃지 */
+.rank-badge {
+  display: inline-flex;
+  align-items: center;
+  justify-content: center;
+  width: 26px; height: 26px;
+  border-radius: 50%;
+  font-weight: 700;
+  font-size: 0.78rem;
+  font-family: 'Space Mono', monospace;
+}
+
+.rank-1 { background: var(--accent-gold); color: #7a5000; }
+.rank-2 { background: #d8e8f5; color: #2a5080; }
+.rank-3 { background: #ffe0cc; color: #8b4010; }
+.rank-n { background: var(--surface-3); color: var(--text-secondary); }
+
+/* 기록 타임 */
+td.record-time {
+  font-family: 'Space Mono', monospace;
+  font-size: 0.85rem;
+  color: var(--blue-main);
+  font-weight: 700;
+}
+
+/* 성별 뱃지 */
+.gender-badge {
+  display: inline-flex;
+  align-items: center;
+  gap: 3px;
+  padding: 2px 9px;
+  border-radius: 12px;
+  font-size: 0.75rem;
+  font-weight: 700;
+}
+
+.gender-m { background: #e3f0ff; color: #1565c0; }
+.gender-f { background: #fce4ec; color: #c62828; }
+
+/* 빈 데이터 */
+.empty-state {
+  text-align: center;
+  padding: 56px 20px;
+  color: var(--text-muted);
+}
+
+.empty-state .empty-icon { font-size: 3rem; margin-bottom: 12px; opacity: 0.5; }
+.empty-state p { font-size: 0.9rem; }
+.empty-state .empty-sub { font-size: 0.78rem; margin-top: 6px; opacity: 0.7; }
+
+/* ══════════ 선수 상세 패널 ══════════ */
+.player-detail {
+  background: var(--surface);
+  border-radius: var(--radius);
+  box-shadow: var(--shadow-md);
+  border: 1px solid var(--border);
+  padding: 24px;
+  margin-bottom: 18px;
+  display: none;
+  animation: fadeIn 0.2s ease;
+}
+
+.player-detail.visible { display: block; }
+
+.detail-header {
+  display: flex;
+  align-items: flex-start;
+  justify-content: space-between;
+  margin-bottom: 18px;
+  padding-bottom: 18px;
+  border-bottom: 1px solid var(--border-soft);
+}
+
+.detail-name-area {
+  display: flex;
+  align-items: center;
+  flex-wrap: wrap;
+  gap: 10px;
+}
+
+.detail-name {
+  font-size: 1.8rem;
+  font-weight: 900;
+  color: var(--blue-deep);
+  letter-spacing: -0.5px;
+}
+
+.chip {
+  display: inline-flex;
+  align-items: center;
+  gap: 4px;
+  padding: 4px 12px;
+  border-radius: 16px;
+  font-size: 0.78rem;
+  font-weight: 700;
+}
+
+.chip-blue   { background: #e3efff; color: #1a4fa8; }
+.chip-green  { background: #e8f5e9; color: #2e7d32; }
+.chip-orange { background: #fff3e0; color: #bf360c; }
+.chip-gray   { background: var(--surface-3); color: var(--text-secondary); }
+.chip-cyan   { background: #e0f7fa; color: #006064; }
+
+.btn-close-detail {
+  padding: 6px 14px;
+  background: var(--surface-3);
+  color: var(--text-secondary);
+  border: 1px solid var(--border);
+  border-radius: 6px;
+  font-size: 0.8rem;
+  cursor: pointer;
+  font-family: 'Noto Sans KR', sans-serif;
+  transition: all 0.15s;
+  flex-shrink: 0;
+}
+
+.btn-close-detail:hover { background: #fce4ec; color: var(--red); border-color: #ef9a9a; }
+
+.info-grid {
+  display: grid;
+  grid-template-columns: repeat(auto-fit, minmax(180px, 1fr));
+  gap: 10px;
+  margin-bottom: 20px;
+}
+
+.info-item {
+  background: var(--surface-2);
+  border-radius: var(--radius-sm);
+  padding: 12px 16px;
+  border: 1px solid var(--border-soft);
+}
+
+.info-item .label {
+  font-size: 0.7rem;
+  color: var(--text-muted);
+  text-transform: uppercase;
+  letter-spacing: 0.5px;
+  margin-bottom: 5px;
+  font-weight: 700;
+}
+
+.info-item .value {
+  font-size: 0.95rem;
+  font-weight: 700;
+  color: var(--text-primary);
+}
+
+.detail-section-title {
+  font-size: 0.82rem;
+  font-weight: 700;
+  color: var(--text-secondary);
+  text-transform: uppercase;
+  letter-spacing: 0.6px;
+  margin-bottom: 12px;
+  padding-bottom: 8px;
+  border-bottom: 1px solid var(--border-soft);
+  display: flex;
+  align-items: center;
+  gap: 7px;
+}
+
+/* ══════════ 페이지네이션 ══════════ */
+.pagination {
+  display: flex;
+  align-items: center;
+  justify-content: center;
+  gap: 6px;
+  padding: 16px 20px;
+  border-top: 1px solid var(--border-soft);
+  flex-wrap: wrap;
+}
+
+.page-btn {
+  padding: 6px 12px;
+  border: 1.5px solid var(--border);
+  border-radius: 6px;
+  background: var(--surface);
+  color: var(--text-secondary);
+  font-size: 0.82rem;
+  cursor: pointer;
+  font-family: 'Space Mono', monospace;
+  transition: all 0.15s;
+  min-width: 36px;
+  text-align: center;
+}
+
+.page-btn:hover:not(:disabled) {
+  border-color: var(--blue-bright);
+  color: var(--blue-bright);
+  background: #eef4ff;
+}
+
+.page-btn.active {
+  background: var(--blue-main);
+  color: #fff;
+  border-color: var(--blue-main);
+  font-weight: 700;
+}
+
+.page-btn:disabled { opacity: 0.35; cursor: not-allowed; }
+
+.page-info {
+  font-size: 0.78rem;
+  color: var(--text-muted);
+  font-family: 'Space Mono', monospace;
+  padding: 0 8px;
+}
+
+/* ══════════ 통계 카드 ══════════ */
+.stats-grid {
+  display: grid;
+  grid-template-columns: repeat(auto-fit, minmax(180px, 1fr));
+  gap: 14px;
+  margin-bottom: 20px;
+}
+
+.stat-card {
+  background: var(--surface);
+  border-radius: var(--radius);
+  padding: 18px 20px;
+  border: 1px solid var(--border-soft);
+  box-shadow: var(--shadow-sm);
+  position: relative;
+  overflow: hidden;
+}
+
+.stat-card::before {
+  content: '';
+  position: absolute;
+  top: 0; left: 0; right: 0;
+  height: 3px;
+  background: linear-gradient(90deg, var(--blue-bright), var(--accent-cyan));
+}
+
+.stat-card .stat-label {
+  font-size: 0.72rem;
+  font-weight: 700;
+  color: var(--text-muted);
+  text-transform: uppercase;
+  letter-spacing: 0.6px;
+  margin-bottom: 6px;
+}
+
+.stat-card .stat-value {
+  font-size: 1.6rem;
+  font-weight: 900;
+  color: var(--blue-deep);
+  font-family: 'Space Mono', monospace;
+  letter-spacing: -1px;
+}
+
+.stat-card .stat-sub {
+  font-size: 0.75rem;
+  color: var(--text-muted);
+  margin-top: 4px;
+}
+
+/* 로딩 스피너 */
+.loading-overlay {
+  display: none;
+  position: fixed;
+  inset: 0;
+  background: rgba(10,42,94,0.35);
+  backdrop-filter: blur(3px);
+  z-index: 999;
+  align-items: center;
+  justify-content: center;
+  flex-direction: column;
+  gap: 16px;
+}
+
+.loading-overlay.visible { display: flex; }
+
+.spinner {
+  width: 48px; height: 48px;
+  border: 4px solid rgba(255,255,255,0.2);
+  border-top-color: var(--accent-cyan);
+  border-radius: 50%;
+  animation: spin 0.8s linear infinite;
+}
+
+@keyframes spin { to { transform: rotate(360deg); } }
+
+.loading-text {
+  color: #fff;
+  font-size: 0.9rem;
+  font-weight: 500;
+}
+
+/* 반응형 */
+@media (max-width: 640px) {
+  header { padding: 0 14px; min-height: 56px; }
+  header .data-badge { display: none; }
+  .tab-nav { padding: 0 14px; overflow-x: auto; }
+  .tab-content { padding: 14px; }
+  .filter-card { padding: 14px; }
+  .filter-group { min-width: 130px; }
+  .detail-name { font-size: 1.4rem; }
+}
+</style>
+</head>
+<body>
+
+<!-- 로딩 오버레이 -->
+<div class="loading-overlay" id="loadingOverlay">
+  <div class="spinner"></div>
+  <div class="loading-text" id="loadingText">데이터 로딩 중...</div>
+</div>
+
+<!-- ══════════ 헤더 ══════════ -->
+<header>
+  <div class="header-brand">
+    <div class="logo-icon">⛸</div>
+    <div>
+      <h1>쇼트트랙 선수 기록 뷰어</h1>
+      <div class="sub">SHORT TRACK SPEED SKATING DATABASE</div>
+    </div>
+  </div>
+  <div class="header-spacer"></div>
+  <div class="file-status-bar">
+    <div class="data-badge" id="dataBadge">
+      <div class="dot"></div>
+      <span id="fileStatusText">데이터 없음</span>
+    </div>
+    <button class="load-btn" id="loadBtn">
+      📂 JSON 파일 불러오기
+    </button>
+    <input type="file" id="jsonFileInput" accept=".json">
+  </div>
+</header>
+
+<!-- ══════════ 탭 네비게이션 ══════════ -->
+<div class="tab-nav">
+  <button class="tab-btn active" data-tab="records">📋 경기기록 조회</button>
+  <button class="tab-btn" data-tab="players">👤 선수별 조회</button>
+  <button class="tab-btn" data-tab="stats">📊 통계</button>
+</div>
+
+<div class="page">
+
+<!-- ══════════ 탭1: 경기기록 조회 ══════════ -->
+<div class="tab-content active" id="tab-records">
+
+  <div class="filter-card">
+    <div class="filter-title"><span>🔍</span> 기록 검색 조건</div>
+    <div class="filter-row">
+      <div class="filter-group" style="min-width:240px;flex:2">
+        <label>대회명</label>
+        <select id="f-competition"><option value="">전체 대회</option></select>
+      </div>
+      <div class="filter-group">
+        <label>종별</label>
+        <select id="f-kind"><option value="">전체</option></select>
+      </div>
+      <div class="filter-group">
+        <label>종목</label>
+        <select id="f-event"><option value="">전체</option></select>
+      </div>
+      <div class="filter-group">
+        <label>라운드</label>
+        <select id="f-round"><option value="">전체</option></select>
+      </div>
+    </div>
+    <div class="filter-row" style="margin-top:10px">
+      <div class="filter-group">
+        <label>선수명 검색</label>
+        <input type="text" id="f-player-name" placeholder="이름 입력 (일부 가능)">
+      </div>
+      <div class="filter-group">
+        <label>소속팀 검색</label>
+        <input type="text" id="f-team" placeholder="팀명 입력">
+      </div>
+      <div class="filter-group">
+        <label>순위 필터</label>
+        <select id="f-rank">
+          <option value="">전체 순위</option>
+          <option value="1">🥇 1위</option>
+          <option value="2">🥈 2위</option>
+          <option value="3">🥉 3위</option>
+          <option value="top3">Top 3</option>
+        </select>
+      </div>
+    </div>
+    <div class="filter-actions">
+      <button class="btn-reset" id="resetRecords">↺ 초기화</button>
+      <button class="btn-search" id="searchRecords">🔍 조회</button>
+    </div>
+  </div>
+
+  <div class="result-card">
+    <div class="result-header">
+      <div class="result-count">총 <b id="recordCount">0</b> 건</div>
+      <button class="btn-export" id="exportRecords">📥 CSV 다운로드</button>
+    </div>
+    <div class="table-wrap">
+      <table>
+        <thead>
+          <tr>
+            <th data-col="competition_nm">대회명<span class="sort-icon"></span></th>
+            <th data-col="event_date">경기일자<span class="sort-icon"></span></th>
+            <th data-col="kind_nm">종별<span class="sort-icon"></span></th>
+            <th data-col="event_nm">종목<span class="sort-icon"></span></th>
+            <th data-col="round_nm">라운드<span class="sort-icon"></span></th>
+            <th data-col="player_name">선수명<span class="sort-icon"></span></th>
+            <th data-col="team_nm">소속<span class="sort-icon"></span></th>
+            <th data-col="record" class="num">기록<span class="sort-icon"></span></th>
+            <th data-col="rank" class="num">순위<span class="sort-icon"></span></th>
+          </tr>
+        </thead>
+        <tbody id="recordBody">
+          <tr><td colspan="9">
+            <div class="empty-state">
+              <div class="empty-icon">📄</div>
+              <p>JSON 파일을 불러오면 데이터가 표시됩니다</p>
+              <p class="empty-sub">우측 상단 '📂 JSON 파일 불러오기' 버튼 클릭</p>
+            </div>
+          </td></tr>
+        </tbody>
+      </table>
+    </div>
+    <div class="pagination" id="recordPagination"></div>
+  </div>
+</div>
+
+<!-- ══════════ 탭2: 선수별 조회 ══════════ -->
+<div class="tab-content" id="tab-players">
+
+  <div class="filter-card">
+    <div class="filter-title"><span>👤</span> 선수 검색 조건</div>
+    <div class="filter-row">
+      <div class="filter-group">
+        <label>선수명</label>
+        <input type="text" id="p-name" placeholder="이름 (일부 가능)">
+      </div>
+      <div class="filter-group">
+        <label>종별</label>
+        <select id="p-kind"><option value="">전체</option></select>
+      </div>
+      <div class="filter-group">
+        <label>성별</label>
+        <select id="p-gender">
+          <option value="">전체</option>
+          <option value="남">남자</option>
+          <option value="여">여자</option>
+        </select>
+      </div>
+      <div class="filter-group">
+        <label>시도</label>
+        <select id="p-sido"><option value="">전체</option></select>
+      </div>
+      <div class="filter-group">
+        <label>소속팀</label>
+        <input type="text" id="p-team" placeholder="팀명 입력">
+      </div>
+      <div class="filter-group">
+        <label>등록구분</label>
+        <select id="p-regtype"><option value="">전체</option></select>
+      </div>
+    </div>
+    <div class="filter-actions">
+      <button class="btn-reset" id="resetPlayers">↺ 초기화</button>
+      <button class="btn-search" id="searchPlayers">🔍 조회</button>
+    </div>
+  </div>
+
+  <!-- 선수 상세 패널 -->
+  <div class="player-detail" id="playerDetail">
+    <div class="detail-header">
+      <div class="detail-name-area">
+        <span class="detail-name" id="detailName">-</span>
+        <span class="chip chip-blue" id="detailGender">-</span>
+        <span class="chip chip-green" id="detailKind">-</span>
+        <span class="chip chip-orange" id="detailSido">-</span>
+        <span class="chip chip-gray" id="detailBirth">-</span>
+      </div>
+      <button class="btn-close-detail" id="closeDetail">✕ 닫기</button>
+    </div>
+    <div class="info-grid" id="detailGrid"></div>
+    <div class="detail-section-title"><span>📋</span> 대회 참가 이력 (<span id="historyCount">0</span>건)</div>
+    <div class="table-wrap">
+      <table>
+        <thead>
+          <tr>
+            <th>대회명</th>
+            <th>경기일자</th>
+            <th>종별</th>
+            <th>종목</th>
+            <th>라운드</th>
+            <th>소속(당시)</th>
+            <th class="num">기록</th>
+            <th class="num">순위</th>
+          </tr>
+        </thead>
+        <tbody id="detailHistBody"></tbody>
+      </table>
+    </div>
+    <div style="margin-top:12px;text-align:right">
+      <button class="btn-export" id="exportPlayerHistory">📥 이력 CSV 다운로드</button>
+    </div>
+  </div>
+
+  <!-- 선수 목록 -->
+  <div class="result-card">
+    <div class="result-header">
+      <div class="result-count">총 <b id="playerCount">0</b> 명</div>
+      <button class="btn-export" id="exportPlayers">📥 CSV 다운로드</button>
+    </div>
+    <div class="table-wrap">
+      <table>
+        <thead>
+          <tr>
+            <th data-col="name">선수명<span class="sort-icon"></span></th>
+            <th data-col="gender">성별<span class="sort-icon"></span></th>
+            <th data-col="birth_year">출생년도<span class="sort-icon"></span></th>
+            <th data-col="kind_nm">종별<span class="sort-icon"></span></th>
+            <th data-col="team_nm">소속팀<span class="sort-icon"></span></th>
+            <th data-col="sido">시도<span class="sort-icon"></span></th>
+            <th data-col="last_reg_year">최종등록년도<span class="sort-icon"></span></th>
+            <th data-col="reg_type">등록구분<span class="sort-icon"></span></th>
+            <th>이력건수</th>
+          </tr>
+        </thead>
+        <tbody id="playerBody">
+          <tr><td colspan="9">
+            <div class="empty-state">
+              <div class="empty-icon">👤</div>
+              <p>JSON 파일을 불러오면 선수 목록이 표시됩니다</p>
+            </div>
+          </td></tr>
+        </tbody>
+      </table>
+    </div>
+    <div class="pagination" id="playerPagination"></div>
+  </div>
+</div>
+
+<!-- ══════════ 탭3: 통계 ══════════ -->
+<div class="tab-content" id="tab-stats">
+  <div class="stats-grid" id="statsGrid">
+    <div class="stat-card">
+      <div class="stat-label">등록 선수</div>
+      <div class="stat-value" id="statPlayers">-</div>
+      <div class="stat-sub">명</div>
+    </div>
+    <div class="stat-card">
+      <div class="stat-label">총 경기 기록</div>
+      <div class="stat-value" id="statHistory">-</div>
+      <div class="stat-sub">건</div>
+    </div>
+    <div class="stat-card">
+      <div class="stat-label">참가 대회 수</div>
+      <div class="stat-value" id="statComps">-</div>
+      <div class="stat-sub">개 대회</div>
+    </div>
+    <div class="stat-card">
+      <div class="stat-label">종별 수</div>
+      <div class="stat-value" id="statKinds">-</div>
+      <div class="stat-sub">개 종별</div>
+    </div>
+  </div>
+
+  <div style="display:grid;grid-template-columns:1fr 1fr;gap:18px;flex-wrap:wrap" id="statsDetailGrid">
+    <div class="result-card">
+      <div class="result-header"><div class="result-count">종별 선수 분포</div></div>
+      <div class="table-wrap">
+        <table>
+          <thead><tr><th>종별</th><th class="num">선수수</th><th class="num">비율</th></tr></thead>
+          <tbody id="kindStatBody"></tbody>
+        </table>
+      </div>
+    </div>
+    <div class="result-card">
+      <div class="result-header"><div class="result-count">시도별 선수 분포</div></div>
+      <div class="table-wrap">
+        <table>
+          <thead><tr><th>시도</th><th class="num">선수수</th><th class="num">비율</th></tr></thead>
+          <tbody id="sidoStatBody"></tbody>
+        </table>
+      </div>
+    </div>
+    <div class="result-card">
+      <div class="result-header"><div class="result-count">종목별 기록 건수</div></div>
+      <div class="table-wrap">
+        <table>
+          <thead><tr><th>종목</th><th class="num">기록건수</th></tr></thead>
+          <tbody id="eventStatBody"></tbody>
+        </table>
+      </div>
+    </div>
+    <div class="result-card">
+      <div class="result-header"><div class="result-count">대회별 기록 건수 (Top 20)</div></div>
+      <div class="table-wrap">
+        <table>
+          <thead><tr><th>대회명</th><th class="num">기록건수</th></tr></thead>
+          <tbody id="compStatBody"></tbody>
+        </table>
+      </div>
+    </div>
+  </div>
+</div>
+
+</div><!-- end .page -->
+
+<script>
+// ══════════════════════════════════════════════
+// 전역 상태
+// ══════════════════════════════════════════════
+const DB = { players: [], history: [] };
+let playerMap = {};       // player_id → player
+let playerHistoryMap = {}; // player_id → history[]
+
+// 정렬
+const sortState = {
+  records: { col: null, dir: 'asc' },
+  players: { col: null, dir: 'asc' }
+};
+
+// 현재 결과 캐시
+let currentRecords = [];
+let currentPlayers = [];
+let selectedPlayer = null;
+let selectedPlayerHistory = [];
+
+// 페이지네이션
+const PAGE_SIZE = 100;
+let recordPage = 1;
+let playerPage = 1;
+
+// ══════════════════════════════════════════════
+// 파일 로드
+// ══════════════════════════════════════════════
+document.getElementById('loadBtn').addEventListener('click', () => {
+  document.getElementById('jsonFileInput').click();
+});
+
+document.getElementById('jsonFileInput').addEventListener('change', function() {
+  const file = this.files[0];
+  if (!file) return;
+  showLoading('JSON 파일 읽는 중...');
+  const reader = new FileReader();
+  reader.onload = e => {
+    setTimeout(() => {
+      try {
+        const data = JSON.parse(e.target.result);
+        initData(data, file.name);
+      } catch(err) {
+        hideLoading();
+        alert('JSON 파일 파싱 오류:\n' + err.message);
+      }
+    }, 50);
+  };
+  reader.readAsText(file, 'utf-8');
+  this.value = ''; // 같은 파일 재선택 허용
+});
+
+// ── 페이지 로드 시 같은 폴더의 shorttrack_data.json 자동 로딩 ──
+(async function autoLoad() {
+  const DEFAULT_FILE = 'shorttrack_data.json';
+  showLoading(`${DEFAULT_FILE} 로딩 중...`);
+  try {
+    const res = await fetch(DEFAULT_FILE);
+    if (!res.ok) throw new Error(`HTTP ${res.status}`);
+    updateLoadingText('JSON 파싱 중...');
+    const data = await res.json();
+    initData(data, DEFAULT_FILE);
+  } catch(err) {
+    hideLoading();
+    // 파일이 없거나 fetch 실패 시 조용히 무시 (수동 로드 대기)
+    document.getElementById('fileStatusText').textContent =
+      `자동 로드 실패 — 파일을 직접 선택해 주세요`;
+    console.warn('shorttrack_data.json 자동 로드 실패:', err.message);
+  }
+})();
+
+function initData(data, filename) {
+  updateLoadingText('선수 데이터 구성 중...');
+  DB.players = data.players || [];
+  DB.history = data.history || data.records || [];
+
+  // playerMap
+  playerMap = {};
+  DB.players.forEach(p => { playerMap[p.player_id] = p; });
+
+  // history에 player_name 병합 + playerHistoryMap
+  updateLoadingText('기록 데이터 인덱싱 중...');
+  playerHistoryMap = {};
+  DB.history.forEach(h => {
+    const p = playerMap[h.player_id];
+    h.player_name = p ? p.name : (h.player_name || '');
+    if (!playerHistoryMap[h.player_id]) playerHistoryMap[h.player_id] = [];
+    playerHistoryMap[h.player_id].push(h);
+  });
+
+  // 배지 업데이트
+  const badge = document.getElementById('dataBadge');
+  badge.classList.add('loaded');
+  document.getElementById('fileStatusText').textContent =
+    `${filename} | 선수 ${DB.players.length.toLocaleString()}명 · 기록 ${DB.history.length.toLocaleString()}건`;
+
+  updateLoadingText('필터 옵션 구성 중...');
+  initFilters();
+  updateLoadingText('결과 표시 중...');
+
+  setTimeout(() => {
+    runRecordSearch();
+    runPlayerSearch();
+    buildStats();
+    hideLoading();
+  }, 20);
+}
+
+// ══════════════════════════════════════════════
+// 필터 초기화
+// ══════════════════════════════════════════════
+function initFilters() {
+  fillSelect('f-competition', unique(DB.history, 'competition_nm').sort());
+  fillSelect('f-kind',  unique(DB.history, 'kind_nm').sort());
+  fillSelect('f-event', unique(DB.history, 'event_nm').sort((a,b)=>a.localeCompare(b)));
+  fillSelect('f-round', unique(DB.history, 'round_nm').sort());
+  fillSelect('p-kind', unique(DB.players, 'kind_nm').sort());
+  fillSelect('p-sido', unique(DB.players, 'sido').sort());
+  fillSelect('p-regtype', unique(DB.players, 'reg_type').sort());
+}
+
+function unique(arr, key) {
+  return [...new Set(arr.map(r => r[key]).filter(v => v && String(v).trim()))];
+}
+
+function fillSelect(id, options) {
+  const sel = document.getElementById(id);
+  const cur = sel.value;
+  const first = sel.options[0].text;
+  sel.innerHTML = `<option value="">${first}</option>`;
+  options.forEach(o => {
+    const opt = document.createElement('option');
+    opt.value = opt.textContent = o;
+    sel.appendChild(opt);
+  });
+  if (options.includes(cur)) sel.value = cur;
+}
+
+// ══════════════════════════════════════════════
+// 탭 전환
+// ══════════════════════════════════════════════
+document.querySelectorAll('.tab-btn').forEach(btn => {
+  btn.addEventListener('click', () => {
+    document.querySelectorAll('.tab-btn').forEach(b => b.classList.remove('active'));
+    document.querySelectorAll('.tab-content').forEach(c => c.classList.remove('active'));
+    btn.classList.add('active');
+    document.getElementById('tab-' + btn.dataset.tab).classList.add('active');
+  });
+});
+
+// ══════════════════════════════════════════════
+// 기록 조회
+// ══════════════════════════════════════════════
+document.getElementById('searchRecords').addEventListener('click', () => {
+  recordPage = 1;
+  runRecordSearch();
+});
+
+document.getElementById('resetRecords').addEventListener('click', () => {
+  ['f-competition','f-kind','f-event','f-round','f-rank'].forEach(id => {
+    document.getElementById(id).value = '';
+  });
+  ['f-player-name','f-team'].forEach(id => {
+    document.getElementById(id).value = '';
+  });
+  recordPage = 1;
+  runRecordSearch();
+});
+
+['f-competition','f-kind','f-event','f-round','f-rank'].forEach(id => {
+  document.getElementById(id).addEventListener('change', () => {
+    recordPage = 1;
+    runRecordSearch();
+  });
+});
+
+function runRecordSearch() {
+  const comp   = document.getElementById('f-competition').value;
+  const kind   = document.getElementById('f-kind').value;
+  const event  = document.getElementById('f-event').value;
+  const round  = document.getElementById('f-round').value;
+  const pname  = document.getElementById('f-player-name').value.trim();
+  const team   = document.getElementById('f-team').value.trim();
+  const rankF  = document.getElementById('f-rank').value;
+
+  let results = DB.history.filter(h => {
+    if (comp  && h.competition_nm !== comp) return false;
+    if (kind  && h.kind_nm  !== kind)       return false;
+    if (event && h.event_nm !== event)      return false;
+    if (round && h.round_nm !== round)      return false;
+    if (pname && !h.player_name.includes(pname)) return false;
+    if (team  && !(h.team_nm||'').includes(team)) return false;
+    if (rankF) {
+      const r = parseInt(h.rank);
+      if (rankF === 'top3' && !(r >= 1 && r <= 3)) return false;
+      else if (rankF !== 'top3' && String(h.rank) !== rankF) return false;
+    }
+    return true;
+  });
+
+  // 정렬
+  const { col, dir } = sortState.records;
+  if (col) results = sortArr(results, col, dir);
+
+  currentRecords = results;
+  document.getElementById('recordCount').textContent = results.length.toLocaleString();
+  renderRecordTable(results);
+}
+
+function renderRecordTable(data) {
+  const total = data.length;
+  const start = (recordPage - 1) * PAGE_SIZE;
+  const page  = data.slice(start, start + PAGE_SIZE);
+
+  const tbody = document.getElementById('recordBody');
+
+  if (!page.length) {
+    tbody.innerHTML = `<tr><td colspan="9"><div class="empty-state">
+      <div class="empty-icon">🔍</div>
+      <p>검색 결과가 없습니다</p>
+      <p class="empty-sub">조건을 변경해 보세요</p>
+    </div></td></tr>`;
+    document.getElementById('recordPagination').innerHTML = '';
+    return;
+  }
+
+  tbody.innerHTML = page.map(h => {
+    const rankNum = parseInt(h.rank);
+    let rankCell;
+    if (rankNum === 1) rankCell = `<span class="rank-badge rank-1">1</span>`;
+    else if (rankNum === 2) rankCell = `<span class="rank-badge rank-2">2</span>`;
+    else if (rankNum === 3) rankCell = `<span class="rank-badge rank-3">3</span>`;
+    else rankCell = h.rank ? `<span class="rank-badge rank-n">${h.rank}</span>` : '<span style="color:#bbb">-</span>';
+
+    return `<tr class="clickable" data-pid="${h.player_id}" onclick="quickViewPlayer('${h.player_id}')">
+      <td title="${h.competition_nm}" style="max-width:240px;overflow:hidden;text-overflow:ellipsis">${h.competition_nm}</td>
+      <td>${formatDate(h.event_date)}</td>
+      <td>${h.kind_nm||''}</td>
+      <td><b>${h.event_nm||''}</b></td>
+      <td style="font-size:0.8rem;color:var(--text-secondary)">${h.round_nm||''}</td>
+      <td><b style="color:var(--blue-main)">${h.player_name||'–'}</b></td>
+      <td style="font-size:0.82rem">${h.team_nm||''}</td>
+      <td class="num record-time">${h.record||'–'}</td>
+      <td class="num">${rankCell}</td>
+    </tr>`;
+  }).join('');
+
+  renderPagination('recordPagination', total, recordPage, (p) => {
+    recordPage = p;
+    renderRecordTable(currentRecords);
+    window.scrollTo(0, document.getElementById('tab-records').offsetTop - 80);
+  });
+}
+
+// ══════════════════════════════════════════════
+// 선수 조회
+// ══════════════════════════════════════════════
+document.getElementById('searchPlayers').addEventListener('click', () => {
+  playerPage = 1;
+  runPlayerSearch();
+});
+
+document.getElementById('resetPlayers').addEventListener('click', () => {
+  ['p-kind','p-gender','p-sido','p-regtype'].forEach(id => document.getElementById(id).value = '');
+  ['p-name','p-team'].forEach(id => document.getElementById(id).value = '');
+  playerPage = 1;
+  runPlayerSearch();
+});
+
+function runPlayerSearch() {
+  const name    = document.getElementById('p-name').value.trim();
+  const kind    = document.getElementById('p-kind').value;
+  const gender  = document.getElementById('p-gender').value;
+  const sido    = document.getElementById('p-sido').value;
+  const team    = document.getElementById('p-team').value.trim();
+  const regtype = document.getElementById('p-regtype').value;
+
+  let results = DB.players.filter(p => {
+    if (name    && !p.name.includes(name))         return false;
+    if (kind    && p.kind_nm !== kind)             return false;
+    if (gender  && p.gender !== gender)            return false;
+    if (sido    && p.sido !== sido)                return false;
+    if (team    && !(p.team_nm||'').includes(team)) return false;
+    if (regtype && p.reg_type !== regtype)         return false;
+    return true;
+  });
+
+  const { col, dir } = sortState.players;
+  if (col) results = sortArr(results, col, dir);
+
+  currentPlayers = results;
+  document.getElementById('playerCount').textContent = results.length.toLocaleString();
+  renderPlayerTable(results);
+}
+
+function renderPlayerTable(data) {
+  const total = data.length;
+  const start = (playerPage - 1) * PAGE_SIZE;
+  const page  = data.slice(start, start + PAGE_SIZE);
+
+  const tbody = document.getElementById('playerBody');
+
+  if (!page.length) {
+    tbody.innerHTML = `<tr><td colspan="9"><div class="empty-state">
+      <div class="empty-icon">👤</div>
+      <p>검색 결과가 없습니다</p>
+    </div></td></tr>`;
+    document.getElementById('playerPagination').innerHTML = '';
+    return;
+  }
+
+  tbody.innerHTML = page.map(p => {
+    const histCnt = (playerHistoryMap[p.player_id]||[]).length;
+    const gBadge = p.gender === '남'
+      ? `<span class="gender-badge gender-m">♂ 남</span>`
+      : `<span class="gender-badge gender-f">♀ 여</span>`;
+    return `<tr class="clickable" onclick="showPlayerDetail('${p.player_id}')">
+      <td><b style="color:var(--blue-main)">${p.name}</b></td>
+      <td>${gBadge}</td>
+      <td class="num">${p.birth_year||'–'}</td>
+      <td>${p.kind_nm||''}</td>
+      <td style="font-size:0.82rem">${p.team_nm||''}</td>
+      <td>${p.sido||''}</td>
+      <td class="num">${p.last_reg_year||''}</td>
+      <td style="font-size:0.8rem;color:var(--text-secondary)">${p.reg_type||''}</td>
+      <td class="num"><span style="font-family:'Space Mono',monospace;color:var(--blue-bright);font-weight:700">${histCnt}</span></td>
+    </tr>`;
+  }).join('');
+
+  renderPagination('playerPagination', total, playerPage, (p) => {
+    playerPage = p;
+    renderPlayerTable(currentPlayers);
+  });
+}
+
+// ══════════════════════════════════════════════
+// 선수 상세
+// ══════════════════════════════════════════════
+function showPlayerDetail(pid) {
+  const p = playerMap[pid];
+  if (!p) return;
+
+  // 탭 선수 탭으로 이동
+  document.querySelectorAll('.tab-btn').forEach(b => b.classList.remove('active'));
+  document.querySelectorAll('.tab-content').forEach(c => c.classList.remove('active'));
+  document.querySelector('[data-tab="players"]').classList.add('active');
+  document.getElementById('tab-players').classList.add('active');
+
+  selectedPlayer = p;
+  const hist = (playerHistoryMap[pid]||[]).slice().sort((a,b)=>String(b.event_date).localeCompare(String(a.event_date)));
+  selectedPlayerHistory = hist;
+
+  document.getElementById('detailName').textContent = p.name;
+  document.getElementById('detailGender').textContent = p.gender === '남' ? '♂ 남자' : '♀ 여자';
+  document.getElementById('detailKind').textContent = p.kind_nm || '';
+  document.getElementById('detailSido').textContent = p.sido || '';
+  document.getElementById('detailBirth').textContent = p.birth_year ? p.birth_year + '년생' : '';
+  document.getElementById('historyCount').textContent = hist.length.toLocaleString();
+
+  document.getElementById('detailGrid').innerHTML = [
+    { label: '선수 ID', value: p.player_id },
+    { label: '소속팀', value: p.team_nm },
+    { label: '팀 코드', value: p.team_cd },
+    { label: '등록구분', value: p.reg_type },
+    { label: '최종등록년도', value: p.last_reg_year },
+    { label: '대회 참가 이력', value: hist.length + '건' },
+  ].map(item => `
+    <div class="info-item">
+      <div class="label">${item.label}</div>
+      <div class="value">${item.value||'–'}</div>
+    </div>
+  `).join('');
+
+  document.getElementById('detailHistBody').innerHTML = hist.slice(0, 200).map(h => {
+    const rankNum = parseInt(h.rank);
+    let rankCell;
+    if (rankNum === 1) rankCell = `<span class="rank-badge rank-1">1</span>`;
+    else if (rankNum === 2) rankCell = `<span class="rank-badge rank-2">2</span>`;
+    else if (rankNum === 3) rankCell = `<span class="rank-badge rank-3">3</span>`;
+    else rankCell = h.rank ? `<span class="rank-badge rank-n">${h.rank}</span>` : '–';
+    return `<tr>
+      <td style="font-size:0.82rem;max-width:220px;overflow:hidden;text-overflow:ellipsis">${h.competition_nm}</td>
+      <td>${formatDate(h.event_date)}</td>
+      <td>${h.kind_nm||''}</td>
+      <td><b>${h.event_nm||''}</b></td>
+      <td style="font-size:0.78rem;color:var(--text-secondary)">${h.round_nm||''}</td>
+      <td style="font-size:0.82rem">${h.team_nm||''}</td>
+      <td class="num record-time">${h.record||'–'}</td>
+      <td class="num">${rankCell}</td>
+    </tr>`;
+  }).join('');
+
+  const detail = document.getElementById('playerDetail');
+  detail.classList.add('visible');
+  detail.scrollIntoView({ behavior: 'smooth', block: 'start' });
+}
+
+// 기록 탭에서 선수명 클릭 → 선수 상세
+function quickViewPlayer(pid) {
+  showPlayerDetail(pid);
+}
+
+document.getElementById('closeDetail').addEventListener('click', () => {
+  document.getElementById('playerDetail').classList.remove('visible');
+  selectedPlayer = null;
+});
+
+// ══════════════════════════════════════════════
+// 정렬
+// ══════════════════════════════════════════════
+document.querySelectorAll('#tab-records thead th[data-col]').forEach(th => {
+  th.addEventListener('click', () => {
+    const col = th.dataset.col;
+    const st = sortState.records;
+    if (st.col === col) st.dir = st.dir === 'asc' ? 'desc' : 'asc';
+    else { st.col = col; st.dir = 'asc'; }
+    updateSortHeaders('#tab-records', st);
+    recordPage = 1;
+    runRecordSearch();
+  });
+});
+
+document.querySelectorAll('#tab-players thead th[data-col]').forEach(th => {
+  th.addEventListener('click', () => {
+    const col = th.dataset.col;
+    const st = sortState.players;
+    if (st.col === col) st.dir = st.dir === 'asc' ? 'desc' : 'asc';
+    else { st.col = col; st.dir = 'asc'; }
+    updateSortHeaders('#tab-players', st);
+    playerPage = 1;
+    runPlayerSearch();
+  });
+});
+
+function updateSortHeaders(scope, st) {
+  document.querySelectorAll(`${scope} thead th[data-col]`).forEach(t => {
+    t.classList.remove('sorted-asc','sorted-desc');
+    if (t.dataset.col === st.col) t.classList.add('sorted-' + st.dir);
+  });
+}
+
+function sortArr(arr, col, dir) {
+  return [...arr].sort((a, b) => {
+    let av = a[col] ?? '', bv = b[col] ?? '';
+    const an = parseFloat(av), bn = parseFloat(bv);
+    if (!isNaN(an) && !isNaN(bn)) {
+      return dir === 'asc' ? an - bn : bn - an;
+    }
+    av = String(av); bv = String(bv);
+    return dir === 'asc' ? av.localeCompare(bv, 'ko') : bv.localeCompare(av, 'ko');
+  });
+}
+
+// ══════════════════════════════════════════════
+// 페이지네이션
+// ══════════════════════════════════════════════
+function renderPagination(containerId, total, current, onPageChange) {
+  const totalPages = Math.ceil(total / PAGE_SIZE);
+  const container = document.getElementById(containerId);
+
+  if (totalPages <= 1) { container.innerHTML = ''; return; }
+
+  const from = (current - 1) * PAGE_SIZE + 1;
+  const to   = Math.min(current * PAGE_SIZE, total);
+
+  let html = `<span class="page-info">${from.toLocaleString()}–${to.toLocaleString()} / ${total.toLocaleString()}</span>`;
+  html += `<button class="page-btn" onclick="(${onPageChange.toString()})(${current-1})" ${current===1?'disabled':''}>‹ 이전</button>`;
+
+  const delta = 2;
+  const pages = [];
+  for (let i = 1; i <= totalPages; i++) {
+    if (i === 1 || i === totalPages || (i >= current - delta && i <= current + delta)) pages.push(i);
+    else if (pages[pages.length-1] !== '…') pages.push('…');
+  }
+
+  pages.forEach(p => {
+    if (p === '…') {
+      html += `<span class="page-info">…</span>`;
+    } else {
+      html += `<button class="page-btn ${p===current?'active':''}" onclick="(${onPageChange.toString()})(${p})">${p}</button>`;
+    }
+  });
+
+  html += `<button class="page-btn" onclick="(${onPageChange.toString()})(${current+1})" ${current===totalPages?'disabled':''}>다음 ›</button>`;
+  container.innerHTML = html;
+}
+
+// ══════════════════════════════════════════════
+// CSV 다운로드
+// ══════════════════════════════════════════════
+function downloadCSV(rows, headers, filename) {
+  const bom = '\uFEFF';
+  const csv = bom + [headers, ...rows].map(r => r.map(v => `"${String(v??'').replace(/"/g,'""')}"`).join(',')).join('\n');
+  const blob = new Blob([csv], { type: 'text/csv;charset=utf-8' });
+  const url  = URL.createObjectURL(blob);
+  const a    = document.createElement('a');
+  a.href = url; a.download = filename;
+  a.click();
+  URL.revokeObjectURL(url);
+}
+
+document.getElementById('exportRecords').addEventListener('click', () => {
+  if (!currentRecords.length) return alert('조회 결과가 없습니다');
+  downloadCSV(
+    currentRecords.map(h => [h.competition_nm, h.event_date, h.kind_nm, h.event_nm, h.round_nm, h.player_name, h.team_nm, h.record, h.rank]),
+    ['대회명','경기일자','종별','종목','라운드','선수명','소속','기록','순위'],
+    '경기기록_' + today() + '.csv'
+  );
+});
+
+document.getElementById('exportPlayers').addEventListener('click', () => {
+  if (!currentPlayers.length) return alert('조회 결과가 없습니다');
+  downloadCSV(
+    currentPlayers.map(p => [p.player_id, p.name, p.gender, p.birth_year, p.kind_nm, p.team_nm, p.sido, p.last_reg_year, p.reg_type]),
+    ['선수ID','선수명','성별','출생년도','종별','소속팀','시도','최종등록년도','등록구분'],
+    '선수목록_' + today() + '.csv'
+  );
+});
+
+document.getElementById('exportPlayerHistory').addEventListener('click', () => {
+  if (!selectedPlayerHistory.length) return;
+  downloadCSV(
+    selectedPlayerHistory.map(h => [h.competition_nm, h.event_date, h.kind_nm, h.event_nm, h.round_nm, h.team_nm, h.record, h.rank]),
+    ['대회명','경기일자','종별','종목','라운드','소속(당시)','기록','순위'],
+    `${selectedPlayer?.name||'선수'}_이력_${today()}.csv`
+  );
+});
+
+// ══════════════════════════════════════════════
+// 통계
+// ══════════════════════════════════════════════
+function buildStats() {
+  document.getElementById('statPlayers').textContent = DB.players.length.toLocaleString();
+  document.getElementById('statHistory').textContent = DB.history.length.toLocaleString();
+  document.getElementById('statComps').textContent  = new Set(DB.history.map(h=>h.competition_nm)).size.toLocaleString();
+  document.getElementById('statKinds').textContent  = new Set([...DB.players.map(p=>p.kind_nm),...DB.history.map(h=>h.kind_nm)]).size.toLocaleString();
+
+  // 종별 선수
+  const kindMap = {};
+  DB.players.forEach(p => { kindMap[p.kind_nm] = (kindMap[p.kind_nm]||0)+1; });
+  const kindSorted = Object.entries(kindMap).sort((a,b)=>b[1]-a[1]);
+  document.getElementById('kindStatBody').innerHTML = kindSorted.map(([k,v]) =>
+    `<tr><td>${k}</td><td class="num">${v.toLocaleString()}</td><td class="num">${(v/DB.players.length*100).toFixed(1)}%</td></tr>`
+  ).join('');
+
+  // 시도별
+  const sidoMap = {};
+  DB.players.forEach(p => { sidoMap[p.sido||'미상'] = (sidoMap[p.sido||'미상']||0)+1; });
+  const sidoSorted = Object.entries(sidoMap).sort((a,b)=>b[1]-a[1]);
+  document.getElementById('sidoStatBody').innerHTML = sidoSorted.map(([k,v]) =>
+    `<tr><td>${k}</td><td class="num">${v.toLocaleString()}</td><td class="num">${(v/DB.players.length*100).toFixed(1)}%</td></tr>`
+  ).join('');
+
+  // 종목별 기록
+  const evtMap = {};
+  DB.history.forEach(h => { evtMap[h.event_nm||'미상'] = (evtMap[h.event_nm||'미상']||0)+1; });
+  const evtSorted = Object.entries(evtMap).sort((a,b)=>b[1]-a[1]);
+  document.getElementById('eventStatBody').innerHTML = evtSorted.map(([k,v]) =>
+    `<tr><td><b>${k}</b></td><td class="num">${v.toLocaleString()}</td></tr>`
+  ).join('');
+
+  // 대회별 기록 (Top 20)
+  const compMap = {};
+  DB.history.forEach(h => { compMap[h.competition_nm] = (compMap[h.competition_nm]||0)+1; });
+  const compSorted = Object.entries(compMap).sort((a,b)=>b[1]-a[1]).slice(0,20);
+  document.getElementById('compStatBody').innerHTML = compSorted.map(([k,v]) =>
+    `<tr><td style="font-size:0.8rem;max-width:260px;overflow:hidden;text-overflow:ellipsis" title="${k}">${k}</td><td class="num">${v.toLocaleString()}</td></tr>`
+  ).join('');
+}
+
+// ══════════════════════════════════════════════
+// 유틸
+// ══════════════════════════════════════════════
+function formatDate(d) {
+  if (!d) return '–';
+  const s = String(d);
+  if (s.includes('.') || s.includes('-')) return s;
+  if (s.length === 8) return `${s.slice(0,4)}.${s.slice(4,6)}.${s.slice(6,8)}`;
+  return s;
+}
+
+function today() {
+  const d = new Date();
+  return d.getFullYear() + ('0'+(d.getMonth()+1)).slice(-2) + ('0'+d.getDate()).slice(-2);
+}
+
+function showLoading(text) {
+  document.getElementById('loadingText').textContent = text || '로딩 중...';
+  document.getElementById('loadingOverlay').classList.add('visible');
+}
+
+function updateLoadingText(text) {
+  document.getElementById('loadingText').textContent = text;
+}
+
+function hideLoading() {
+  document.getElementById('loadingOverlay').classList.remove('visible');
+}
+
+// ══════════════════════════════════════════════
+// Enter 키 검색
+// ══════════════════════════════════════════════
+['f-player-name','f-team'].forEach(id => {
+  document.getElementById(id).addEventListener('keydown', e => {
+    if (e.key === 'Enter') { recordPage = 1; runRecordSearch(); }
+  });
+});
+['p-name','p-team'].forEach(id => {
+  document.getElementById(id).addEventListener('keydown', e => {
+    if (e.key === 'Enter') { playerPage = 1; runPlayerSearch(); }
+  });
+});
+</script>
+</body>
+</html>

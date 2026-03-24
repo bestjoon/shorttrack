@@ -1,0 +1,842 @@
+페이지 구조와 API를 완전히 분석했습니다. 아래에 Python 스크래핑 프로그램 전체 코드를 제공합니다.
+
+---
+
+## 분석 결과 요약
+
+| 단계 | URL | 주요 파라미터 |
+|---|---|---|
+| 대회상세/세부종목 | `POST INF202.do` | `classCd`, `toCd` |
+| 경기일정(라운드) | `POST INF301.do` | `kindCd`, `detailClassCd` 추가 |
+| 경기결과(선수목록) | `POST INF310.do` | `rhCd`, `baseClassCd`, `rhNm`, `baseClassNm` 추가 |
+| 선수상세정보 | `POST INF503.do` | `idNo` (선수ID) 추가 |
+
+---
+
+## Python 스크래핑 프로그램
+
+```python
+#!/usr/bin/env python3
+# -*- coding: utf-8 -*-
+"""
+빙상연맹 쇼트트랙 선수 데이터 수집 프로그램
+대상 사이트: https://result.sports.or.kr/SK/
+SQLite DB로 저장
+"""
+
+import requests
+from bs4 import BeautifulSoup
+import sqlite3
+import re
+import time
+import logging
+import argparse
+from datetime import datetime
+
+# ─────────────────────────────────────────────
+# 로깅 설정
+# ─────────────────────────────────────────────
+logging.basicConfig(
+    level=logging.INFO,
+    format="%(asctime)s [%(levelname)s] %(message)s",
+    handlers=[
+        logging.StreamHandler(),
+        logging.FileHandler("scraping.log", encoding="utf-8"),
+    ],
+)
+logger = logging.getLogger(__name__)
+
+# ─────────────────────────────────────────────
+# 상수 / 기본 파라미터
+# ─────────────────────────────────────────────
+BASE_URL = "https://result.sports.or.kr/SK"
+
+# 쇼트트랙 classCd
+CLASS_CD_SHORTTRACK = "2"
+
+# 종별코드 매핑 (INF301 드롭다운에서 확인)
+KIND_CD_MAP = {
+    "남자중학부":     "02",
+    "남자고등부":     "03",
+    "남자대학부":     "04",
+    "남자일반부":     "05",
+    "여자중학부":     "07",
+    "여자고등부":     "08",
+    "여자대학부":     "09",
+    "여자일반부":     "10",
+    "남자초등1,2학년": "31",
+    "남자초등3,4학년": "32",
+    "남자초등5,6학년": "33",
+    "여자초등1,2학년": "41",
+    "여자초등3,4학년": "42",
+    "여자초등5,6학년": "43",
+}
+
+# 종목코드 매핑
+DETAIL_CLASS_CD_MAP = {
+    "500M":  "20201",
+    "1000M": "20203",
+    "1500M": "20204",
+}
+
+# 라운드 우선순위 (낮을수록 먼저)
+ROUND_PRIORITY = ["예선", "준준결승", "준결승", "결승B", "결승A", "결승"]
+
+# 요청 간 딜레이 (초) - 서버 부하 방지
+REQUEST_DELAY = 0.5
+
+
+# ─────────────────────────────────────────────
+# HTTP 세션
+# ─────────────────────────────────────────────
+def make_session() -> requests.Session:
+    """재사용 가능한 HTTP 세션 생성"""
+    session = requests.Session()
+    session.headers.update(
+        {
+            "User-Agent": (
+                "Mozilla/5.0 (Windows NT 10.0; Win64; x64) "
+                "AppleWebKit/537.36 (KHTML, like Gecko) "
+                "Chrome/124.0.0.0 Safari/537.36"
+            ),
+            "Referer": f"{BASE_URL}/INF201.do",
+            "Origin":  "https://result.sports.or.kr",
+            "Content-Type": "application/x-www-form-urlencoded",
+        }
+    )
+    return session
+
+
+# ─────────────────────────────────────────────
+# DB 초기화
+# ─────────────────────────────────────────────
+def init_db(db_path: str) -> sqlite3.Connection:
+    """SQLite DB 생성 및 스키마 초기화"""
+    conn = sqlite3.connect(db_path)
+    cur = conn.cursor()
+
+    # 선수 마스터 테이블
+    cur.execute(
+        """
+        CREATE TABLE IF NOT EXISTS player (
+            player_id        TEXT PRIMARY KEY,   -- 선수 고유 ID (idNo)
+            name             TEXT NOT NULL,       -- 이름
+            gender           TEXT,               -- 성별
+            birth_year       TEXT,               -- 출생년도
+            kind_nm          TEXT,               -- 종별명 (최종등록 기준)
+            team_nm          TEXT,               -- 소속팀
+            team_cd          TEXT,               -- 팀코드
+            sido             TEXT,               -- 시도
+            last_reg_year    TEXT,               -- 최종등록년도
+            reg_type         TEXT,               -- 등록구분
+            created_at       TEXT DEFAULT (datetime('now','localtime')),
+            updated_at       TEXT DEFAULT (datetime('now','localtime'))
+        )
+        """
+    )
+
+    # 대회참가이력 테이블
+    cur.execute(
+        """
+        CREATE TABLE IF NOT EXISTS player_history (
+            id               INTEGER PRIMARY KEY AUTOINCREMENT,
+            player_id        TEXT NOT NULL,       -- 선수 ID (FK)
+            competition_nm   TEXT,               -- 대회명
+            event_date       TEXT,               -- 경기일자 (YYYYMMDD)
+            kind_nm          TEXT,               -- 종별
+            event_nm         TEXT,               -- 종목
+            round_nm         TEXT,               -- 라운드
+            team_nm          TEXT,               -- 소속 (당시)
+            record           TEXT,               -- 기록
+            rank             TEXT,               -- 순위
+            UNIQUE(player_id, competition_nm, event_date, kind_nm, event_nm, round_nm),
+            FOREIGN KEY (player_id) REFERENCES player(player_id)
+        )
+        """
+    )
+
+    # 수집 작업 로그 테이블
+    cur.execute(
+        """
+        CREATE TABLE IF NOT EXISTS collect_log (
+            id              INTEGER PRIMARY KEY AUTOINCREMENT,
+            to_cd           TEXT,
+            competition_nm  TEXT,
+            kind_nm         TEXT,
+            event_nm        TEXT,
+            round_nm        TEXT,
+            total_players   INTEGER,
+            new_players     INTEGER,
+            skipped_players INTEGER,
+            collected_at    TEXT DEFAULT (datetime('now','localtime'))
+        )
+        """
+    )
+
+    conn.commit()
+    logger.info(f"DB 초기화 완료: {db_path}")
+    return conn
+
+
+# ─────────────────────────────────────────────
+# API 호출 함수들
+# ─────────────────────────────────────────────
+def get_event_list(
+    session: requests.Session,
+    class_cd: str,
+    to_cd: str,
+) -> list[dict]:
+    """
+    INF202: 대회 상세 + 세부종목 목록 조회
+    Returns: [{"kind_nm": "남자중학부", "kind_cd": "02",
+               "detail_class_nm": "1000M", "detail_class_cd": "20203",
+               "onclick": "javascript:fnEventSchedule(\"02\",\"20203\")"}, ...]
+    """
+    url = f"{BASE_URL}/INF202.do"
+    data = {
+        "classCd": class_cd,
+        "toCd": to_cd,
+        "platform": "pc",
+    }
+    resp = session.post(url, data=data, timeout=15)
+    resp.raise_for_status()
+    soup = BeautifulSoup(resp.text, "html.parser")
+
+    events = []
+    tables = soup.find_all("table")
+    if len(tables) < 2:
+        logger.warning("세부종목 테이블을 찾을 수 없음")
+        return events
+
+    event_table = tables[1]
+    for row in event_table.find("tbody").find_all("tr"):
+        onclick = row.get("onclick", "")
+        if not onclick:
+            continue
+        # fnEventSchedule("02","20203") 파싱
+        m = re.search(r'fnEventSchedule\("([^"]+)","([^"]+)"\)', onclick)
+        if not m:
+            continue
+        kind_cd_val = m.group(1)
+        detail_cd_val = m.group(2)
+
+        cells = row.find_all("td")
+        kind_nm = cells[0].get_text(strip=True) if len(cells) > 0 else ""
+        detail_nm = cells[1].get_text(strip=True) if len(cells) > 1 else ""
+
+        events.append(
+            {
+                "kind_nm": kind_nm,
+                "kind_cd": kind_cd_val,
+                "detail_class_nm": detail_nm,
+                "detail_class_cd": detail_cd_val,
+            }
+        )
+
+    logger.info(f"세부종목 {len(events)}개 조회")
+    return events
+
+
+def get_round_list(
+    session: requests.Session,
+    class_cd: str,
+    to_cd: str,
+    kind_cd: str,
+    detail_class_cd: str,
+) -> list[dict]:
+    """
+    INF301: 경기일정(라운드) 목록 조회
+    Returns: [{"rh_cd": "4", "base_class_cd": "03",
+               "rh_nm": "준준결승", "base_class_nm": "1000M",
+               "pcnt_gbn": "I"}, ...]
+    """
+    url = f"{BASE_URL}/INF301.do"
+    data = {
+        "classCd":       class_cd,
+        "toCd":          to_cd,
+        "kindCd":        kind_cd,
+        "detailClassCd": detail_class_cd,
+        "platform":      "pc",
+    }
+    resp = session.post(url, data=data, timeout=15)
+    resp.raise_for_status()
+    soup = BeautifulSoup(resp.text, "html.parser")
+
+    rounds = []
+    tables = soup.find_all("table")
+    if len(tables) < 2:
+        return rounds
+
+    schedule_table = tables[1]
+    for row in schedule_table.find("tbody").find_all("tr"):
+        btn = row.find("button")
+        if not btn:
+            continue
+        onclick = btn.get("onclick", "")
+        # fnEventResult("","I","03", "4", "준준결승", "1000M")
+        m = re.search(
+            r'fnEventResult\("([^"]*)",\s*"([^"]*)",\s*"([^"]*)",\s*"([^"]*)",\s*"([^"]*)",\s*"([^"]*)"\)',
+            onclick,
+        )
+        if not m:
+            continue
+
+        rounds.append(
+            {
+                "pcnt_gbn":      m.group(2),   # "I"
+                "base_class_cd": m.group(3),   # "03"
+                "rh_cd":         m.group(4),   # "4"
+                "rh_nm":         m.group(5),   # "준준결승"
+                "base_class_nm": m.group(6),   # "1000M"
+            }
+        )
+
+    return rounds
+
+
+def get_earliest_round(rounds: list[dict]) -> dict | None:
+    """라운드 목록에서 가장 이른 라운드 반환"""
+    if not rounds:
+        return None
+
+    def priority(r: dict) -> int:
+        nm = r["rh_nm"]
+        for i, keyword in enumerate(ROUND_PRIORITY):
+            if keyword in nm:
+                return i
+        return 999  # 알 수 없는 라운드는 후순위
+
+    return sorted(rounds, key=priority)[0]
+
+
+def get_players_from_result(
+    session: requests.Session,
+    class_cd: str,
+    to_cd: str,
+    kind_cd: str,
+    detail_class_cd: str,
+    rh_cd: str,
+    base_class_cd: str,
+    rh_nm: str,
+    base_class_nm: str,
+    pcnt_gbn: str = "I",
+) -> list[dict]:
+    """
+    INF310: 경기결과 페이지에서 선수 목록 조회
+    Returns: [{"player_id": "202011000433", "name": "김도윤",
+               "team_nm": "동수원중학교"}, ...]
+    """
+    url = f"{BASE_URL}/INF310.do"
+    data = {
+        "classCd":       class_cd,
+        "toCd":          to_cd,
+        "kindCd":        kind_cd,
+        "idNo":          "",
+        "rhCd":          rh_cd,
+        "detailClassCd": detail_class_cd,
+        "baseClassCd":   base_class_cd,
+        "teamCd":        "",
+        "vsTeamCd":      "",
+        "pcntGbn":       pcnt_gbn,
+        "baseClassNm":   base_class_nm,
+        "rhNm":          rh_nm,
+        "searchKindCd":  kind_cd,
+        "searchDetailClassCd": detail_class_cd,
+        "platform":      "pc",
+    }
+    resp = session.post(url, data=data, timeout=15)
+    resp.raise_for_status()
+    soup = BeautifulSoup(resp.text, "html.parser")
+
+    players = []
+    # 선수 성명 링크: href="javascript:fnViewHistory('202011000433');"
+    for a_tag in soup.find_all("a", href=re.compile(r"fnViewHistory")):
+        m = re.search(r"fnViewHistory\('([^']+)'\)", a_tag.get("href", ""))
+        if not m:
+            continue
+        player_id = m.group(1)
+        name = a_tag.get_text(strip=True)
+
+        # 소속 셀 (같은 행에서 td[3])
+        row = a_tag.find_parent("tr")
+        team_nm = ""
+        if row:
+            cells = row.find_all("td")
+            if len(cells) >= 4:
+                team_nm = cells[3].get_text(strip=True)
+
+        players.append({"player_id": player_id, "name": name, "team_nm": team_nm})
+
+    return players
+
+
+def get_player_detail(
+    session: requests.Session,
+    class_cd: str,
+    to_cd: str,
+    kind_cd: str,
+    detail_class_cd: str,
+    rh_cd: str,
+    player_id: str,
+) -> dict | None:
+    """
+    INF503: 선수 상세정보(최종등록정보 + 대회참가이력) 조회
+    Returns: {
+        "player": {master fields...},
+        "history": [{history fields...}, ...]
+    }
+    """
+    url = f"{BASE_URL}/INF503.do"
+    data = {
+        "classCd":       class_cd,
+        "toCd":          to_cd,
+        "kindCd":        kind_cd,
+        "idNo":          player_id,
+        "rhCd":          rh_cd,
+        "detailClassCd": detail_class_cd,
+        "platform":      "pc",
+    }
+    resp = session.post(url, data=data, timeout=15)
+    resp.raise_for_status()
+    soup = BeautifulSoup(resp.text, "html.parser")
+
+    # ── 최종등록정보 파싱 ──
+    player_info = {"player_id": player_id}
+    reg_table = soup.find("table")
+    if reg_table:
+        for row in reg_table.find_all("tr"):
+            cells = row.find_all(["th", "td"])
+            # 헤더/값 쌍으로 파싱 (2열씩)
+            for i in range(0, len(cells) - 1, 2):
+                header = cells[i].get_text(strip=True)
+                value  = cells[i + 1].get_text(strip=True)
+                if "이름" in header:
+                    player_info["name"] = value
+                elif "성별" in header:
+                    player_info["gender"] = value
+                elif "출생년도" in header:
+                    player_info["birth_year"] = re.sub(r"[^0-9]", "", value)
+                elif "종별" in header:
+                    player_info["kind_nm"] = value
+                elif "소속팀" in header:
+                    # "서울염경초등학교 (SK90481)" → name / code 분리
+                    tm = re.match(r"^(.+?)\s*\(([^)]+)\)\s*$", value)
+                    if tm:
+                        player_info["team_nm"] = tm.group(1).strip()
+                        player_info["team_cd"] = tm.group(2).strip()
+                    else:
+                        player_info["team_nm"] = value
+                        player_info["team_cd"] = ""
+                elif "시도" in header:
+                    player_info["sido"] = value
+                elif "최종등록년도" in header:
+                    player_info["last_reg_year"] = re.sub(r"[^0-9]", "", value)
+                elif "등록구분" in header:
+                    player_info["reg_type"] = value
+
+    # ── 대회참가이력 파싱 ──
+    history_list = []
+    tables = soup.find_all("table")
+    if len(tables) < 2:
+        return {"player": player_info, "history": history_list}
+
+    history_table = tables[1]
+    current_competition = ""
+
+    for row in history_table.find("tbody").find_all("tr"):
+        cells = row.find_all("td")
+        if not cells:
+            continue
+
+        # colspan이 있는 행 = 대회명 행
+        if len(cells) == 1 or any(c.get("colspan") for c in cells):
+            current_competition = cells[0].get_text(strip=True)
+            continue
+
+        # 데이터 행: 일자 / 종별 / 세부종목 / 라운드 / 소속 / 기록 / 순위
+        if len(cells) >= 6:
+            history_list.append(
+                {
+                    "player_id":      player_id,
+                    "competition_nm": current_competition,
+                    "event_date":     cells[0].get_text(strip=True),
+                    "kind_nm":        cells[1].get_text(strip=True),
+                    "event_nm":       cells[2].get_text(strip=True),
+                    "round_nm":       cells[3].get_text(strip=True),
+                    "team_nm":        cells[4].get_text(strip=True),
+                    "record":         cells[5].get_text(strip=True),
+                    "rank":           cells[6].get_text(strip=True) if len(cells) > 6 else "",
+                }
+            )
+
+    return {"player": player_info, "history": history_list}
+
+
+# ─────────────────────────────────────────────
+# DB 저장 함수
+# ─────────────────────────────────────────────
+def save_player(conn: sqlite3.Connection, player: dict) -> bool:
+    """
+    선수 마스터 저장. 이미 존재하면 Skip (False 반환).
+    """
+    cur = conn.cursor()
+    cur.execute("SELECT player_id FROM player WHERE player_id = ?", (player["player_id"],))
+    if cur.fetchone():
+        return False  # 중복
+
+    cur.execute(
+        """
+        INSERT INTO player
+            (player_id, name, gender, birth_year, kind_nm,
+             team_nm, team_cd, sido, last_reg_year, reg_type)
+        VALUES (?, ?, ?, ?, ?, ?, ?, ?, ?, ?)
+        """,
+        (
+            player.get("player_id", ""),
+            player.get("name", ""),
+            player.get("gender", ""),
+            player.get("birth_year", ""),
+            player.get("kind_nm", ""),
+            player.get("team_nm", ""),
+            player.get("team_cd", ""),
+            player.get("sido", ""),
+            player.get("last_reg_year", ""),
+            player.get("reg_type", ""),
+        ),
+    )
+    conn.commit()
+    return True
+
+
+def save_history(conn: sqlite3.Connection, history_rows: list[dict]) -> int:
+    """대회참가이력 저장. UNIQUE 충돌 시 Skip. 저장된 건수 반환."""
+    cur = conn.cursor()
+    saved = 0
+    for h in history_rows:
+        try:
+            cur.execute(
+                """
+                INSERT OR IGNORE INTO player_history
+                    (player_id, competition_nm, event_date, kind_nm,
+                     event_nm, round_nm, team_nm, record, rank)
+                VALUES (?, ?, ?, ?, ?, ?, ?, ?, ?)
+                """,
+                (
+                    h.get("player_id", ""),
+                    h.get("competition_nm", ""),
+                    h.get("event_date", ""),
+                    h.get("kind_nm", ""),
+                    h.get("event_nm", ""),
+                    h.get("round_nm", ""),
+                    h.get("team_nm", ""),
+                    h.get("record", ""),
+                    h.get("rank", ""),
+                ),
+            )
+            saved += cur.rowcount
+        except sqlite3.Error as e:
+            logger.warning(f"이력 저장 오류: {e}")
+    conn.commit()
+    return saved
+
+
+def save_collect_log(
+    conn: sqlite3.Connection,
+    to_cd: str,
+    competition_nm: str,
+    kind_nm: str,
+    event_nm: str,
+    round_nm: str,
+    total: int,
+    new: int,
+    skipped: int,
+):
+    conn.execute(
+        """
+        INSERT INTO collect_log
+            (to_cd, competition_nm, kind_nm, event_nm, round_nm,
+             total_players, new_players, skipped_players)
+        VALUES (?, ?, ?, ?, ?, ?, ?, ?)
+        """,
+        (to_cd, competition_nm, kind_nm, event_nm, round_nm, total, new, skipped),
+    )
+    conn.commit()
+
+
+# ─────────────────────────────────────────────
+# 대회명 조회
+# ─────────────────────────────────────────────
+def get_competition_name(
+    session: requests.Session, class_cd: str, to_cd: str
+) -> str:
+    """INF202 페이지에서 대회명 파싱"""
+    url = f"{BASE_URL}/INF202.do"
+    resp = session.post(url, data={"classCd": class_cd, "toCd": to_cd, "platform": "pc"}, timeout=15)
+    resp.raise_for_status()
+    soup = BeautifulSoup(resp.text, "html.parser")
+    tables = soup.find_all("table")
+    if tables:
+        for row in tables[0].find_all("tr"):
+            cells = row.find_all("td")
+            for i, cell in enumerate(cells):
+                if "대회명" in cell.get_text():
+                    if i + 1 < len(cells):
+                        return cells[i + 1].get_text(strip=True)
+    return to_cd  # fallback
+
+
+# ─────────────────────────────────────────────
+# 메인 수집 함수
+# ─────────────────────────────────────────────
+def collect(
+    db_path: str = "shorttrack_players.db",
+    class_cd: str = CLASS_CD_SHORTTRACK,
+    to_cd: str = "202514413",              # 대회 ID (파라미터)
+    target_kinds: list[str] | None = None, # None이면 전체 종별
+    target_events: list[str] | None = None,# None이면 전체 종목
+    delay: float = REQUEST_DELAY,
+):
+    """
+    메인 수집 루프.
+    
+    Args:
+        db_path:        SQLite DB 파일 경로
+        class_cd:       종목 분류 코드 (쇼트트랙=2)
+        to_cd:          대회 ID (URL 파라미터)
+        target_kinds:   수집할 종별 목록 (예: ["남자중학부", "여자중학부"])
+                        None이면 전체
+        target_events:  수집할 종목 목록 (예: ["500M", "1000M"])
+                        None이면 전체
+        delay:          요청 간 딜레이(초)
+    """
+    conn = init_db(db_path)
+    session = make_session()
+
+    # 대회명 조회
+    competition_nm = get_competition_name(session, class_cd, to_cd)
+    logger.info(f"대회: {competition_nm} (toCd={to_cd})")
+    time.sleep(delay)
+
+    # 세부종목 목록 조회
+    event_list = get_event_list(session, class_cd, to_cd)
+    time.sleep(delay)
+
+    # 수집된 선수 ID 집합 (런타임 중복 제거 - DB에 없어도 이번 실행 중 중복 skip)
+    seen_player_ids: set[str] = set()
+
+    # 이미 DB에 있는 선수 ID 로드
+    cur = conn.cursor()
+    cur.execute("SELECT player_id FROM player")
+    for (pid,) in cur.fetchall():
+        seen_player_ids.add(pid)
+
+    total_new = 0
+    total_skip = 0
+
+    for event in event_list:
+        kind_nm    = event["kind_nm"]
+        kind_cd    = event["kind_cd"]
+        event_nm   = event["detail_class_nm"]
+        event_cd   = event["detail_class_cd"]
+
+        # 종별/종목 필터
+        if target_kinds and kind_nm not in target_kinds:
+            continue
+        if target_events and event_nm not in target_events:
+            continue
+
+        logger.info(f"▶ 종별={kind_nm}, 종목={event_nm}")
+
+        # 라운드 목록 조회
+        rounds = get_round_list(session, class_cd, to_cd, kind_cd, event_cd)
+        time.sleep(delay)
+
+        if not rounds:
+            logger.warning(f"  라운드 없음: {kind_nm} {event_nm}")
+            continue
+
+        # 가장 이른 라운드 선택
+        earliest = get_earliest_round(rounds)
+        if not earliest:
+            continue
+
+        rh_cd          = earliest["rh_cd"]
+        rh_nm          = earliest["rh_nm"]
+        base_class_cd  = earliest["base_class_cd"]
+        base_class_nm  = earliest["base_class_nm"]
+        pcnt_gbn       = earliest["pcnt_gbn"]
+
+        logger.info(f"  첫 라운드: {rh_nm} (rhCd={rh_cd})")
+
+        # 경기결과에서 선수 목록 조회
+        players = get_players_from_result(
+            session, class_cd, to_cd, kind_cd, event_cd,
+            rh_cd, base_class_cd, rh_nm, base_class_nm, pcnt_gbn,
+        )
+        time.sleep(delay)
+
+        logger.info(f"  선수 {len(players)}명 조회")
+
+        new_count     = 0
+        skipped_count = 0
+
+        for p in players:
+            pid = p["player_id"]
+
+            if pid in seen_player_ids:
+                skipped_count += 1
+                logger.debug(f"  SKIP: {p['name']} ({pid})")
+                continue
+
+            seen_player_ids.add(pid)
+
+            # 선수 상세정보 조회
+            detail = get_player_detail(
+                session, class_cd, to_cd, kind_cd, event_cd, rh_cd, pid
+            )
+            time.sleep(delay)
+
+            if not detail:
+                logger.warning(f"  상세정보 조회 실패: {pid}")
+                continue
+
+            # 선수 마스터 저장
+            is_new = save_player(conn, detail["player"])
+
+            # 대회참가이력 저장
+            if detail["history"]:
+                save_history(conn, detail["history"])
+
+            if is_new:
+                new_count += 1
+                total_new += 1
+                logger.info(
+                    f"  NEW: {detail['player'].get('name','?')} ({pid}) "
+                    f"이력 {len(detail['history'])}건"
+                )
+            else:
+                skipped_count += 1
+                total_skip += 1
+
+        # 수집 로그 저장
+        save_collect_log(
+            conn, to_cd, competition_nm,
+            kind_nm, event_nm, rh_nm,
+            len(players), new_count, skipped_count,
+        )
+        logger.info(
+            f"  완료: 신규={new_count}, 중복skip={skipped_count}"
+        )
+
+    logger.info(
+        f"\n===== 수집 완료 ===== 총 신규={total_new}, 총 skip={total_skip}"
+    )
+    conn.close()
+
+
+# ─────────────────────────────────────────────
+# CLI 인터페이스
+# ─────────────────────────────────────────────
+def main():
+    parser = argparse.ArgumentParser(
+        description="빙상연맹 쇼트트랙 선수 데이터 수집기"
+    )
+    parser.add_argument(
+        "--to_cd",
+        default="202514413",
+        help="대회 ID (toCd). 기본값: 제40회 전국남녀 종별종합 쇼트트랙 선수권대회",
+    )
+    parser.add_argument(
+        "--class_cd",
+        default=CLASS_CD_SHORTTRACK,
+        help=f"종목 분류 코드 (기본값: {CLASS_CD_SHORTTRACK} = 쇼트트랙)",
+    )
+    parser.add_argument(
+        "--kinds",
+        nargs="*",
+        default=None,
+        help=(
+            "수집할 종별 목록 (공백 구분). "
+            "예: --kinds 남자중학부 여자중학부 | 미지정시 전체"
+        ),
+    )
+    parser.add_argument(
+        "--events",
+        nargs="*",
+        default=None,
+        help="수집할 종목 목록. 예: --events 500M 1000M | 미지정시 전체",
+    )
+    parser.add_argument(
+        "--db",
+        default="shorttrack_players.db",
+        help="SQLite DB 파일 경로 (기본값: shorttrack_players.db)",
+    )
+    parser.add_argument(
+        "--delay",
+        type=float,
+        default=REQUEST_DELAY,
+        help=f"요청 간 딜레이(초) (기본값: {REQUEST_DELAY})",
+    )
+
+    args = parser.parse_args()
+
+    collect(
+        db_path=args.db,
+        class_cd=args.class_cd,
+        to_cd=args.to_cd,
+        target_kinds=args.kinds,
+        target_events=args.events,
+        delay=args.delay,
+    )
+
+
+if __name__ == "__main__":
+    main()
+```
+
+---
+
+## 사용 방법
+
+### 설치 (필요 패키지)
+```bash
+pip install requests beautifulsoup4
+```
+
+### 기본 실행 (제40회 대회 전체 종별/종목 수집)
+```bash
+python shorttrack_scraper.py --to_cd 202514413
+```
+
+### 특정 종별만 수집
+```bash
+python shorttrack_scraper.py --to_cd 202514413 --kinds 남자중학부 여자중학부
+```
+
+### 특정 종별+종목 수집
+```bash
+python shorttrack_scraper.py --to_cd 202514413 --kinds 남자중학부 --events 1000M 1500M
+```
+
+### 다른 대회 수집 (파라미터만 변경)
+```bash
+python shorttrack_scraper.py --to_cd [다른_대회_ID] --db another_competition.db
+```
+
+### 대회 ID 찾는 방법
+대회 목록 페이지(`INF201.do`)에서 대회 행 클릭 시 `fnEventInfo("2","202514413")` 형태로 두 번째 값이 `toCd`입니다.
+
+---
+
+## DB 스키마 설명
+
+| 테이블 | 설명 |
+|---|---|
+| `player` | 선수 마스터 (이름, 성별, 출생년도, 소속팀, 시도, 등록구분 등) |
+| `player_history` | 대회참가이력 (대회명, 경기일자, 종별, 종목, 라운드, 기록, 순위) |
+| `collect_log` | 수집 작업 로그 (언제 어떤 종별/종목을 얼마나 수집했는지) |
+
+**중복 방지 로직:**
+- `player` 테이블: `player_id`(선수 ID)가 이미 있으면 skip
+- 런타임에도 `seen_player_ids` 집합으로 같은 선수가 다른 종목에서 중복 조회되면 skip
+- `player_history` 테이블: `(player_id, competition_nm, event_date, kind_nm, event_nm, round_nm)` 복합 UNIQUE 제약으로 `INSERT OR IGNORE` 처리
