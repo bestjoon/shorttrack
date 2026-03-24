@@ -153,6 +153,20 @@ def init_db(db_path: str) -> sqlite3.Connection:
 # ─────────────────────────────────────────────
 # API 호출 함수들
 # ─────────────────────────────────────────────
+def post_with_retry(session: requests.Session, url: str, data: dict, timeout: int = 15, retries: int = 3) -> requests.Response:
+    """타임아웃/연결 오류 시 재시도하는 POST 요청"""
+    for attempt in range(retries):
+        try:
+            resp = session.post(url, data=data, timeout=timeout)
+            resp.raise_for_status()
+            return resp
+        except (requests.exceptions.Timeout, requests.exceptions.ConnectionError) as e:
+            if attempt == retries - 1:
+                raise
+            logger.warning(f"    연결 오류 (재시도 {attempt+1}/{retries}): {e}")
+            time.sleep(5)
+
+
 def get_event_list(
     session: requests.Session,
     class_cd: str,
@@ -161,8 +175,7 @@ def get_event_list(
     """INF202: 세부종목 목록 조회"""
     url = f"{BASE_URL}/INF202.do"
     data = {"classCd": class_cd, "toCd": to_cd, "platform": "pc"}
-    resp = session.post(url, data=data, timeout=15)
-    resp.raise_for_status()
+    resp = post_with_retry(session, url, data)
     soup = BeautifulSoup(resp.text, "html.parser")
 
     events = []
@@ -206,8 +219,7 @@ def get_round_list(
         "detailClassCd": detail_class_cd,
         "platform":      "pc",
     }
-    resp = session.post(url, data=data, timeout=15)
-    resp.raise_for_status()
+    resp = post_with_retry(session, url, data)
     soup = BeautifulSoup(resp.text, "html.parser")
 
     rounds = []
@@ -278,8 +290,7 @@ def get_players_from_result(
         "searchDetailClassCd": detail_class_cd,
         "platform":           "pc",
     }
-    resp = session.post(url, data=data, timeout=15)
-    resp.raise_for_status()
+    resp = post_with_retry(session, url, data)
     soup = BeautifulSoup(resp.text, "html.parser")
 
     players = []
@@ -364,8 +375,7 @@ def get_player_detail(
         "detailClassCd": detail_class_cd,
         "platform":      "pc",
     }
-    resp = session.post(url, data=data, timeout=15)
-    resp.raise_for_status()
+    resp = post_with_retry(session, url, data)
     soup = BeautifulSoup(resp.text, "html.parser")
 
     # 최종등록정보 파싱
