@@ -545,7 +545,7 @@ body {
     </div>
   </div>
   <label class="btn-upload">
-    📂 파일 교체
+    📂 데이터 업로드
     <input type="file" id="fileInput" accept=".json">
   </label>
 </header>
@@ -686,10 +686,10 @@ body {
           <thead>
             <tr>
               <th>라운드</th>
+              <th style="text-align:center">순위</th>
               <th>선수명</th>
               <th>소속</th>
               <th>기록</th>
-              <th style="text-align:center">순위</th>
             </tr>
           </thead>
           <tbody id="resultTableBody">
@@ -750,12 +750,13 @@ const ROUND_ORDER = ['결승','준결승','준준결승','예선','예비예선'
 function getRoundLevel(rn) {
   if (!rn) return 99;
   const r = rn.replace(/\s/g,'');
-  if (/^결승/.test(r)) return 0;
-  if (/^준결승/.test(r)) return 1;
-  if (/^준준결승/.test(r)) return 2;
-  if (/^예선/.test(r)) return 3;
-  if (/^예비예선/.test(r)) return 4;
-  return 5;
+  if (r === '결승B') return 1;          // 결승 바로 아래
+  if (/^결승/.test(r)) return 0;        // 결승Final, 결승A, 결승1조 등
+  if (/^준결승/.test(r)) return 2;
+  if (/^준준결승/.test(r)) return 3;
+  if (/^예선/.test(r)) return 4;
+  if (/^예비예선/.test(r)) return 5;
+  return 6;
 }
 
 function getRoundClass(rn) {
@@ -850,8 +851,8 @@ function initData(data, filename) {
   buildBirthYearChips();
   initResultSelects();
 
-  const info = `선수 ${DB.players.length.toLocaleString()}명 · 기록 ${DB.history.length.toLocaleString()}건${filename?' · '+filename:''}`;
-  document.getElementById('headerSub').textContent = info;
+  const info = `선수 ${DB.players.length.toLocaleString()}명 · 기록 ${DB.history.length.toLocaleString()}건`;
+  document.getElementById('headerSub').textContent = 'SHORT TRACK SPEED SKATING';
   document.getElementById('bannerText').textContent = info;
   document.getElementById('bannerDot').className = 'banner-dot ok';
 
@@ -875,7 +876,7 @@ window.addEventListener('DOMContentLoaded', async () => {
     initData(data, 'shorttrack_data.json');
   } catch(e) {
     document.getElementById('loadingScreen').classList.add('hidden');
-    document.getElementById('bannerText').textContent = '자동 로드 실패 — 📂 파일 교체 버튼으로 JSON 파일을 선택하세요';
+    document.getElementById('bannerText').textContent = '자동 로드 실패 — 📂 데이터 업로드 버튼으로 JSON 파일을 선택하세요';
     document.getElementById('bannerDot').className = 'banner-dot err';
     console.warn('Auto-load failed:', e.message);
   }
@@ -975,7 +976,10 @@ document.querySelectorAll('.tab-item').forEach(tab => {
 /* ══════════════════════════════════════════════
    선수 조회
 ══════════════════════════════════════════════ */
-document.getElementById('playerSearchBtn').addEventListener('click', () => runPlayerSearch());
+document.getElementById('playerSearchBtn').addEventListener('click', () => {
+  runPlayerSearch();
+  document.getElementById('playerFilterPanel').classList.remove('open');
+});
 document.getElementById('playerNameInput').addEventListener('input', debounce(() => runPlayerSearch(), 300));
 document.getElementById('playerNameInput').addEventListener('keydown', e => { if(e.key==='Enter') runPlayerSearch(); });
 document.getElementById('playerResetBtn').addEventListener('click', () => {
@@ -1014,10 +1018,7 @@ function runPlayerSearch() {
     }
     if (name && !p.name.includes(name)) return false;
     return true;
-  }).sort((a,b) => {
-    const na = parseInt(a.birth_year||0), nb = parseInt(b.birth_year||0);
-    return na - nb || a.name.localeCompare(b.name, 'ko');
-  });
+  }).sort((a,b) => a.name.localeCompare(b.name, 'ko'));
 
   document.getElementById('playerResultMeta').innerHTML =
     `<b>${currentPlayers.length.toLocaleString()}</b> 명의 선수`;
@@ -1191,7 +1192,7 @@ function openPlayerDetail(pid) {
     best500List.forEach(b => {
       html += `<tr>
         <td><b>${b.year}</b></td>
-        <td class="record-val">${b.record}</td>
+        <td class="record-val">${fmtRecord(b.record)}</td>
         <td style="font-size:0.68rem;color:var(--text2);max-width:150px;overflow:hidden;text-overflow:ellipsis" title="${b.comp}">${b.comp}</td>
       </tr>`;
     });
@@ -1282,7 +1283,15 @@ function initResultSelects() {
     (compDateMap[b]||'').localeCompare(compDateMap[a]||'')
   );
   fillResultSelect('sel-comp', comps, '전체 대회');
+  // 첫 번째 대회 기본 선택
+  const selComp = document.getElementById('sel-comp');
+  if (comps.length > 0) {
+    selComp.value = comps[0];
+    selComp.classList.add('has-value');
+  }
   updateDependentSelects();
+  // 대회결과 탭 초기 조회
+  runResultSearch();
 }
 
 // sel-comp 변경 → 종별 갱신
@@ -1386,7 +1395,10 @@ function fillResultSelect(id, options, placeholder) {
   sel.classList.toggle('has-value', !!sel.value);
 }
 
-document.getElementById('resultSearchBtn').addEventListener('click', () => runResultSearch());
+document.getElementById('resultSearchBtn').addEventListener('click', () => {
+  runResultSearch();
+  document.getElementById('resultFilterPanel').classList.remove('open');
+});
 document.getElementById('resultNameInput').addEventListener('input', debounce(() => runResultSearch(), 300));
 document.getElementById('resultNameInput').addEventListener('keydown', e => { if(e.key==='Enter') runResultSearch(); });
 
@@ -1518,10 +1530,10 @@ function renderResultTable(rows) {
 
     html += `<tr>
       <td>${roundDisplay}</td>
-      <td style="font-weight:700;color:var(--blue2)">${h._playerName||'–'}</td>
-      <td style="font-size:0.75rem">${h.team_nm||''}</td>
-      <td class="record-val">${h.record||'–'}</td>
       <td style="text-align:center">${rankCell}</td>
+      <td style="font-weight:700;color:var(--cyan)">${h._playerName||'–'}</td>
+      <td style="font-size:0.75rem;color:var(--text2)">${h.team_nm||''}</td>
+      <td class="record-val">${h.record||'–'}</td>
     </tr>`;
 
     prevComp=comp; prevKind=kind; prevEvent=event; prevRound=round;
@@ -1533,6 +1545,21 @@ function renderResultTable(rows) {
 /* ══════════════════════════════════════════════
    유틸
 ══════════════════════════════════════════════ */
+// 기록 표시 포맷 통일: 항상 m:ss.xxx 형태로
+function fmtRecord(s) {
+  if (!s) return '–';
+  const t = parseTime(s);
+  if (t === null) return s;
+  const mins = Math.floor(t / 60);
+  const secs = t - mins * 60;
+  // 소수점 이하 자릿수 원본 유지 (3자리 or 2자리)
+  const orig = s.trim();
+  const m = orig.match(/\.(\d+)$/);
+  const decimals = m ? m[1].length : 2;
+  const secStr = secs.toFixed(decimals).padStart(decimals + 3, '0');
+  return mins + ':' + secStr;
+}
+
 function debounce(fn, ms) {
   let timer;
   return (...args) => { clearTimeout(timer); timer = setTimeout(() => fn(...args), ms); };
