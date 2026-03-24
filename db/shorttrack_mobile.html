@@ -686,6 +686,57 @@ body {
   z-index: 100;
 }
 .scroll-top.show { display: flex; }
+
+/* ══════════════════════════════════════════
+   콤보박스 (select) 스타일
+══════════════════════════════════════════ */
+.filter-select-wrap {
+  position: relative;
+}
+.filter-select {
+  width: 100%;
+  padding: 10px 34px 10px 12px;
+  border: 1.5px solid var(--border2);
+  border-radius: 10px;
+  font-size: 0.88rem;
+  font-family: 'Noto Sans KR', sans-serif;
+  color: var(--text);
+  background: var(--surface2);
+  outline: none;
+  appearance: none;
+  -webkit-appearance: none;
+  cursor: pointer;
+  transition: border-color 0.2s, box-shadow 0.2s;
+  white-space: nowrap;
+  overflow: hidden;
+  text-overflow: ellipsis;
+}
+.filter-select:focus {
+  border-color: var(--blue2);
+  background: var(--surface);
+  box-shadow: 0 0 0 3px rgba(37,99,235,0.1);
+}
+.filter-select option { font-family: 'Noto Sans KR', sans-serif; }
+.filter-select:disabled {
+  opacity: 0.45;
+  cursor: not-allowed;
+}
+.select-arrow {
+  position: absolute;
+  right: 11px;
+  top: 50%;
+  transform: translateY(-50%);
+  pointer-events: none;
+  color: var(--muted);
+  font-size: 0.72rem;
+}
+/* 선택된 값이 있으면 파란 테두리 강조 */
+.filter-select.has-value {
+  border-color: var(--blue2);
+  background: #eff6ff;
+  color: var(--blue2);
+  font-weight: 700;
+}
 </style>
 </head>
 <body>
@@ -785,25 +836,44 @@ body {
         </div>
       </button>
       <div class="filter-body">
+        <!-- 대회명 -->
+        <div class="filter-section">
+          <div class="filter-label">대회명</div>
+          <div class="filter-select-wrap">
+            <select class="filter-select" id="sel-comp">
+              <option value="">전체 대회</option>
+            </select>
+            <span class="select-arrow">▼</span>
+          </div>
+        </div>
         <!-- 종별 -->
         <div class="filter-section">
           <div class="filter-label">종별</div>
-          <div class="chip-group" id="kindChips"></div>
+          <div class="filter-select-wrap">
+            <select class="filter-select" id="sel-kind">
+              <option value="">전체 종별</option>
+            </select>
+            <span class="select-arrow">▼</span>
+          </div>
         </div>
         <!-- 종목 -->
         <div class="filter-section">
           <div class="filter-label">종목</div>
-          <div class="chip-group" id="eventChips"></div>
+          <div class="filter-select-wrap">
+            <select class="filter-select" id="sel-event">
+              <option value="">전체 종목</option>
+            </select>
+            <span class="select-arrow">▼</span>
+          </div>
         </div>
         <!-- 라운드 -->
         <div class="filter-section">
           <div class="filter-label">라운드</div>
-          <div class="chip-group" id="roundFilterChips">
-            <button class="chip-btn" data-val="결승">결승</button>
-            <button class="chip-btn" data-val="준결승">준결승</button>
-            <button class="chip-btn" data-val="준준결승">준준결승</button>
-            <button class="chip-btn" data-val="예선">예선</button>
-            <button class="chip-btn" data-val="예비예선">예비예선</button>
+          <div class="filter-select-wrap">
+            <select class="filter-select" id="sel-round">
+              <option value="">전체 라운드</option>
+            </select>
+            <span class="select-arrow">▼</span>
           </div>
         </div>
         <!-- 선수명 -->
@@ -987,8 +1057,7 @@ function initData(data, filename) {
 
   setLoading(90, 'UI 구성 중...');
   buildBirthYearChips();
-  buildKindChips();
-  buildEventChips();
+  initResultSelects();
 
   const info = `선수 ${DB.players.length.toLocaleString()}명 · 기록 ${DB.history.length.toLocaleString()}건${filename?' · '+filename:''}`;
   document.getElementById('headerSub').textContent = info;
@@ -1060,28 +1129,6 @@ function buildBirthYearChips() {
   });
 }
 
-function buildKindChips() {
-  const kinds = [...new Set(DB.history.map(h=>h.kind_nm).filter(Boolean))].sort();
-  const container = document.getElementById('kindChips');
-  container.innerHTML = kinds.map(k =>
-    `<button class="chip-btn" data-val="${k}">${k}</button>`
-  ).join('');
-  container.querySelectorAll('.chip-btn').forEach(btn => {
-    btn.addEventListener('click', () => btn.classList.toggle('selected'));
-  });
-}
-
-function buildEventChips() {
-  const events = [...new Set(DB.history.map(h=>h.event_nm).filter(Boolean))].sort();
-  const container = document.getElementById('eventChips');
-  container.innerHTML = events.map(e =>
-    `<button class="chip-btn" data-val="${e}">${e}</button>`
-  ).join('');
-  container.querySelectorAll('.chip-btn').forEach(btn => {
-    btn.addEventListener('click', () => btn.classList.toggle('selected'));
-  });
-}
-
 function getSelectedChips(containerId) {
   return [...document.querySelectorAll(`#${containerId} .chip-btn.selected`)].map(b => b.dataset.val);
 }
@@ -1104,10 +1151,6 @@ setupFilterPanel('resultFilterPanel','resultFilterToggle');
 
 // 성별 단일 선택
 document.querySelectorAll('#genderChips .chip-btn').forEach(btn => {
-  btn.addEventListener('click', () => btn.classList.toggle('selected'));
-});
-// 결과 라운드 칩
-document.querySelectorAll('#roundFilterChips .chip-btn').forEach(btn => {
   btn.addEventListener('click', () => btn.classList.toggle('selected'));
 });
 
@@ -1205,35 +1248,66 @@ function openPlayerDetail(pid) {
     <span class="dchip dchip-w">${p.birth_year||''}년생</span>
   `;
 
-  // ── 메달 집계 (결승 또는 결승A라운드, 결승B 제외)
-  let gold=0, silver=0, bronze=0;
+  // ── 메달 집계 (결승 라운드, 결승B 제외) — 연도별
+  const medalByYear = {}; // year → { gold, silver, bronze }
   hist.forEach(h => {
     if (!isMedalRound(h.round_nm)) return;
     const r = parseInt(h.rank);
-    if (r===1) gold++;
-    else if (r===2) silver++;
-    else if (r===3) bronze++;
+    if (r !== 1 && r !== 2 && r !== 3) return;
+    const yr = (h._dateNorm || '').slice(0, 4) || '?';
+    if (!medalByYear[yr]) medalByYear[yr] = { gold:0, silver:0, bronze:0 };
+    if (r===1) medalByYear[yr].gold++;
+    else if (r===2) medalByYear[yr].silver++;
+    else medalByYear[yr].bronze++;
   });
+  const medalYears = Object.keys(medalByYear).sort();
+  const medalTotal = medalYears.reduce(
+    (acc, yr) => {
+      acc.gold   += medalByYear[yr].gold;
+      acc.silver += medalByYear[yr].silver;
+      acc.bronze += medalByYear[yr].bronze;
+      return acc;
+    }, { gold:0, silver:0, bronze:0 }
+  );
 
-  // ── 연도/종목별 최고기록
-  const bestMap = {}; // 'yyyy|event_nm' → {record, time, date, comp}
+  // ── 연도별 500M 최고기록
+  const best500Map = {}; // yyyy → {record, time, comp, round}
   hist.forEach(h => {
+    if ((h.event_nm||'').trim() !== '500M') return;
     if (!h.record) return;
     const t = parseTime(h.record);
     if (t === null) return;
     const yr = (h._dateNorm||'').slice(0,4) || '?';
-    const key = `${yr}|${h.event_nm}`;
-    if (!bestMap[key] || t < bestMap[key].time) {
-      bestMap[key] = { year:yr, event:h.event_nm, record:h.record, time:t, date:h.event_date, comp:h.competition_nm };
+    if (!best500Map[yr] || t < best500Map[yr].time) {
+      best500Map[yr] = { year:yr, record:h.record, time:t, comp:h.competition_nm, round:h.round_nm };
     }
   });
-  const bestList = Object.values(bestMap).sort((a,b)=>(a.year||'').localeCompare(b.year||'')||(a.event||'').localeCompare(b.event||''));
+  const best500List = Object.values(best500Map).sort((a,b)=>(a.year||'').localeCompare(b.year||''));
 
   // ── 대회기록 정렬 (날짜 내림차순, 같은 날짜면 라운드 순서)
+  // 채점종합: 날짜가 없더라도 같은 대회의 가장 늦은 날짜를 빌려 쓰고, 라운드 레벨을 맨 마지막으로
+  const compMaxDate = {};
+  hist.forEach(h => {
+    const d = h._dateNorm||'';
+    if (!d) return;
+    const c = h.competition_nm||'';
+    if (!compMaxDate[c] || d > compMaxDate[c]) compMaxDate[c] = d;
+  });
+
+  function sortKey(h) {
+    const isChaejom = (h.round_nm||'').trim() === '채점종합';
+    const date = h._dateNorm || compMaxDate[h.competition_nm||''] || '';
+    const roundLvl = isChaejom ? 999 : getRoundLevel(h.round_nm);
+    return { date, roundLvl };
+  }
+
   const sortedHist = hist.slice().sort((a,b) => {
-    const dd = (b._dateNorm||'').localeCompare(a._dateNorm||'');
+    const ka = sortKey(a), kb = sortKey(b);
+    const dd = kb.date.localeCompare(ka.date);   // 날짜 내림차순
     if (dd!==0) return dd;
-    return getRoundLevel(a.round_nm) - getRoundLevel(b.round_nm);
+    const cc = (a.competition_nm||'').localeCompare(b.competition_nm||'');
+    if (cc!==0) return cc;
+    return ka.roundLvl - kb.roundLvl;            // 라운드 순서 (채점종합=999 → 맨 뒤)
   });
 
   // ── HTML 빌드
@@ -1250,29 +1324,59 @@ function openPlayerDetail(pid) {
     </div>
   </div>`;
 
-  // 메달
-  html += `<div class="info-card">
-    <div class="section-title">🏅 메달 현황 <span style="font-size:0.65rem;font-weight:400;color:var(--muted)">(결승 1·2·3위)</span></div>
-    <div class="medal-row">
-      <div class="medal-box medal-gold"><div class="medal-icon">🥇</div><div class="medal-count">${gold}</div><div class="medal-label">금메달</div></div>
-      <div class="medal-box medal-silver"><div class="medal-icon">🥈</div><div class="medal-count">${silver}</div><div class="medal-label">은메달</div></div>
-      <div class="medal-box medal-bronze"><div class="medal-icon">🥉</div><div class="medal-count">${bronze}</div><div class="medal-label">동메달</div></div>
-    </div>
-  </div>`;
-
-  // 최고기록
-  if (bestList.length) {
-    html += `<div class="info-card">
-      <div class="section-title">⏱ 연도/종목별 최고기록</div>
+  // 메달 — 연도별 집계
+  if (medalYears.length) {
+    let medalHtml = `<div class="info-card">
+      <div class="section-title">🏅 메달 현황 <span style="font-size:0.65rem;font-weight:400;color:var(--muted)">(결승 1·2·3위 · 연도별)</span></div>
       <table class="best-table">
-        <thead><tr><th>연도</th><th>종목</th><th>최고기록</th><th>대회</th></tr></thead>
+        <thead>
+          <tr>
+            <th>연도</th>
+            <th style="text-align:center">🥇</th>
+            <th style="text-align:center">🥈</th>
+            <th style="text-align:center">🥉</th>
+            <th style="text-align:center">합계</th>
+          </tr>
+        </thead>
         <tbody>`;
-    bestList.forEach(b => {
+    medalYears.forEach(yr => {
+      const m = medalByYear[yr];
+      const total = m.gold + m.silver + m.bronze;
+      medalHtml += `<tr>
+        <td><b>${yr}</b></td>
+        <td style="text-align:center;font-weight:700;color:var(--gold)">${m.gold||'–'}</td>
+        <td style="text-align:center;font-weight:700;color:var(--silver)">${m.silver||'–'}</td>
+        <td style="text-align:center;font-weight:700;color:var(--bronze)">${m.bronze||'–'}</td>
+        <td style="text-align:center;font-weight:700;color:var(--text2)">${total}</td>
+      </tr>`;
+    });
+    // 합계 행 (2년 이상일 때만)
+    if (medalYears.length > 1) {
+      const tot = medalTotal.gold + medalTotal.silver + medalTotal.bronze;
+      medalHtml += `<tr style="border-top:2px solid var(--border2);background:var(--surface2)">
+        <td><b>합계</b></td>
+        <td style="text-align:center;font-weight:900;color:var(--gold)">${medalTotal.gold||'–'}</td>
+        <td style="text-align:center;font-weight:900;color:var(--silver)">${medalTotal.silver||'–'}</td>
+        <td style="text-align:center;font-weight:900;color:var(--bronze)">${medalTotal.bronze||'–'}</td>
+        <td style="text-align:center;font-weight:900;color:var(--blue2)">${tot}</td>
+      </tr>`;
+    }
+    medalHtml += `</tbody></table></div>`;
+    html += medalHtml;
+  }
+
+  // 연도별 500M 최고기록
+  if (best500List.length) {
+    html += `<div class="info-card">
+      <div class="section-title">⏱ 연도별 단거리 최고기록 <span style="font-size:0.65rem;font-weight:400;color:var(--muted)">(500M)</span></div>
+      <table class="best-table">
+        <thead><tr><th>연도</th><th>최고기록</th><th>대회</th></tr></thead>
+        <tbody>`;
+    best500List.forEach(b => {
       html += `<tr>
-        <td>${b.year}</td>
-        <td><b>${b.event}</b></td>
+        <td><b>${b.year}</b></td>
         <td class="record-val">${b.record}</td>
-        <td style="font-size:0.68rem;color:var(--text2);max-width:120px;overflow:hidden;text-overflow:ellipsis" title="${b.comp}">${b.comp}</td>
+        <td style="font-size:0.68rem;color:var(--text2);max-width:150px;overflow:hidden;text-overflow:ellipsis" title="${b.comp}">${b.comp}</td>
       </tr>`;
     });
     html += `</tbody></table></div>`;
@@ -1343,24 +1447,149 @@ function closeDetail() {
 }
 
 /* ══════════════════════════════════════════════
-   대회 결과 조회
+   대회 결과 조회 — 콤보박스 + 연동 필터
 ══════════════════════════════════════════════ */
+
+// 대회 날짜 맵: competition_nm → 최초 등장 날짜(정렬용)
+let compDateMap = {};
+
+function initResultSelects() {
+  // 대회명: 날짜 내림차순 정렬
+  compDateMap = {};
+  DB.history.forEach(h => {
+    const nm = h.competition_nm||'';
+    if (!nm) return;
+    const d = h._dateNorm||'';
+    if (!compDateMap[nm] || d > compDateMap[nm]) compDateMap[nm] = d;
+  });
+  const comps = Object.keys(compDateMap).sort((a,b)=>
+    (compDateMap[b]||'').localeCompare(compDateMap[a]||'')
+  );
+  fillResultSelect('sel-comp', comps, '전체 대회');
+  updateDependentSelects();
+}
+
+// sel-comp 변경 → 종별 갱신
+// sel-kind 변경 → 종목 갱신
+// sel-event 변경 → 라운드 갱신
+// 각 단계에서 현재 선택값이 새 옵션 목록에 없으면 초기화
+
+document.addEventListener('change', e => {
+  const id = e.target.id;
+  if (id === 'sel-comp') {
+    updateDependentSelects('comp');
+  } else if (id === 'sel-kind') {
+    updateDependentSelects('kind');
+  } else if (id === 'sel-event') {
+    updateDependentSelects('event');
+  }
+  // 선택값 있으면 파란 강조
+  ['sel-comp','sel-kind','sel-event','sel-round'].forEach(sid => {
+    const el = document.getElementById(sid);
+    if (el) el.classList.toggle('has-value', !!el.value);
+  });
+  updateResultBadge();
+});
+
+function getFilteredHistoryFor(upTo) {
+  // upTo: 'comp' | 'kind' | 'event' | null
+  // 각 단계까지의 선택값으로 필터링한 history 반환
+  const comp  = document.getElementById('sel-comp')?.value  || '';
+  const kind  = upTo==='comp' ? '' : (document.getElementById('sel-kind')?.value  || '');
+  const event = (upTo==='comp'||upTo==='kind') ? '' : (document.getElementById('sel-event')?.value || '');
+  return DB.history.filter(h => {
+    if (comp  && h.competition_nm !== comp)  return false;
+    if (kind  && h.kind_nm        !== kind)  return false;
+    if (event && h.event_nm       !== event) return false;
+    return true;
+  });
+}
+
+function updateDependentSelects(changedLevel) {
+  // changedLevel: 'comp' | 'kind' | 'event' | undefined(초기)
+
+  const selComp  = document.getElementById('sel-comp');
+  const selKind  = document.getElementById('sel-kind');
+  const selEvent = document.getElementById('sel-event');
+  const selRound = document.getElementById('sel-round');
+
+  // 종별 옵션: comp 선택 기준
+  if (!changedLevel || changedLevel === 'comp') {
+    const prevKind = selKind.value;
+    const baseK = getFilteredHistoryFor('comp');
+    const kinds = [...new Set(baseK.map(h=>h.kind_nm).filter(Boolean))].sort();
+    fillResultSelect('sel-kind', kinds, '전체 종별');
+    if (kinds.includes(prevKind)) selKind.value = prevKind;
+    selKind.classList.toggle('has-value', !!selKind.value);
+  }
+
+  // 종목 옵션: comp + kind 기준
+  if (!changedLevel || changedLevel === 'comp' || changedLevel === 'kind') {
+    const prevEvent = selEvent.value;
+    const baseE = getFilteredHistoryFor('kind');
+    const events = [...new Set(baseE.map(h=>h.event_nm).filter(Boolean))].sort();
+    fillResultSelect('sel-event', events, '전체 종목');
+    if (events.includes(prevEvent)) selEvent.value = prevEvent;
+    selEvent.classList.toggle('has-value', !!selEvent.value);
+  }
+
+  // 라운드 옵션: comp + kind + event 기준, 라운드 레벨 순 정렬
+  {
+    const prevRound = selRound.value;
+    const baseR = getFilteredHistoryFor('event');
+    const rounds = [...new Set(baseR.map(h=>h.round_nm).filter(Boolean))]
+      .sort((a,b) => {
+        const ld = getRoundLevel(a) - getRoundLevel(b);
+        if (ld !== 0) return ld;
+        return a.localeCompare(b, 'ko');
+      });
+    fillResultSelect('sel-round', rounds, '전체 라운드');
+    if (rounds.includes(prevRound)) selRound.value = prevRound;
+    selRound.classList.toggle('has-value', !!selRound.value);
+  }
+}
+
+function fillResultSelect(id, options, placeholder) {
+  const sel = document.getElementById(id);
+  if (!sel) return;
+  const prevVal = sel.value;
+  // DOM API 사용으로 특수문자 안전 처리
+  sel.innerHTML = '';
+  const defOpt = document.createElement('option');
+  defOpt.value = ''; defOpt.textContent = placeholder;
+  sel.appendChild(defOpt);
+  options.forEach(o => {
+    const opt = document.createElement('option');
+    opt.value = o; opt.textContent = o;
+    sel.appendChild(opt);
+  });
+  // 이전 값 복원
+  if (options.includes(prevVal)) sel.value = prevVal;
+  else sel.value = '';
+  sel.classList.toggle('has-value', !!sel.value);
+}
+
 document.getElementById('resultSearchBtn').addEventListener('click', () => runResultSearch());
 document.getElementById('resultNameInput').addEventListener('keydown', e => { if(e.key==='Enter') runResultSearch(); });
+
 document.getElementById('resultResetBtn').addEventListener('click', () => {
-  clearChips('kindChips');
-  clearChips('eventChips');
-  clearChips('roundFilterChips');
+  ['sel-comp','sel-kind','sel-event','sel-round'].forEach(id => {
+    const el = document.getElementById(id);
+    if (el) { el.value = ''; el.classList.remove('has-value'); }
+  });
   document.getElementById('resultNameInput').value = '';
+  updateDependentSelects();
   updateResultBadge();
   renderResultTable([]);
   document.getElementById('resultMeta').innerHTML = '';
 });
 
 function updateResultBadge() {
-  const cnt = getSelectedChips('kindChips').length + getSelectedChips('eventChips').length +
-    getSelectedChips('roundFilterChips').length +
-    (document.getElementById('resultNameInput').value.trim() ? 1 : 0);
+  let cnt = 0;
+  ['sel-comp','sel-kind','sel-event','sel-round'].forEach(id => {
+    if (document.getElementById(id)?.value) cnt++;
+  });
+  if (document.getElementById('resultNameInput').value.trim()) cnt++;
   const badge = document.getElementById('resultFilterBadge');
   badge.textContent = cnt;
   badge.classList.toggle('show', cnt > 0);
@@ -1368,34 +1597,36 @@ function updateResultBadge() {
 
 function runResultSearch() {
   updateResultBadge();
-  const kinds   = getSelectedChips('kindChips');
-  const events  = getSelectedChips('eventChips');
-  const roundFs = getSelectedChips('roundFilterChips'); // ['결승','준결승',...]
-  const name    = document.getElementById('resultNameInput').value.trim();
+  const comp  = document.getElementById('sel-comp').value;
+  const kind  = document.getElementById('sel-kind').value;
+  const event = document.getElementById('sel-event').value;
+  const round = document.getElementById('sel-round').value;
+  const name  = document.getElementById('resultNameInput').value.trim();
 
   let rows = DB.history.filter(h => {
-    if (kinds.length  && !kinds.includes(h.kind_nm)) return false;
-    if (events.length && !events.includes(h.event_nm)) return false;
-    if (roundFs.length) {
-      const lvl = getRoundLevel(h.round_nm);
-      // 선택된 roundF 중 하나라도 매칭
-      const match = roundFs.some(rf => {
-        if (rf==='결승')   return lvl===0;
-        if (rf==='준결승') return lvl===1;
-        if (rf==='준준결승') return lvl===2;
-        if (rf==='예선')   return lvl===3;
-        if (rf==='예비예선') return lvl===4;
-        return false;
-      });
-      if (!match) return false;
-    }
-    if (name && !h._playerName.includes(name)) return false;
+    if (comp  && h.competition_nm !== comp)  return false;
+    if (kind  && h.kind_nm        !== kind)  return false;
+    if (event && h.event_nm       !== event) return false;
+    if (round && h.round_nm       !== round) return false;
+    if (name  && !h._playerName.includes(name)) return false;
     return true;
   });
 
-  // 정렬: 날짜 내림차순, 같은 날짜+대회 내에서 종별, 종목, 라운드 순서
+  // 정렬: 경기일자 내림차순 → 대회 → 종별 → 종목 → 라운드 레벨 → 순위
+  // 채점종합: 날짜 없어도 같은 대회의 최신 날짜를 빌려 쓰고, 라운드 레벨을 맨 마지막으로
+  const compMaxDateR = {};
+  rows.forEach(h => {
+    const d = h._dateNorm||'';
+    if (!d) return;
+    const c = h.competition_nm||'';
+    if (!compMaxDateR[c] || d > compMaxDateR[c]) compMaxDateR[c] = d;
+  });
   rows.sort((a,b) => {
-    const dd = (b._dateNorm||'').localeCompare(a._dateNorm||'');
+    const isChaejomA = (a.round_nm||'').trim() === '채점종합';
+    const isChaejomB = (b.round_nm||'').trim() === '채점종합';
+    const da = a._dateNorm || compMaxDateR[a.competition_nm||''] || '';
+    const db = b._dateNorm || compMaxDateR[b.competition_nm||''] || '';
+    const dd = db.localeCompare(da);
     if (dd!==0) return dd;
     const cc = (a.competition_nm||'').localeCompare(b.competition_nm||'');
     if (cc!==0) return cc;
@@ -1403,8 +1634,12 @@ function runResultSearch() {
     if (kk!==0) return kk;
     const ee = (a.event_nm||'').localeCompare(b.event_nm||'');
     if (ee!==0) return ee;
-    const rr = getRoundLevel(a.round_nm) - getRoundLevel(b.round_nm);
-    if (rr!==0) return rr;
+    const ra = isChaejomA ? 999 : getRoundLevel(a.round_nm);
+    const rb = isChaejomB ? 999 : getRoundLevel(b.round_nm);
+    if (ra!==rb) return ra - rb;
+    // 같은 라운드 내 상세 조 번호 자연 정렬
+    const rna = a.round_nm||'', rnb = b.round_nm||'';
+    if (rna!==rnb) return rna.localeCompare(rnb,'ko',{numeric:true});
     return parseInt(a.rank||99) - parseInt(b.rank||99);
   });
 
