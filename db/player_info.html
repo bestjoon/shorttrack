@@ -213,6 +213,14 @@ body {
   transition:all 0.15s;
 }
 .btn-search:active { opacity:0.8; transform:scale(0.97); }
+.btn-export {
+  display:inline-flex; align-items:center; gap:5px;
+  padding:7px 15px; border-radius:var(--radius-sm);
+  background:rgba(52,211,153,0.12); border:1px solid rgba(52,211,153,0.3);
+  color:#6ee7b7; font-size:0.78rem; font-weight:700; font-family:inherit;
+  cursor:pointer; transition:all 0.15s; white-space:nowrap;
+}
+.btn-export:active { background:rgba(52,211,153,0.25); transform:scale(0.97); }
 
 /* 결과 요약 */
 .result-meta {
@@ -288,22 +296,25 @@ body {
 .detail-panel.open { transform:translateY(0); }
 .detail-header {
   background:linear-gradient(160deg,#0a0f1e 0%,#0d1a3a 60%,#0f2040 100%);
-  padding:16px 16px 18px;
+  padding:12px 14px 10px;
   position:sticky; top:0; z-index:10;
   border-bottom:1px solid rgba(34,211,238,0.15);
 }
-.detail-header-row { display:flex; align-items:center; justify-content:space-between; margin-bottom:12px; }
+.detail-name-row {
+  display:flex; align-items:center; justify-content:space-between; gap:10px;
+}
 .btn-back {
-  background:rgba(34,211,238,0.12); border:1px solid rgba(34,211,238,0.25);
-  color:var(--cyan); border-radius:50%;
-  width:34px; height:34px; font-size:1.1rem; cursor:pointer;
+  background:rgba(34,211,238,0.1); border:1px solid rgba(34,211,238,0.2);
+  color:var(--cyan); border-radius:8px;
+  width:32px; height:32px; font-size:1rem; cursor:pointer;
   display:flex; align-items:center; justify-content:center;
-  transition:all 0.15s;
+  transition:all 0.15s; flex-shrink:0;
 }
 .btn-back:active { background:rgba(34,211,238,0.25); }
 .detail-player-name {
-  color:#fff; font-size:1.6rem; font-weight:900; letter-spacing:-0.5px;
-  text-shadow:0 0 20px rgba(34,211,238,0.4);
+  color:#fff; font-size:1.4rem; font-weight:900; letter-spacing:-0.5px;
+  text-shadow:0 0 20px rgba(34,211,238,0.4); flex:1; min-width:0;
+  overflow:hidden; text-overflow:ellipsis; white-space:nowrap;
 }
 .detail-chips { display:flex; flex-wrap:wrap; gap:5px; margin-top:6px; }
 .dchip { padding:3px 11px; border-radius:12px; font-size:0.72rem; font-weight:700; }
@@ -384,11 +395,19 @@ body {
   border-bottom:1.5px solid var(--border); white-space:nowrap;
   font-family:'Rajdhani',sans-serif;
 }
+.comp-table th:nth-child(1) { width:120px; }
+.comp-table th:nth-child(2) { width:70px; }
 .comp-table td {
   padding:8px 9px; border-bottom:1px solid var(--border);
-  vertical-align:middle; white-space:nowrap; color:var(--text);
+  vertical-align:middle; color:var(--text);
 }
+.comp-table td[rowspan] { vertical-align:middle; border-right:1px solid rgba(255,255,255,0.08); }
+/* 대회명·종별 줄바꿈 허용, 나머지는 nowrap */
+.comp-table td:not(:nth-child(1)):not(:nth-child(2)) { white-space:nowrap; }
+.comp-table td:nth-child(1) { white-space:normal; word-break:keep-all; max-width:120px; font-size:0.74rem; }
+.comp-table td:nth-child(2) { white-space:normal; word-break:keep-all; max-width:70px; font-size:0.74rem; }
 .comp-table tr:last-child td { border-bottom:none; }
+
 .comp-table tr:hover td { background:rgba(255,255,255,0.02); }
 .comp-table .td-merge { color:var(--text3); font-style:italic; font-size:0.68rem; }
 .comp-table td.record-val {
@@ -497,6 +516,27 @@ body {
   box-shadow:0 0 20px rgba(34,211,238,0.4); z-index:100;
 }
 .scroll-top.show { display:flex; }
+/* ── Pull-to-refresh ── */
+.ptr-indicator {
+  position: fixed;
+  top: 0; left: 0; right: 0;
+  display: flex; align-items: center; justify-content: center;
+  height: 0; overflow: hidden;
+  background: linear-gradient(180deg, rgba(34,211,238,0.15) 0%, transparent 100%);
+  z-index: 199;
+  transition: height 0.15s;
+  pointer-events: none;
+}
+.ptr-spinner {
+  width: 28px; height: 28px;
+  border: 2.5px solid rgba(34,211,238,0.2);
+  border-top-color: var(--cyan);
+  border-radius: 50%;
+  opacity: 0;
+  transition: opacity 0.2s;
+}
+.ptr-indicator.ready .ptr-spinner { animation: spin 0.7s linear infinite; opacity: 1; }
+@keyframes spin { to { transform: rotate(360deg); } }
 
 /* 콤보박스 */
 .filter-select-wrap { position:relative; }
@@ -526,6 +566,9 @@ body {
 </style>
 </head>
 <body>
+
+<!-- Pull-to-refresh indicator -->
+<div class="ptr-indicator" id="ptrIndicator"><div class="ptr-spinner" id="ptrSpinner"></div></div>
 
 <!-- 로딩 화면 -->
 <div class="loading-screen" id="loadingScreen">
@@ -718,11 +761,10 @@ body {
 <div class="detail-overlay" id="detailOverlay"></div>
 <div class="detail-panel" id="detailPanel">
   <div class="detail-header">
-    <div class="detail-header-row">
-      <button class="btn-back" id="btnBack">←</button>
-      <div></div>
+    <div class="detail-name-row">
+      <div class="detail-player-name" id="dpName"></div>
+      <button class="btn-back" id="btnBack">✕</button>
     </div>
-    <div class="detail-player-name" id="dpName"></div>
     <div class="detail-chips" id="dpChips"></div>
   </div>
   <div class="detail-body" id="detailBody"></div>
@@ -741,6 +783,8 @@ let playerMap = {};
 let playerHistoryMap = {};
 let currentPlayers = [];
 let currentResultRows = [];
+let currentDetailPlayer = null;
+let currentDetailHist = [];
 
 /* ══════════════════════════════════════════════
    라운드 순서 정의
@@ -1101,30 +1145,36 @@ function openPlayerDetail(pid) {
   });
   const best500List = Object.values(best500Map).sort((a,b)=>(a.year||'').localeCompare(b.year||''));
 
-  // ── 대회기록 정렬 (날짜 내림차순, 같은 날짜면 라운드 순서)
-  // 채점종합: 날짜가 없더라도 같은 대회의 가장 늦은 날짜를 빌려 쓰고, 라운드 레벨을 맨 마지막으로
+  // ── 대회기록 정렬
+  // 1차: 대회의 대표날짜(최신날짜) 기준 내림차순 → 대회 그룹이 항상 붙어서 정렬
+  // 2차: 대회명 (같은 대표날짜 내 tie-break)
+  // 3차: 개별 경기일자 내림차순
+  // 4차: 라운드 레벨 (채점종합=999 → 해당 대회의 항상 맨 마지막)
   const compMaxDate = {};
   hist.forEach(h => {
     const d = h._dateNorm||'';
     if (!d) return;
-    const c = h.competition_nm||'';
-    if (!compMaxDate[c] || d > compMaxDate[c]) compMaxDate[c] = d;
+    const nm = h.competition_nm||'';
+    if (!compMaxDate[nm] || d > compMaxDate[nm]) compMaxDate[nm] = d;
   });
 
-  function sortKey(h) {
-    const isChaejom = (h.round_nm||'').trim() === '채점종합';
-    const date = h._dateNorm || compMaxDate[h.competition_nm||''] || '';
-    const roundLvl = isChaejom ? 999 : getRoundLevel(h.round_nm);
-    return { date, roundLvl };
-  }
-
   const sortedHist = hist.slice().sort((a,b) => {
-    const ka = sortKey(a), kb = sortKey(b);
-    const dd = kb.date.localeCompare(ka.date);   // 날짜 내림차순
-    if (dd!==0) return dd;
-    const cc = (a.competition_nm||'').localeCompare(b.competition_nm||'');
-    if (cc!==0) return cc;
-    return ka.roundLvl - kb.roundLvl;            // 라운드 순서 (채점종합=999 → 맨 뒤)
+    const compA = a.competition_nm||'', compB = b.competition_nm||'';
+    // 1차: 대회 대표날짜 내림차순
+    const repA = compMaxDate[compA]||'', repB = compMaxDate[compB]||'';
+    const repDiff = repB.localeCompare(repA);
+    if (repDiff!==0) return repDiff;
+    // 2차: 대회명 (tie-break)
+    const compDiff = compA.localeCompare(compB);
+    if (compDiff!==0) return compDiff;
+    // 3차: 개별 날짜 내림차순 (채점종합은 날짜 없으므로 '' → 맨 뒤로)
+    const isChaejomA = (a.round_nm||'').trim() === '채점종합';
+    const isChaejomB = (b.round_nm||'').trim() === '채점종합';
+    if (isChaejomA !== isChaejomB) return isChaejomA ? 1 : -1; // 채점종합은 무조건 뒤
+    const dateDiff = (b._dateNorm||'').localeCompare(a._dateNorm||'');
+    if (dateDiff!==0) return dateDiff;
+    // 4차: 라운드 레벨
+    return getRoundLevel(a.round_nm) - getRoundLevel(b.round_nm);
   });
 
   // ── HTML 빌드
@@ -1201,8 +1251,9 @@ function openPlayerDetail(pid) {
 
   // 대회기록 (병합 표시)
   html += `<div class="info-card" style="padding:0;overflow:hidden">
-    <div style="padding:14px 14px 10px;border-bottom:1px solid var(--border)">
+    <div style="padding:12px 14px 10px;border-bottom:1px solid var(--border);display:flex;align-items:center;justify-content:space-between;gap:8px">
       <div class="section-title" style="margin-bottom:0">📋 대회 출전 기록 <span style="color:var(--muted);font-weight:400">(${sortedHist.length}건)</span></div>
+      <button class="btn-export" onclick="downloadHistoryCSV()">📥 CSV</button>
     </div>
     <div class="comp-table-wrap">
       <table class="comp-table">
@@ -1212,16 +1263,55 @@ function openPlayerDetail(pid) {
         </tr></thead>
         <tbody>`;
 
-  let prevComp='', prevKind='', prevEvent='', prevDate='';
-  sortedHist.forEach(h => {
+  // ── rowspan 사전 계산 ──
+  // 각 행의 comp/kind/event/date 그룹 크기를 미리 계산
+  const spans = sortedHist.map(() => ({ comp:0, kind:0, event:0, date:0 }));
+  const n = sortedHist.length;
+
+  // comp rowspan
+  for (let i = 0; i < n; ) {
+    let j = i + 1;
+    while (j < n && sortedHist[j].competition_nm === sortedHist[i].competition_nm) j++;
+    spans[i].comp = j - i;
+    i = j;
+  }
+  // kind rowspan (comp 그룹 안에서)
+  for (let i = 0; i < n; ) {
+    let j = i + 1;
+    while (j < n &&
+           sortedHist[j].competition_nm === sortedHist[i].competition_nm &&
+           sortedHist[j].kind_nm        === sortedHist[i].kind_nm) j++;
+    spans[i].kind = j - i;
+    i = j;
+  }
+  // event rowspan (comp+kind 안에서)
+  for (let i = 0; i < n; ) {
+    let j = i + 1;
+    while (j < n &&
+           sortedHist[j].competition_nm === sortedHist[i].competition_nm &&
+           sortedHist[j].kind_nm        === sortedHist[i].kind_nm &&
+           sortedHist[j].event_nm       === sortedHist[i].event_nm) j++;
+    spans[i].event = j - i;
+    i = j;
+  }
+  // date rowspan (comp 안에서, 날짜 동일한 연속 행)
+  for (let i = 0; i < n; ) {
+    const baseComp = sortedHist[i].competition_nm;
+    const baseDate = fmtDate(sortedHist[i].event_date);
+    let j = i + 1;
+    while (j < n &&
+           sortedHist[j].competition_nm === baseComp &&
+           fmtDate(sortedHist[j].event_date) === baseDate) j++;
+    spans[i].date = j - i;
+    i = j;
+  }
+
+  sortedHist.forEach((h, idx) => {
+    const sp = spans[idx];
     const comp  = h.competition_nm||'';
     const kind  = h.kind_nm||'';
     const event = h.event_nm||'';
     const date  = fmtDate(h.event_date);
-    const isSameComp  = comp===prevComp;
-    const isSameKind  = isSameComp && kind===prevKind;
-    const isSameEvent = isSameKind && event===prevEvent;
-    const isSameDate  = isSameComp && date===prevDate;
 
     const rankNum = parseInt(h.rank);
     let rankCell;
@@ -1233,20 +1323,22 @@ function openPlayerDetail(pid) {
     const roundShort = getRoundShort(h.round_nm);
     const roundClass = getRoundClass(h.round_nm);
 
-    html += `<tr>
-      <td style="max-width:130px;overflow:hidden;text-overflow:ellipsis" title="${comp}">${isSameComp?'<span class="td-merge">↳</span>':comp}</td>
-      <td>${isSameKind?'<span class="td-merge">″</span>':kind}</td>
-      <td><b>${isSameEvent?'<span class="td-merge">″</span>':event}</b></td>
-      <td>${isSameDate?'<span class="td-merge">″</span>':date}</td>
-      <td><span class="round-tag ${roundClass}">${roundShort}</span></td>
-      <td class="record-val">${h.record||'–'}</td>
-      <td class="rank-cell">${rankCell}</td>
-    </tr>`;
-
-    prevComp=comp; prevKind=kind; prevEvent=event; prevDate=date;
+    html += `<tr>`;
+    if (sp.comp)  html += `<td rowspan="${sp.comp}">${comp}</td>`;
+    if (sp.kind)  html += `<td rowspan="${sp.kind}">${kind}</td>`;
+    if (sp.event) html += `<td rowspan="${sp.event}"><b>${event}</b></td>`;
+    if (sp.date)  html += `<td rowspan="${sp.date}">${date||'–'}</td>`;
+    html += `<td><span class="round-tag ${roundClass}">${roundShort}</span></td>`;
+    html += `<td class="record-val">${h.record||'–'}</td>`;
+    html += `<td class="rank-cell">${rankCell}</td>`;
+    html += `</tr>`;
   });
 
   html += `</tbody></table></div></div>`;
+
+  // 전역 저장 (CSV 다운로드용)
+  currentDetailPlayer = p;
+  currentDetailHist = sortedHist;
 
   document.getElementById('detailBody').innerHTML = html;
 
@@ -1261,6 +1353,34 @@ document.getElementById('detailOverlay').addEventListener('click', closeDetail);
 function closeDetail() {
   document.getElementById('detailOverlay').classList.remove('open');
   document.getElementById('detailPanel').classList.remove('open');
+}
+
+function downloadHistoryCSV() {
+  if (!currentDetailPlayer || !currentDetailHist.length) return;
+  const name = currentDetailPlayer.name;
+  const BOM = '\uFEFF';
+  const headers = ['대회명','경기일자','종별','종목','라운드','기록','순위'];
+  const rows = currentDetailHist.map(h => [
+    h.competition_nm||'',
+    fmtDate(h.event_date),
+    h.kind_nm||'',
+    h.event_nm||'',
+    h.round_nm||'',
+    h.record||'',
+    h.rank||''
+  ]);
+  const csv = BOM + [headers, ...rows]
+    .map(r => r.map(v => `"${String(v).replace(/"/g,'""')}"`).join(','))
+    .join('\n');
+  const blob = new Blob([csv], { type: 'text/csv;charset=utf-8' });
+  const url  = URL.createObjectURL(blob);
+  const a    = document.createElement('a');
+  a.href = url;
+  a.download = `${name}_대회출전기록.csv`;
+  document.body.appendChild(a);
+  a.click();
+  document.body.removeChild(a);
+  URL.revokeObjectURL(url);
 }
 
 /* ══════════════════════════════════════════════
@@ -1576,6 +1696,61 @@ window.addEventListener('scroll', () => {
 });
 document.getElementById('scrollTopBtn').addEventListener('click', () => {
   window.scrollTo({ top:0, behavior:'smooth' });
+});
+
+/* ── Pull-to-refresh ── */
+(function() {
+  const PTR_THRESHOLD = 80;
+  let startY = 0, pulling = false, triggered = false;
+  const ind = document.getElementById('ptrIndicator');
+
+  document.addEventListener('touchstart', e => {
+    if (window.scrollY === 0 && !document.getElementById('detailPanel').classList.contains('open')) {
+      startY = e.touches[0].clientY;
+      pulling = true;
+      triggered = false;
+    }
+  }, { passive: true });
+
+  document.addEventListener('touchmove', e => {
+    if (!pulling) return;
+    const dy = e.touches[0].clientY - startY;
+    if (dy <= 0) { pulling = false; return; }
+    const h = Math.min(dy * 0.45, PTR_THRESHOLD);
+    ind.style.height = h + 'px';
+    if (h >= PTR_THRESHOLD - 5 && !triggered) {
+      triggered = true;
+      ind.classList.add('ready');
+    } else if (h < PTR_THRESHOLD - 5) {
+      triggered = false;
+      ind.classList.remove('ready');
+    }
+  }, { passive: true });
+
+  document.addEventListener('touchend', () => {
+    if (!pulling) return;
+    pulling = false;
+    if (triggered) {
+      ind.style.height = '48px';
+      setTimeout(() => { location.reload(); }, 300);
+    } else {
+      ind.style.height = '0';
+      ind.classList.remove('ready');
+    }
+  });
+})();
+
+/* ── Android 뒤로가기 버튼으로 선수 상세 닫기 ── */
+window.addEventListener('popstate', () => {
+  if (document.getElementById('detailPanel').classList.contains('open')) {
+    closeDetail();
+  }
+});
+document.getElementById('detailPanel').addEventListener('transitionend', () => {
+  // 패널 열릴 때 history에 상태 추가
+  if (document.getElementById('detailPanel').classList.contains('open')) {
+    history.pushState({ detail: true }, '');
+  }
 });
 </script>
 </body>
