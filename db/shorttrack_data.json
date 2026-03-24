@@ -1,5 +1,5 @@
 {
-  "generated_at": "2026-03-24T09:56:55.148Z",
+  "generated_at": "2026-03-24T14:10:44.788Z",
   "source_file": "shorttrack_players.db",
   "players": [
     {
@@ -2895,18 +2895,6 @@
       "reg_type": "전문클럽 등"
     },
     {
-      "player_id": "201805001858",
-      "name": "지윤서",
-      "gender": "여",
-      "birth_year": "2007",
-      "kind_nm": "18세이하부",
-      "team_nm": "서현고등학교",
-      "team_cd": "SK00016",
-      "sido": "경기",
-      "last_reg_year": "2025",
-      "reg_type": "전문클럽 등"
-    },
-    {
       "player_id": "202010003376",
       "name": "진초록",
       "gender": "여",
@@ -3372,6 +3360,18 @@
       "team_cd": "SK00004",
       "sido": "서울",
       "last_reg_year": "2025",
+      "reg_type": "학교운동부"
+    },
+    {
+      "player_id": "201805001858",
+      "name": "지윤서",
+      "gender": "여",
+      "birth_year": "2007",
+      "kind_nm": "대학부",
+      "team_nm": "경희대학교",
+      "team_cd": "SK00013",
+      "sido": "경기",
+      "last_reg_year": "2026",
       "reg_type": "학교운동부"
     },
     {
