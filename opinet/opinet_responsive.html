@@ -1,0 +1,1103 @@
+<!DOCTYPE html>
+<html lang="ko">
+<head>
+  <meta charset="UTF-8"/>
+  <meta name="viewport" content="width=device-width, initial-scale=1.0, maximum-scale=1.0, user-scalable=no"/>
+  <meta name="theme-color" content="#080c14"/>
+  <title>⛽ 오피넷 최저가 주유소</title>
+
+  <link rel="stylesheet" href="https://unpkg.com/leaflet@1.9.4/dist/leaflet.css"/>
+  <link href="https://fonts.googleapis.com/css2?family=Noto+Sans+KR:wght@300;400;500;600;700&family=JetBrains+Mono:wght@400;700&display=swap" rel="stylesheet"/>
+
+  <style>
+    /* ══════════════════════════════════════════
+       리셋 & 변수
+    ══════════════════════════════════════════ */
+    *, *::before, *::after { box-sizing: border-box; margin: 0; padding: 0; }
+
+    :root {
+      --bg:       #080c14;
+      --surf:     #0d1422;
+      --surf2:    #131e30;
+      --surf3:    #1a2840;
+      --border:   #1e2e46;
+      --border2:  #273d5c;
+      --accent:   #00d4ff;
+      --accent-d: #0099cc;
+      --text:     #d4e2f0;
+      --sub:      #6a87a8;
+      --dim:      #344d68;
+      --green:    #06d6a0;
+      --yellow:   #ffd166;
+      --red:      #ef476f;
+      --sans:     'Noto Sans KR', sans-serif;
+      --mono:     'JetBrains Mono', monospace;
+      --hdr-h:    54px;
+      --sheet-peek: 220px;   /* 모바일: 바텀시트 기본 노출 높이 */
+      --safe-b:   env(safe-area-inset-bottom, 0px);
+    }
+
+    html, body {
+      height: 100%; width: 100%;
+      font-family: var(--sans);
+      background: var(--bg);
+      color: var(--text);
+      overflow: hidden;
+      -webkit-tap-highlight-color: transparent;
+    }
+
+    /* 배경 도트 패턴 */
+    body::before {
+      content: '';
+      position: fixed; inset: 0;
+      background-image: radial-gradient(circle, rgba(0,212,255,0.04) 1px, transparent 1px);
+      background-size: 28px 28px;
+      pointer-events: none; z-index: 0;
+    }
+
+    /* ══════════════════════════════════════════
+       헤더
+    ══════════════════════════════════════════ */
+    .hdr {
+      position: fixed; top: 0; left: 0; right: 0;
+      height: var(--hdr-h);
+      background: rgba(8,12,20,0.96);
+      border-bottom: 1px solid var(--border);
+      backdrop-filter: blur(16px);
+      -webkit-backdrop-filter: blur(16px);
+      display: flex; align-items: center;
+      padding: 0 16px; gap: 12px;
+      z-index: 800;
+    }
+    .hdr::after {
+      content: '';
+      position: absolute; bottom: 0; left: 0; right: 0; height: 1px;
+      background: linear-gradient(90deg, transparent, rgba(0,212,255,0.35), transparent);
+    }
+
+    .logo {
+      display: flex; align-items: center; gap: 9px; flex-shrink: 0;
+    }
+    .logo-icon {
+      width: 30px; height: 30px;
+      background: linear-gradient(135deg, var(--accent), #0077ff);
+      border-radius: 8px;
+      display: flex; align-items: center; justify-content: center;
+      font-size: 15px;
+      box-shadow: 0 0 14px rgba(0,212,255,0.35);
+      flex-shrink: 0;
+    }
+    .logo-name {
+      font-size: 14px; font-weight: 700; letter-spacing: -.3px;
+      white-space: nowrap;
+    }
+    .logo-name em { color: var(--accent); font-style: normal; }
+    .logo-sub {
+      font-size: 9px; color: var(--sub);
+      font-family: var(--mono); margin-top: 1px;
+      display: none; /* 모바일에서 숨김 */
+    }
+
+    /* 헤더 우측 버튼들 */
+    .hdr-right {
+      margin-left: auto;
+      display: flex; align-items: center; gap: 8px;
+    }
+
+    /* 모바일 필터 토글 버튼 */
+    .btn-filter-toggle {
+      display: flex; align-items: center; gap: 6px;
+      height: 34px; padding: 0 14px;
+      background: var(--surf2);
+      border: 1px solid var(--border2);
+      border-radius: 8px;
+      color: var(--text); font-family: var(--sans); font-size: 13px;
+      cursor: pointer; white-space: nowrap;
+      transition: border-color .2s;
+    }
+    .btn-filter-toggle:active { opacity: .7; }
+
+    .proxy-dot {
+      width: 7px; height: 7px; border-radius: 50%;
+      background: var(--dim); flex-shrink: 0;
+      transition: background .3s;
+    }
+    .proxy-dot.ok   { background: var(--green); box-shadow: 0 0 6px rgba(6,214,160,.5); }
+    .proxy-dot.fail { background: var(--red); }
+
+    /* ══════════════════════════════════════════
+       지도 (항상 전체 화면)
+    ══════════════════════════════════════════ */
+    #map {
+      position: fixed;
+      top: var(--hdr-h); left: 0; right: 0; bottom: 0;
+      z-index: 1;
+    }
+
+    /* ══════════════════════════════════════════
+       필터 패널 (데스크톱: 헤더 인라인 / 모바일: 바텀시트 모달)
+    ══════════════════════════════════════════ */
+
+    /* ── 데스크톱 인라인 컨트롤 (헤더 안) ── */
+    .ctrl-inline {
+      display: none; /* 기본 숨김, 데스크톱에서 표시 */
+      align-items: center; gap: 8px; flex: 1;
+    }
+
+    select.ctrl-sel, .btn-query {
+      height: 34px;
+      background: var(--surf2);
+      border: 1px solid var(--border2);
+      color: var(--text);
+      border-radius: 7px;
+      padding: 0 12px;
+      font-family: var(--sans); font-size: 13px;
+      cursor: pointer; outline: none;
+      transition: border-color .2s, box-shadow .2s;
+      appearance: none; -webkit-appearance: none;
+    }
+    select.ctrl-sel {
+      padding-right: 26px;
+      background-image: url("data:image/svg+xml,%3Csvg xmlns='http://www.w3.org/2000/svg' width='10' height='6'%3E%3Cpath d='M0 0l5 6 5-6z' fill='%236a87a8'/%3E%3C/svg%3E");
+      background-repeat: no-repeat; background-position: right 9px center;
+    }
+    select.ctrl-sel:focus, .btn-query:focus { border-color: var(--accent); box-shadow: 0 0 0 2px rgba(0,212,255,.15); }
+
+    .btn-query {
+      background: linear-gradient(135deg, var(--accent) 0%, #0080ff 100%);
+      border: none; color: #000; font-weight: 700;
+      padding: 0 18px; letter-spacing: .3px;
+      box-shadow: 0 0 18px rgba(0,212,255,.25);
+      flex-shrink: 0;
+      transition: opacity .2s, transform .1s, box-shadow .2s;
+    }
+    .btn-query:hover { opacity: .9; box-shadow: 0 0 26px rgba(0,212,255,.4); }
+    .btn-query:active { transform: scale(.97); }
+    .btn-query:disabled { opacity: .55; cursor: not-allowed; pointer-events: none; }
+
+    /* ── 모바일 필터 바텀시트 ── */
+    .filter-sheet {
+      position: fixed; left: 0; right: 0; bottom: 0;
+      background: var(--surf);
+      border-top: 1px solid var(--border2);
+      border-radius: 20px 20px 0 0;
+      z-index: 1200;
+      padding: 0 20px calc(20px + var(--safe-b));
+      transform: translateY(100%);
+      transition: transform .32s cubic-bezier(.32,0,.68,1);
+      box-shadow: 0 -12px 40px rgba(0,0,0,.6);
+    }
+    .filter-sheet.open { transform: translateY(0); }
+    .filter-sheet-handle {
+      width: 36px; height: 4px;
+      background: var(--border2); border-radius: 2px;
+      margin: 12px auto 18px;
+    }
+    .filter-sheet h3 {
+      font-size: 15px; font-weight: 700; margin-bottom: 16px;
+      color: var(--text);
+    }
+    .filter-grid {
+      display: grid; grid-template-columns: 1fr 1fr; gap: 10px;
+      margin-bottom: 18px;
+    }
+    .filter-label { font-size: 10px; color: var(--sub); margin-bottom: 5px; font-family: var(--mono); letter-spacing: .5px; }
+    select.sheet-sel {
+      width: 100%; height: 42px;
+      background: var(--surf2);
+      border: 1px solid var(--border2);
+      color: var(--text); border-radius: 8px;
+      padding: 0 14px; font-family: var(--sans); font-size: 13px;
+      appearance: none; -webkit-appearance: none; outline: none;
+      background-image: url("data:image/svg+xml,%3Csvg xmlns='http://www.w3.org/2000/svg' width='10' height='6'%3E%3Cpath d='M0 0l5 6 5-6z' fill='%236a87a8'/%3E%3C/svg%3E");
+      background-repeat: no-repeat; background-position: right 12px center;
+    }
+    .btn-sheet-query {
+      width: 100%; height: 46px;
+      background: linear-gradient(135deg, var(--accent), #0080ff);
+      border: none; border-radius: 10px;
+      color: #000; font-weight: 700; font-size: 15px;
+      font-family: var(--sans); cursor: pointer;
+      box-shadow: 0 4px 20px rgba(0,212,255,.3);
+      transition: opacity .2s, transform .1s;
+    }
+    .btn-sheet-query:active { transform: scale(.97); opacity: .9; }
+    .btn-sheet-query:disabled { opacity: .5; pointer-events: none; }
+
+    /* 필터시트 백드롭 */
+    .sheet-backdrop {
+      position: fixed; inset: 0;
+      background: rgba(0,0,0,.55);
+      z-index: 1100;
+      opacity: 0; pointer-events: none;
+      transition: opacity .28s;
+    }
+    .sheet-backdrop.open { opacity: 1; pointer-events: auto; }
+
+    /* ══════════════════════════════════════════
+       결과 바텀시트 (모바일)
+    ══════════════════════════════════════════ */
+    .result-sheet {
+      position: fixed; left: 0; right: 0;
+      background: var(--surf);
+      border-top: 1px solid var(--border2);
+      border-radius: 20px 20px 0 0;
+      z-index: 700;
+      box-shadow: 0 -8px 30px rgba(0,0,0,.5);
+
+      /* 드래그 상태 */
+      bottom: 0;
+      transform: translateY(calc(100% - var(--sheet-peek)));
+      transition: transform .35s cubic-bezier(.32,0,.68,1);
+      max-height: 92vh;
+      display: flex; flex-direction: column;
+    }
+    .result-sheet.expanded {
+      transform: translateY(0);
+    }
+    .result-sheet.collapsed {
+      transform: translateY(calc(100% - 80px));
+    }
+
+    .sheet-drag-area {
+      padding: 10px 0 6px;
+      cursor: grab; flex-shrink: 0;
+    }
+    .sheet-drag-area:active { cursor: grabbing; }
+    .sheet-handle {
+      width: 40px; height: 4px;
+      background: var(--border2); border-radius: 2px;
+      margin: 0 auto;
+    }
+
+    /* 통계 바 */
+    .stats-row {
+      display: grid; grid-template-columns: repeat(3,1fr);
+      gap: 1px; background: var(--border);
+      border-top: 1px solid var(--border); border-bottom: 1px solid var(--border);
+      flex-shrink: 0;
+    }
+    .stat-cell {
+      background: var(--surf2);
+      padding: 10px 8px; text-align: center;
+    }
+    .stat-lbl {
+      font-size: 9px; font-weight: 600; letter-spacing: 1px;
+      text-transform: uppercase; color: var(--sub);
+      font-family: var(--mono); margin-bottom: 4px;
+    }
+    .stat-val {
+      font-size: 17px; font-weight: 700;
+      font-family: var(--mono); letter-spacing: -.5px;
+    }
+    .stat-val.g { color: var(--green); text-shadow: 0 0 10px rgba(6,214,160,.4); }
+    .stat-val.y { color: var(--yellow); text-shadow: 0 0 10px rgba(255,209,102,.4); }
+    .stat-val.r { color: var(--red);   text-shadow: 0 0 10px rgba(239,71,111,.4); }
+
+    /* 순위 헤더 */
+    .rank-hd {
+      padding: 9px 14px;
+      display: flex; align-items: center; justify-content: space-between;
+      border-bottom: 1px solid var(--border);
+      flex-shrink: 0;
+    }
+    .rank-hd-label {
+      font-size: 10px; font-weight: 600; letter-spacing: 1.2px;
+      text-transform: uppercase; color: var(--sub); font-family: var(--mono);
+    }
+    .rank-badge {
+      background: rgba(0,212,255,.1);
+      border: 1px solid rgba(0,212,255,.25);
+      color: var(--accent);
+      border-radius: 4px; padding: 2px 8px;
+      font-size: 10px; font-family: var(--mono);
+    }
+
+    /* 에러 */
+    .err-bar {
+      display: none; margin: 8px 12px;
+      padding: 10px 14px;
+      background: rgba(239,71,111,.1);
+      border: 1px solid rgba(239,71,111,.3);
+      border-radius: 8px; font-size: 12px; color: #ff9eb5; line-height: 1.5;
+    }
+
+    /* 순위 목록 스크롤 */
+    .rank-scroll {
+      flex: 1; overflow-y: auto;
+      padding: 8px 10px calc(8px + var(--safe-b));
+      overscroll-behavior: contain;
+      -webkit-overflow-scrolling: touch;
+    }
+    .rank-scroll::-webkit-scrollbar { width: 3px; }
+    .rank-scroll::-webkit-scrollbar-thumb { background: var(--border2); border-radius: 3px; }
+
+    .no-data {
+      padding: 40px 20px;
+      display: flex; flex-direction: column;
+      align-items: center; gap: 10px;
+      color: var(--dim); font-size: 13px; text-align: center;
+    }
+    .no-data-icon { font-size: 34px; opacity: .4; }
+
+    .rank-item {
+      display: flex; align-items: center; gap: 10px;
+      padding: 10px 11px;
+      background: var(--surf2);
+      border: 1px solid var(--border);
+      border-radius: 10px; margin-bottom: 5px;
+      cursor: pointer;
+      transition: border-color .15s, background .15s, transform .15s;
+      touch-action: manipulation;
+    }
+    .rank-item:active { transform: scale(.98); opacity: .85; }
+    .rank-item.active {
+      border-color: var(--accent);
+      background: rgba(0,212,255,.06);
+    }
+
+    .rank-num {
+      width: 28px; height: 28px; border-radius: 50%;
+      display: flex; align-items: center; justify-content: center;
+      font-size: 12px; font-weight: 800; color: #000;
+      flex-shrink: 0; font-family: var(--mono);
+    }
+    .rank-info { flex: 1; min-width: 0; }
+    .rank-name {
+      font-size: 13px; font-weight: 600;
+      white-space: nowrap; overflow: hidden; text-overflow: ellipsis;
+      margin-bottom: 2px;
+    }
+    .rank-addr {
+      font-size: 10px; color: var(--sub);
+      white-space: nowrap; overflow: hidden; text-overflow: ellipsis; margin-bottom: 3px;
+    }
+    .brand-tag {
+      display: inline-block; border-radius: 3px;
+      padding: 1px 6px; font-size: 10px; font-weight: 600;
+      color: #fff; opacity: .85;
+    }
+    .rank-price { text-align: right; flex-shrink: 0; }
+    .price-val {
+      font-size: 16px; font-weight: 700;
+      font-family: var(--mono); letter-spacing: -.5px;
+    }
+    .price-unit { font-size: 10px; color: var(--sub); }
+    .price-diff { font-size: 10px; margin-top: 2px; font-family: var(--mono); }
+
+    /* 업데이트 시간 */
+    .update-bar {
+      padding: 7px 14px;
+      border-top: 1px solid var(--border);
+      font-size: 10px; color: var(--dim);
+      font-family: var(--mono); flex-shrink: 0;
+    }
+
+    /* ══════════════════════════════════════════
+       로딩 오버레이
+    ══════════════════════════════════════════ */
+    .loading {
+      position: fixed; inset: 0; z-index: 2000;
+      background: rgba(8,12,20,.82);
+      backdrop-filter: blur(6px);
+      display: flex; flex-direction: column;
+      align-items: center; justify-content: center;
+      opacity: 0; pointer-events: none;
+      transition: opacity .28s;
+    }
+    .loading.on { opacity: 1; pointer-events: auto; }
+    .spin-wrap { position: relative; width: 50px; height: 50px; }
+    .spin-ring {
+      position: absolute; inset: 0;
+      border: 2px solid transparent; border-radius: 50%;
+      animation: spin 1.2s linear infinite;
+    }
+    .spin-ring:nth-child(1) { border-top-color: var(--accent); }
+    .spin-ring:nth-child(2) { border-right-color: rgba(0,212,255,.35); inset: 6px; animation-duration: .85s; animation-direction: reverse; }
+    .spin-ring:nth-child(3) { border-bottom-color: rgba(0,128,255,.25); inset: 12px; animation-duration: 1.7s; }
+    @keyframes spin { to { transform: rotate(360deg); } }
+    .loading-msg { margin-top: 18px; font-size: 12px; color: var(--sub); font-family: var(--mono); }
+
+    /* ══════════════════════════════════════════
+       지도 오버레이 UI (전국평균, 프록시 상태)
+    ══════════════════════════════════════════ */
+    .map-overlay {
+      position: fixed; right: 12px;
+      z-index: 600;
+      display: flex; flex-direction: column; align-items: flex-end; gap: 8px;
+    }
+    /* 모바일: 바텀시트 위쪽에 위치 */
+    .map-overlay { bottom: calc(var(--sheet-peek) + 16px); }
+
+    .avg-card {
+      background: rgba(13,20,34,.92);
+      border: 1px solid var(--border2);
+      border-radius: 10px; padding: 11px 14px;
+      backdrop-filter: blur(10px);
+      min-width: 180px; display: none;
+    }
+    .avg-title {
+      font-size: 9px; font-weight: 600; letter-spacing: 1px;
+      text-transform: uppercase; color: var(--sub);
+      font-family: var(--mono); margin-bottom: 8px;
+    }
+    .avg-row {
+      display: flex; justify-content: space-between; align-items: center;
+      padding: 3px 0; border-bottom: 1px solid var(--border);
+      font-size: 11px;
+    }
+    .avg-row:last-child { border-bottom: none; }
+    .avg-nm { color: var(--sub); }
+    .avg-vl { font-family: var(--mono); font-weight: 600; }
+
+    /* ══════════════════════════════════════════
+       Leaflet 커스텀
+    ══════════════════════════════════════════ */
+    .leaflet-popup-content-wrapper {
+      background: var(--surf2) !important;
+      border: 1px solid var(--border2) !important;
+      border-radius: 12px !important;
+      box-shadow: 0 8px 32px rgba(0,0,0,.65) !important;
+      color: var(--text) !important;
+    }
+    .leaflet-popup-tip { background: var(--surf2) !important; }
+    .leaflet-popup-content { margin: 14px 16px !important; min-width: 190px; }
+    .popup-rank { font-size: 10px; color: var(--sub); font-family: var(--mono); margin-bottom: 3px; }
+    .popup-name { font-size: 14px; font-weight: 700; margin-bottom: 5px; }
+    .popup-brand { display: inline-block; border-radius: 4px; padding: 2px 8px; font-size: 11px; color:#fff; margin-bottom: 9px; }
+    .popup-price { font-size: 22px; font-weight: 800; color: var(--green); font-family: var(--mono); text-shadow: 0 0 16px rgba(6,214,160,.45); }
+    .popup-price span { font-size: 13px; color: var(--sub); font-weight: 400; }
+    .popup-addr { font-size: 11px; color: var(--sub); margin-top: 5px; line-height: 1.5; }
+
+    .c-marker {
+      width: 30px; height: 30px;
+      border-radius: 50% 50% 50% 0;
+      transform: rotate(-45deg);
+      display: flex; align-items: center; justify-content: center;
+      border: 2px solid rgba(255,255,255,.2);
+      box-shadow: 0 4px 12px rgba(0,0,0,.5);
+    }
+    .c-marker span {
+      transform: rotate(45deg);
+      font-size: 11px; font-weight: 800; color: #000; font-family: var(--mono);
+    }
+
+    /* ══════════════════════════════════════════
+       데스크톱 레이아웃 (768px 이상)
+    ══════════════════════════════════════════ */
+    @media (min-width: 768px) {
+      :root { --hdr-h: 58px; }
+
+      /* 헤더 로고 서브텍스트 표시 */
+      .logo-sub { display: block; }
+
+      /* 인라인 컨트롤 표시, 필터 토글 버튼 숨김 */
+      .ctrl-inline { display: flex; }
+      .btn-filter-toggle { display: none; }
+
+      /* 지도를 사이드바 옆으로 */
+      #map {
+        left: 360px;
+      }
+
+      /* 사이드바 고정 패널 */
+      .sidebar-desktop {
+        position: fixed;
+        top: var(--hdr-h); left: 0;
+        width: 360px; bottom: 0;
+        background: var(--surf);
+        border-right: 1px solid var(--border);
+        display: flex; flex-direction: column;
+        overflow: hidden; z-index: 600;
+      }
+
+      /* 모바일 요소 숨김 */
+      .result-sheet { display: none; }
+      .filter-sheet { display: none; }
+      .sheet-backdrop { display: none; }
+
+      /* 오버레이 위치 조정 */
+      .map-overlay { bottom: 24px; }
+
+      /* 평균가 카드 표시 */
+      .avg-card { display: block; }
+    }
+
+    @media (min-width: 768px) and (max-width: 1100px) {
+      #map { left: 320px; }
+      .sidebar-desktop { width: 320px; }
+    }
+
+    /* 데스크톱 사이드바 내부 컴포넌트 */
+    .sidebar-desktop .stats-row { border-top: none; }
+    .sidebar-desktop .rank-scroll {
+      padding-bottom: 10px;
+    }
+    .sidebar-desktop .rank-item:hover {
+      border-color: var(--border2);
+      background: var(--surf3);
+      transform: translateX(3px);
+    }
+  </style>
+</head>
+<body>
+
+<!-- ══════════════════════════════════════════
+     헤더
+══════════════════════════════════════════ -->
+<header class="hdr">
+  <div class="logo">
+    <div class="logo-icon">⛽</div>
+    <div>
+      <div class="logo-name">오피넷 <em>최저가</em></div>
+      <div class="logo-sub">OPINET REAL-TIME DASHBOARD</div>
+    </div>
+  </div>
+
+  <!-- 데스크톱 인라인 컨트롤 -->
+  <div class="ctrl-inline" id="ctrl-inline">
+    <select class="ctrl-sel" id="prodcd-d">
+      <option value="B027">보통휘발유</option>
+      <option value="D047">자동차경유</option>
+      <option value="B034">고급휘발유</option>
+      <option value="C004">실내등유</option>
+      <option value="K015">자동차부탄</option>
+    </select>
+    <select class="ctrl-sel" id="area-d">
+      <option value="">🗺 전국</option>
+      <option value="01">서울</option><option value="02">경기</option>
+      <option value="03">강원</option><option value="04">충북</option>
+      <option value="05">충남</option><option value="06">전북</option>
+      <option value="07">전남</option><option value="08">경북</option>
+      <option value="09">경남</option><option value="10">제주</option>
+      <option value="11">부산</option><option value="12">대구</option>
+      <option value="13">인천</option><option value="14">광주</option>
+      <option value="15">대전</option><option value="16">울산</option>
+      <option value="17">세종</option>
+    </select>
+    <select class="ctrl-sel" id="cnt-d">
+      <option value="10">TOP 10</option>
+      <option value="15">TOP 15</option>
+      <option value="20">TOP 20</option>
+    </select>
+    <button class="btn-query" id="query-btn-d" onclick="loadData('d')">🔄 조회</button>
+  </div>
+
+  <!-- 헤더 우측 -->
+  <div class="hdr-right">
+    <div class="proxy-dot" id="proxy-dot" title="CORS 프록시 상태"></div>
+    <!-- 모바일 필터 버튼 -->
+    <button class="btn-filter-toggle" onclick="openFilter()">
+      ⚙ 필터 · 조회
+    </button>
+  </div>
+</header>
+
+<!-- ══════════════════════════════════════════
+     지도
+══════════════════════════════════════════ -->
+<div id="map"></div>
+
+<!-- ══════════════════════════════════════════
+     지도 오버레이 (전국평균가)
+══════════════════════════════════════════ -->
+<div class="map-overlay">
+  <div class="avg-card" id="avg-card">
+    <div class="avg-title">📊 전국 평균가 (원/L)</div>
+    <div id="avg-rows"></div>
+  </div>
+</div>
+
+<!-- ══════════════════════════════════════════
+     데스크톱 사이드바
+══════════════════════════════════════════ -->
+<div class="sidebar-desktop" id="sidebar-desktop">
+  <div class="stats-row">
+    <div class="stat-cell">
+      <div class="stat-lbl">최저가</div>
+      <div class="stat-val g" id="s-min-d">—</div>
+    </div>
+    <div class="stat-cell">
+      <div class="stat-lbl">평균가</div>
+      <div class="stat-val y" id="s-avg-d">—</div>
+    </div>
+    <div class="stat-cell">
+      <div class="stat-lbl">최고가</div>
+      <div class="stat-val r" id="s-max-d">—</div>
+    </div>
+  </div>
+  <div class="rank-hd">
+    <span class="rank-hd-label">순위 목록</span>
+    <span class="rank-badge" id="badge-d">—</span>
+  </div>
+  <div class="err-bar" id="err-d"></div>
+  <div class="rank-scroll" id="list-d">
+    <div class="no-data">
+      <div class="no-data-icon">⛽</div>
+      조건 선택 후 [조회]를 클릭하세요
+    </div>
+  </div>
+  <div class="update-bar" id="upd-d">마지막 업데이트: —</div>
+</div>
+
+<!-- ══════════════════════════════════════════
+     모바일 필터 바텀시트
+══════════════════════════════════════════ -->
+<div class="sheet-backdrop" id="filter-backdrop" onclick="closeFilter()"></div>
+<div class="filter-sheet" id="filter-sheet">
+  <div class="sheet-drag-handle" style="width:36px;height:4px;background:var(--border2);border-radius:2px;margin:12px auto 18px;"></div>
+  <h3>🔍 조회 조건</h3>
+  <div class="filter-grid">
+    <div>
+      <div class="filter-label">유종</div>
+      <select class="sheet-sel" id="prodcd-m">
+        <option value="B027">🔵 보통휘발유</option>
+        <option value="D047">⚫ 자동차경유</option>
+        <option value="B034">🟡 고급휘발유</option>
+        <option value="C004">🟤 실내등유</option>
+        <option value="K015">🟠 자동차부탄</option>
+      </select>
+    </div>
+    <div>
+      <div class="filter-label">지역</div>
+      <select class="sheet-sel" id="area-m">
+        <option value="">🗺 전국</option>
+        <option value="01">서울</option><option value="02">경기</option>
+        <option value="03">강원</option><option value="04">충북</option>
+        <option value="05">충남</option><option value="06">전북</option>
+        <option value="07">전남</option><option value="08">경북</option>
+        <option value="09">경남</option><option value="10">제주</option>
+        <option value="11">부산</option><option value="12">대구</option>
+        <option value="13">인천</option><option value="14">광주</option>
+        <option value="15">대전</option><option value="16">울산</option>
+        <option value="17">세종</option>
+      </select>
+    </div>
+    <div>
+      <div class="filter-label">조회 개수</div>
+      <select class="sheet-sel" id="cnt-m">
+        <option value="10">TOP 10</option>
+        <option value="15">TOP 15</option>
+        <option value="20">TOP 20</option>
+      </select>
+    </div>
+  </div>
+  <button class="btn-sheet-query" id="query-btn-m" onclick="loadData('m')">🔄 조회하기</button>
+</div>
+
+<!-- ══════════════════════════════════════════
+     모바일 결과 바텀시트
+══════════════════════════════════════════ -->
+<div class="result-sheet" id="result-sheet">
+  <div class="sheet-drag-area" id="drag-area">
+    <div class="sheet-handle"></div>
+  </div>
+  <div class="stats-row">
+    <div class="stat-cell">
+      <div class="stat-lbl">최저가</div>
+      <div class="stat-val g" id="s-min-m">—</div>
+    </div>
+    <div class="stat-cell">
+      <div class="stat-lbl">평균가</div>
+      <div class="stat-val y" id="s-avg-m">—</div>
+    </div>
+    <div class="stat-cell">
+      <div class="stat-lbl">최고가</div>
+      <div class="stat-val r" id="s-max-m">—</div>
+    </div>
+  </div>
+  <div class="rank-hd">
+    <span class="rank-hd-label">순위 목록</span>
+    <span class="rank-badge" id="badge-m">—</span>
+  </div>
+  <div class="err-bar" id="err-m"></div>
+  <div class="rank-scroll" id="list-m">
+    <div class="no-data">
+      <div class="no-data-icon">⛽</div>
+      조건 선택 후 조회해 주세요
+    </div>
+  </div>
+  <div class="update-bar" id="upd-m">마지막 업데이트: —</div>
+</div>
+
+<!-- ══════════════════════════════════════════
+     로딩 오버레이
+══════════════════════════════════════════ -->
+<div class="loading" id="loading">
+  <div class="spin-wrap">
+    <div class="spin-ring"></div>
+    <div class="spin-ring"></div>
+    <div class="spin-ring"></div>
+  </div>
+  <div class="loading-msg" id="loading-msg">데이터 수신 중...</div>
+</div>
+
+<script src="https://unpkg.com/leaflet@1.9.4/dist/leaflet.js"></script>
+<script>
+/* ══════════════════════════════════════════════════════
+   상수
+══════════════════════════════════════════════════════ */
+const API_KEY = "F260330688";
+const OPINET  = "https://www.opinet.co.kr/api";
+
+const PROXIES = [
+  u => `https://corsproxy.io/?${encodeURIComponent(u)}`,
+  u => `https://api.allorigins.win/raw?url=${encodeURIComponent(u)}`,
+  u => `https://thingproxy.freeboard.io/fetch/${u}`,
+];
+let activeProxy = 0;
+
+const PRODUCTS = { B027:"보통휘발유", D047:"자동차경유", B034:"고급휘발유", C004:"실내등유", K015:"자동차부탄" };
+const AREAS = { "":"전국","01":"서울","02":"경기","03":"강원","04":"충북","05":"충남","06":"전북","07":"전남","08":"경북","09":"경남","10":"제주","11":"부산","12":"대구","13":"인천","14":"광주","15":"대전","16":"울산","17":"세종" };
+const BRANDS = { SKE:"SK에너지",GSC:"GS칼텍스",HDO:"현대오일뱅크",SOL:"S-OIL",RTE:"자영알뜰",RTX:"고속도로알뜰",NHO:"농협알뜰",ETC:"자가상표",E1G:"E1",SKG:"SK가스",RTO:"자영알뜰" };
+const BRAND_COLORS = { SKE:"#FF6B35",GSC:"#4CAF50",HDO:"#2196F3",SOL:"#9C27B0",RTE:"#FF9800",RTX:"#009688",NHO:"#3F51B5",ETC:"#607D8B",E1G:"#E91E63",SKG:"#795548",RTO:"#FF5722" };
+const RANK_COLORS = ["#06d6a0","#19e6ac","#2ef5ba","#ffd166","#ffc84d","#ffbe33","#ff9f43","#ff8c1a","#ef476f","#f05d80","#f27090","#e83e5a","#dd3550","#d12c46","#c5233c","#e91e63","#c2185b","#ad1457","#880e4f","#6a0f3c"];
+const rankColor = r => RANK_COLORS[r-1] || "#344d68";
+
+/* ══════════════════════════════════════════════════════
+   Leaflet 초기화
+══════════════════════════════════════════════════════ */
+const map = L.map('map', { center:[36.5,127.8], zoom:7, zoomControl:false });
+L.control.zoom({ position:'topright' }).addTo(map);
+L.tileLayer('https://{s}.basemaps.cartocdn.com/dark_all/{z}/{x}/{y}{r}.png', {
+  attribution:'&copy; OSM &copy; CARTO', subdomains:'abcd', maxZoom:19
+}).addTo(map);
+
+let markers = [], currentData = [];
+
+/* ══════════════════════════════════════════════════════
+   좌표 변환 (KATEC → WGS84 선형 근사)
+══════════════════════════════════════════════════════ */
+function k2w(x,y) {
+  return {
+    lat: Math.round((38.0 + (y-600000)/111000)*1e6)/1e6,
+    lon: Math.round((128.0 + (x-400000)/88600)*1e6)/1e6
+  };
+}
+
+/* ══════════════════════════════════════════════════════
+   반응형 감지
+══════════════════════════════════════════════════════ */
+const isMobile = () => window.innerWidth < 768;
+
+/* ══════════════════════════════════════════════════════
+   CORS 프록시 fetch
+══════════════════════════════════════════════════════ */
+async function proxyFetch(targetUrl) {
+  for (let i = 0; i < PROXIES.length; i++) {
+    const idx = (activeProxy + i) % PROXIES.length;
+    try {
+      const res = await fetch(PROXIES[idx](targetUrl), { signal: AbortSignal.timeout(13000) });
+      if (!res.ok) throw new Error(`HTTP ${res.status}`);
+      let json = await res.json();
+      if (json.contents) json = JSON.parse(json.contents);
+      activeProxy = idx;
+      setProxyDot('ok');
+      return json;
+    } catch(e) { console.warn(`proxy ${idx} fail:`, e.message); }
+  }
+  setProxyDot('fail');
+  throw new Error("모든 CORS 프록시 연결 실패. 잠시 후 다시 시도해 주세요.");
+}
+
+function setProxyDot(state) {
+  document.getElementById('proxy-dot').className = `proxy-dot ${state}`;
+}
+
+/* ══════════════════════════════════════════════════════
+   필터 패널 (모바일)
+══════════════════════════════════════════════════════ */
+function openFilter() {
+  document.getElementById('filter-sheet').classList.add('open');
+  document.getElementById('filter-backdrop').classList.add('open');
+  document.body.style.overflow = 'hidden';
+}
+function closeFilter() {
+  document.getElementById('filter-sheet').classList.remove('open');
+  document.getElementById('filter-backdrop').classList.remove('open');
+  document.body.style.overflow = '';
+}
+
+/* ══════════════════════════════════════════════════════
+   바텀시트 드래그 (모바일)
+══════════════════════════════════════════════════════ */
+(function initDrag() {
+  const sheet = document.getElementById('result-sheet');
+  const area  = document.getElementById('drag-area');
+  if (!sheet || !area) return;
+
+  let startY = 0, startT = 0;
+  const states = ['collapsed', 'default', 'expanded'];
+  let curState = 'default'; // collapsed / default / expanded
+
+  function applyState(s) {
+    curState = s;
+    sheet.classList.remove('collapsed','expanded');
+    if (s !== 'default') sheet.classList.add(s);
+  }
+
+  function onStart(e) {
+    startY = (e.touches ? e.touches[0].clientY : e.clientY);
+    startT = Date.now();
+    sheet.style.transition = 'none';
+  }
+  function onEnd(e) {
+    sheet.style.transition = '';
+    const endY = (e.changedTouches ? e.changedTouches[0].clientY : e.clientY);
+    const dy   = endY - startY;
+    const dt   = Date.now() - startT;
+    const fast = dt < 250;
+
+    if (fast && Math.abs(dy) > 30) {
+      if (dy < 0) { // 위로 스와이프
+        applyState(curState === 'collapsed' ? 'default' : 'expanded');
+      } else {      // 아래로 스와이프
+        applyState(curState === 'expanded' ? 'default' : 'collapsed');
+      }
+    } else {
+      if (dy < -60)       applyState(curState === 'collapsed' ? 'default' : 'expanded');
+      else if (dy > 60)   applyState(curState === 'expanded' ? 'default' : 'collapsed');
+    }
+  }
+  area.addEventListener('touchstart', onStart, { passive: true });
+  area.addEventListener('touchend',   onEnd,   { passive: true });
+  area.addEventListener('mousedown',  onStart);
+  document.addEventListener('mouseup', onEnd);
+})();
+
+/* ══════════════════════════════════════════════════════
+   데이터 로드
+══════════════════════════════════════════════════════ */
+async function loadData(mode) {
+  // 필터값 읽기 (mode: 'm'=모바일, 'd'=데스크톱)
+  const isMob = (mode === 'm') || isMobile();
+  const suf   = isMob ? 'm' : 'd';
+
+  const prodcd = document.getElementById(`prodcd-${isMob?'m':'d'}`).value;
+  const area   = document.getElementById(`area-${isMob?'m':'d'}`).value;
+  const cnt    = document.getElementById(`cnt-${isMob?'m':'d'}`).value;
+
+  closeFilter();
+  setLoading(true, '오피넷 API 연결 중...');
+  setQueryLoading(true);
+  hideErr('m'); hideErr('d');
+
+  try {
+    let url = `${OPINET}/lowTop10.do?code=${API_KEY}&out=json&prodcd=${prodcd}&cnt=${cnt}`;
+    if (area) url += `&area=${area}`;
+    const data = await proxyFetch(url);
+    const raw = data?.RESULT?.OIL ?? [];
+    if (!Array.isArray(raw)) throw new Error("API 응답 형식 오류");
+
+    setLoading(true, '좌표 변환 및 렌더링 중...');
+    currentData = raw.map((s,i) => {
+      const {lat,lon} = k2w(parseFloat(s.GIS_X_COOR||0)||0, parseFloat(s.GIS_Y_COOR||0)||0);
+      const bc = s.POLL_DIV_CD || 'ETC';
+      return {
+        rank: i+1,
+        name: s.OS_NM || '',
+        price: parseInt(parseFloat(s.PRICE||0)) || 0,
+        brand: BRANDS[bc] || bc,
+        brandCode: bc,
+        brandColor: BRAND_COLORS[bc] || '#607D8B',
+        address: s.NEW_ADR || s.VAN_ADR || '',
+        lat, lon
+      };
+    });
+
+    // 지도 마커
+    markers.forEach(m => map.removeLayer(m));
+    markers = [];
+    const bounds = [];
+    currentData.forEach(s => {
+      if (!s.lat || !s.lon) return;
+      const m = makeMarker(s);
+      m.addTo(map); markers.push(m);
+      bounds.push([s.lat, s.lon]);
+    });
+    if (bounds.length) map.fitBounds(bounds, { padding:[60,60] });
+
+    // 양쪽 렌더
+    renderList(currentData, prodcd, area);
+
+    // 모바일 바텀시트 default로 올리기
+    if (isMobile()) {
+      const rs = document.getElementById('result-sheet');
+      rs.classList.remove('collapsed','expanded');
+    }
+
+    // 전국 평균가 비동기
+    loadAvg();
+
+  } catch(e) {
+    showErr('m', e.message);
+    showErr('d', e.message);
+  } finally {
+    setLoading(false);
+    setQueryLoading(false);
+  }
+}
+
+/* ══════════════════════════════════════════════════════
+   전국 평균가
+══════════════════════════════════════════════════════ */
+async function loadAvg() {
+  try {
+    const data = await proxyFetch(`${OPINET}/avgAllPrice.do?code=${API_KEY}&out=json`);
+    const oils = data?.RESULT?.OIL ?? [];
+    if (!oils.length) return;
+    const m2 = {}; oils.forEach(o => { m2[o.PRODCD] = o; });
+    document.getElementById('avg-rows').innerHTML =
+      ["B027","D047","B034","C004","K015"].map(cd => {
+        const o = m2[cd]; if (!o) return '';
+        return `<div class="avg-row">
+          <span class="avg-nm">${PRODUCTS[cd]||cd}</span>
+          <span class="avg-vl">${parseInt(parseFloat(o.PRICE||0)).toLocaleString()}원</span>
+        </div>`;
+      }).join('');
+    document.getElementById('avg-card').style.display = 'block';
+  } catch {}
+}
+
+/* ══════════════════════════════════════════════════════
+   마커
+══════════════════════════════════════════════════════ */
+function makeMarker(s) {
+  const color = rankColor(s.rank);
+  const icon = L.divIcon({
+    className: '',
+    html: `<div class="c-marker" style="background:${color}"><span>${s.rank}</span></div>`,
+    iconSize:[30,30], iconAnchor:[15,30], popupAnchor:[0,-32]
+  });
+  const m = L.marker([s.lat,s.lon], { icon }).bindPopup(`
+    <div class="popup-rank">#${s.rank} 최저가</div>
+    <div class="popup-name">${s.name}</div>
+    <div class="popup-brand" style="background:${s.brandColor}">${s.brand}</div>
+    <div class="popup-price">${s.price.toLocaleString()}<span> 원/L</span></div>
+    <div class="popup-addr">📍 ${s.address||'주소 정보 없음'}</div>
+  `, { maxWidth:240 });
+  m.on('click', () => highlight(s.rank));
+  return m;
+}
+
+/* ══════════════════════════════════════════════════════
+   순위 목록 렌더링 (모바일·데스크톱 동시)
+══════════════════════════════════════════════════════ */
+function renderList(data, prodcd, area) {
+  if (!data.length) {
+    ['m','d'].forEach(s => {
+      document.getElementById(`list-${s}`).innerHTML =
+        '<div class="no-data"><div class="no-data-icon">🔍</div>해당 조건의 데이터가 없습니다</div>';
+    });
+    return;
+  }
+  const prices = data.map(d => d.price);
+  const minP = Math.min(...prices);
+  const maxP = Math.max(...prices);
+  const avgP = Math.round(prices.reduce((a,b)=>a+b,0)/prices.length);
+  const areaName = AREAS[area] || area || '전국';
+  const prodName = PRODUCTS[prodcd] || prodcd;
+  const badgeTxt = `${areaName} · ${prodName} · ${data.length}개`;
+  const now = new Date().toLocaleString('ko-KR');
+
+  ['m','d'].forEach(suf => {
+    document.getElementById(`s-min-${suf}`).textContent = minP.toLocaleString();
+    document.getElementById(`s-avg-${suf}`).textContent = avgP.toLocaleString();
+    document.getElementById(`s-max-${suf}`).textContent = maxP.toLocaleString();
+    document.getElementById(`badge-${suf}`).textContent = badgeTxt;
+    document.getElementById(`upd-${suf}`).textContent   = `마지막 업데이트: ${now}`;
+    document.getElementById(`list-${suf}`).innerHTML    = data.map(s => {
+      const diff = s.price - minP;
+      const diffHtml = diff > 0
+        ? `<span style="color:var(--red)">+${diff.toLocaleString()}</span>`
+        : `<span style="color:var(--green)">최저</span>`;
+      return `
+      <div class="rank-item" id="ri-${suf}-${s.rank}" onclick="focusStation(${s.rank})">
+        <div class="rank-num" style="background:${rankColor(s.rank)}">${s.rank}</div>
+        <div class="rank-info">
+          <div class="rank-name">${s.name}</div>
+          <div class="rank-addr">${s.address||'주소 정보 없음'}</div>
+          <div class="brand-tag" style="background:${s.brandColor}">${s.brand}</div>
+        </div>
+        <div class="rank-price">
+          <div class="price-val" style="color:${rankColor(s.rank)}">${s.price.toLocaleString()}</div>
+          <div class="price-unit">원/L</div>
+          <div class="price-diff">${diffHtml}</div>
+        </div>
+      </div>`;
+    }).join('');
+  });
+}
+
+/* ══════════════════════════════════════════════════════
+   인터랙션
+══════════════════════════════════════════════════════ */
+function focusStation(rank) {
+  const s = currentData.find(d => d.rank === rank);
+  if (!s) return;
+  map.flyTo([s.lat, s.lon], 15, { duration:.7 });
+  const m = markers[rank-1];
+  if (m) setTimeout(() => m.openPopup(), 450);
+  highlight(rank);
+  // 모바일: 지도 보이도록 시트 조금 내림
+  if (isMobile()) {
+    const rs = document.getElementById('result-sheet');
+    rs.classList.remove('expanded');
+  }
+}
+
+function highlight(rank) {
+  ['m','d'].forEach(suf => {
+    document.querySelectorAll(`[id^="ri-${suf}-"]`).forEach(el => el.classList.remove('active'));
+    const el = document.getElementById(`ri-${suf}-${rank}`);
+    if (el) { el.classList.add('active'); el.scrollIntoView({ behavior:'smooth', block:'nearest' }); }
+  });
+}
+
+/* ══════════════════════════════════════════════════════
+   UI 유틸
+══════════════════════════════════════════════════════ */
+function setLoading(on, msg) {
+  const el = document.getElementById('loading');
+  el.classList.toggle('on', on);
+  if (msg) document.getElementById('loading-msg').textContent = msg;
+}
+function setQueryLoading(on) {
+  ['query-btn-d','query-btn-m'].forEach(id => {
+    const btn = document.getElementById(id);
+    if (!btn) return;
+    btn.disabled = on;
+    btn.textContent = on ? '⏳ 조회 중...' : (id.includes('-m') ? '🔄 조회하기' : '🔄 조회');
+  });
+}
+function showErr(suf, msg) {
+  const el = document.getElementById(`err-${suf}`);
+  el.style.display = 'block';
+  el.innerHTML = `⚠ ${msg}<br><small style="color:var(--dim);display:block;margin-top:4px">프록시 서버가 일시 불안정할 수 있습니다. 잠시 후 재조회해 주세요.</small>`;
+}
+function hideErr(suf) {
+  document.getElementById(`err-${suf}`).style.display = 'none';
+}
+
+/* ══════════════════════════════════════════════════════
+   화면 크기 변경 시 지도 리사이즈
+══════════════════════════════════════════════════════ */
+window.addEventListener('resize', () => {
+  map.invalidateSize();
+});
+
+/* ══════════════════════════════════════════════════════
+   초기화
+══════════════════════════════════════════════════════ */
+window.addEventListener('load', () => {
+  setProxyDot('');
+  // 모바일이면 시트 default(반쯤 열린) 상태로 시작
+  if (isMobile()) {
+    const rs = document.getElementById('result-sheet');
+    rs.style.transition = 'none';
+    setTimeout(() => { rs.style.transition = ''; }, 50);
+  }
+});
+</script>
+</body>
+</html>
