@@ -1,0 +1,851 @@
+<!DOCTYPE html>
+<html lang="ko">
+<head>
+  <meta charset="UTF-8"/>
+  <meta name="viewport" content="width=device-width, initial-scale=1.0"/>
+  <title>⛽ 오피넷 최저가 주유소</title>
+
+  <link rel="stylesheet" href="https://unpkg.com/leaflet@1.9.4/dist/leaflet.css"/>
+  <link href="https://fonts.googleapis.com/css2?family=Noto+Sans+KR:wght@300;400;500;600;700&family=JetBrains+Mono:wght@400;600&display=swap" rel="stylesheet"/>
+
+  <style>
+    *, *::before, *::after { box-sizing: border-box; margin: 0; padding: 0; }
+
+    :root {
+      --bg:        #080c14;
+      --surface:   #0e1420;
+      --surface2:  #151d2e;
+      --surface3:  #1c263a;
+      --border:    #1f2d45;
+      --border2:   #2a3d58;
+      --accent:    #00d4ff;
+      --accent2:   #ff6b6b;
+      --accent3:   #ffd166;
+      --text:      #d8e4f0;
+      --text-sub:  #6e8aaa;
+      --text-dim:  #3d5270;
+      --green:     #06d6a0;
+      --yellow:    #ffd166;
+      --red:       #ef476f;
+      --glow:      rgba(0,212,255,0.15);
+      --mono:      'JetBrains Mono', monospace;
+      --sans:      'Noto Sans KR', sans-serif;
+      --sidebar-w: 360px;
+    }
+
+    html, body {
+      height: 100%;
+      font-family: var(--sans);
+      background: var(--bg);
+      color: var(--text);
+      overflow: hidden;
+    }
+
+    /* ─── 배경 그리드 효과 ─────────────────── */
+    body::before {
+      content: '';
+      position: fixed;
+      inset: 0;
+      background-image:
+        linear-gradient(rgba(0,212,255,0.03) 1px, transparent 1px),
+        linear-gradient(90deg, rgba(0,212,255,0.03) 1px, transparent 1px);
+      background-size: 40px 40px;
+      pointer-events: none;
+      z-index: 0;
+    }
+
+    /* ─── 레이아웃 ─────────────────────────── */
+    .app { display: flex; flex-direction: column; height: 100vh; position: relative; z-index: 1; }
+
+    /* ─── 헤더 ─────────────────────────────── */
+    header {
+      background: linear-gradient(180deg, rgba(14,20,32,0.98) 0%, rgba(8,12,20,0.95) 100%);
+      border-bottom: 1px solid var(--border);
+      padding: 0 20px;
+      height: 58px;
+      display: flex;
+      align-items: center;
+      gap: 20px;
+      flex-shrink: 0;
+      backdrop-filter: blur(12px);
+      position: relative;
+    }
+    header::after {
+      content: '';
+      position: absolute;
+      bottom: 0; left: 0; right: 0;
+      height: 1px;
+      background: linear-gradient(90deg, transparent, var(--accent), transparent);
+      opacity: 0.4;
+    }
+
+    .logo {
+      display: flex;
+      align-items: center;
+      gap: 10px;
+      flex-shrink: 0;
+    }
+    .logo-icon {
+      width: 32px; height: 32px;
+      background: linear-gradient(135deg, var(--accent), #0080ff);
+      border-radius: 8px;
+      display: flex; align-items: center; justify-content: center;
+      font-size: 16px;
+      box-shadow: 0 0 16px rgba(0,212,255,0.3);
+    }
+    .logo-text { font-size: 15px; font-weight: 700; letter-spacing: -0.3px; }
+    .logo-text span { color: var(--accent); }
+    .logo-sub { font-size: 10px; color: var(--text-sub); font-weight: 400; margin-top: 1px; font-family: var(--mono); }
+
+    .controls {
+      display: flex;
+      gap: 8px;
+      margin-left: auto;
+      align-items: center;
+    }
+
+    select, .btn {
+      height: 34px;
+      background: var(--surface2);
+      border: 1px solid var(--border2);
+      color: var(--text);
+      border-radius: 6px;
+      padding: 0 12px;
+      font-family: var(--sans);
+      font-size: 13px;
+      cursor: pointer;
+      outline: none;
+      transition: border-color .2s, box-shadow .2s;
+      appearance: none;
+      -webkit-appearance: none;
+    }
+    select {
+      padding-right: 28px;
+      background-image: url("data:image/svg+xml,%3Csvg xmlns='http://www.w3.org/2000/svg' width='10' height='6'%3E%3Cpath d='M0 0l5 6 5-6z' fill='%236e8aaa'/%3E%3C/svg%3E");
+      background-repeat: no-repeat;
+      background-position: right 10px center;
+    }
+    select:focus, .btn:focus { border-color: var(--accent); box-shadow: 0 0 0 2px rgba(0,212,255,0.15); }
+    select:hover { border-color: var(--border2); }
+
+    .btn-query {
+      background: linear-gradient(135deg, var(--accent) 0%, #0080ff 100%);
+      border: none;
+      color: #000;
+      font-weight: 700;
+      padding: 0 18px;
+      letter-spacing: 0.3px;
+      box-shadow: 0 0 20px rgba(0,212,255,0.25);
+      transition: opacity .2s, transform .1s, box-shadow .2s;
+    }
+    .btn-query:hover { opacity: 0.9; box-shadow: 0 0 28px rgba(0,212,255,0.4); }
+    .btn-query:active { transform: scale(0.97); }
+    .btn-query.loading { opacity: 0.6; cursor: not-allowed; pointer-events: none; }
+
+    .proxy-badge {
+      font-family: var(--mono);
+      font-size: 10px;
+      color: var(--text-dim);
+      border: 1px solid var(--border);
+      border-radius: 4px;
+      padding: 2px 7px;
+      white-space: nowrap;
+    }
+    .proxy-badge.ok   { color: var(--green); border-color: rgba(6,214,160,0.3); }
+    .proxy-badge.fail { color: var(--red);   border-color: rgba(239,71,111,0.3); }
+
+    /* ─── 메인 ─────────────────────────────── */
+    .main { display: flex; flex: 1; overflow: hidden; position: relative; }
+
+    /* ─── 사이드바 ──────────────────────────── */
+    .sidebar {
+      width: var(--sidebar-w);
+      flex-shrink: 0;
+      background: var(--surface);
+      border-right: 1px solid var(--border);
+      display: flex;
+      flex-direction: column;
+      overflow: hidden;
+    }
+
+    /* 통계 바 */
+    .stats {
+      display: grid;
+      grid-template-columns: repeat(3, 1fr);
+      gap: 1px;
+      background: var(--border);
+      border-bottom: 1px solid var(--border);
+      flex-shrink: 0;
+    }
+    .stat {
+      background: var(--surface2);
+      padding: 12px 10px;
+      text-align: center;
+    }
+    .stat-label {
+      font-size: 10px;
+      font-weight: 600;
+      letter-spacing: 1px;
+      text-transform: uppercase;
+      color: var(--text-sub);
+      margin-bottom: 5px;
+      font-family: var(--mono);
+    }
+    .stat-value {
+      font-size: 18px;
+      font-weight: 700;
+      font-family: var(--mono);
+      letter-spacing: -0.5px;
+    }
+    .stat-value.green  { color: var(--green); text-shadow: 0 0 12px rgba(6,214,160,0.4); }
+    .stat-value.yellow { color: var(--yellow); text-shadow: 0 0 12px rgba(255,209,102,0.4); }
+    .stat-value.red    { color: var(--red);   text-shadow: 0 0 12px rgba(239,71,111,0.4); }
+
+    /* 섹션 헤더 */
+    .section-hd {
+      padding: 10px 14px;
+      display: flex;
+      align-items: center;
+      justify-content: space-between;
+      border-bottom: 1px solid var(--border);
+      flex-shrink: 0;
+    }
+    .section-hd-title {
+      font-size: 10px;
+      font-weight: 600;
+      letter-spacing: 1.5px;
+      text-transform: uppercase;
+      color: var(--text-sub);
+      font-family: var(--mono);
+    }
+    .badge {
+      background: rgba(0,212,255,0.12);
+      border: 1px solid rgba(0,212,255,0.25);
+      color: var(--accent);
+      border-radius: 4px;
+      padding: 2px 8px;
+      font-size: 10px;
+      font-family: var(--mono);
+    }
+
+    /* 에러 */
+    .error-bar {
+      display: none;
+      margin: 8px;
+      padding: 10px 14px;
+      background: rgba(239,71,111,0.1);
+      border: 1px solid rgba(239,71,111,0.3);
+      border-radius: 6px;
+      font-size: 12px;
+      color: #ff9eb5;
+      line-height: 1.5;
+    }
+
+    /* 순위 목록 */
+    .rank-list {
+      flex: 1;
+      overflow-y: auto;
+      padding: 8px;
+    }
+    .rank-list::-webkit-scrollbar { width: 3px; }
+    .rank-list::-webkit-scrollbar-track { background: transparent; }
+    .rank-list::-webkit-scrollbar-thumb { background: var(--border2); border-radius: 3px; }
+
+    .no-data {
+      height: 100%;
+      display: flex;
+      flex-direction: column;
+      align-items: center;
+      justify-content: center;
+      color: var(--text-dim);
+      font-size: 13px;
+      gap: 10px;
+    }
+    .no-data-icon { font-size: 36px; opacity: 0.4; }
+
+    .rank-item {
+      display: flex;
+      align-items: center;
+      gap: 10px;
+      padding: 10px 11px;
+      background: var(--surface2);
+      border: 1px solid var(--border);
+      border-radius: 8px;
+      margin-bottom: 5px;
+      cursor: pointer;
+      transition: border-color .15s, background .15s, transform .15s;
+    }
+    .rank-item:hover {
+      border-color: var(--border2);
+      background: var(--surface3);
+      transform: translateX(3px);
+    }
+    .rank-item.active {
+      border-color: var(--accent);
+      background: rgba(0,212,255,0.06);
+      box-shadow: 0 0 0 1px rgba(0,212,255,0.15);
+    }
+
+    .rank-num {
+      width: 28px; height: 28px;
+      border-radius: 50%;
+      display: flex; align-items: center; justify-content: center;
+      font-size: 12px; font-weight: 800;
+      color: #000;
+      flex-shrink: 0;
+      font-family: var(--mono);
+    }
+
+    .rank-info { flex: 1; min-width: 0; }
+    .rank-name {
+      font-size: 13px; font-weight: 600;
+      white-space: nowrap; overflow: hidden; text-overflow: ellipsis;
+      margin-bottom: 2px;
+    }
+    .rank-addr {
+      font-size: 10px; color: var(--text-sub);
+      white-space: nowrap; overflow: hidden; text-overflow: ellipsis;
+      margin-bottom: 3px;
+    }
+    .rank-brand-tag {
+      display: inline-block;
+      font-size: 10px; font-weight: 600;
+      border-radius: 3px;
+      padding: 1px 6px;
+      color: #fff;
+      opacity: 0.85;
+    }
+
+    .rank-price { text-align: right; flex-shrink: 0; }
+    .rank-price-val {
+      font-size: 16px; font-weight: 700;
+      font-family: var(--mono);
+      letter-spacing: -0.5px;
+    }
+    .rank-price-unit { font-size: 10px; color: var(--text-sub); }
+    .rank-price-diff { font-size: 10px; margin-top: 2px; font-family: var(--mono); }
+
+    /* 하단 업데이트 시간 */
+    .update-bar {
+      padding: 7px 14px;
+      border-top: 1px solid var(--border);
+      font-size: 10px;
+      color: var(--text-dim);
+      font-family: var(--mono);
+      flex-shrink: 0;
+    }
+
+    /* ─── 지도 ──────────────────────────────── */
+    #map { flex: 1; }
+
+    /* ─── 로딩 오버레이 ─────────────────────── */
+    .loading-overlay {
+      position: absolute; inset: 0;
+      background: rgba(8,12,20,0.8);
+      backdrop-filter: blur(4px);
+      display: flex; flex-direction: column;
+      align-items: center; justify-content: center;
+      z-index: 9999;
+      opacity: 0; pointer-events: none;
+      transition: opacity .3s;
+    }
+    .loading-overlay.on { opacity: 1; pointer-events: auto; }
+    .spinner-wrap { position: relative; width: 52px; height: 52px; }
+    .spinner-ring {
+      position: absolute; inset: 0;
+      border: 2px solid transparent;
+      border-radius: 50%;
+      animation: spin 1.2s linear infinite;
+    }
+    .spinner-ring:nth-child(1) { border-top-color: var(--accent); }
+    .spinner-ring:nth-child(2) { border-right-color: rgba(0,212,255,0.4); inset: 6px; animation-duration: 0.8s; animation-direction: reverse; }
+    .spinner-ring:nth-child(3) { border-bottom-color: rgba(0,128,255,0.3); inset: 12px; animation-duration: 1.6s; }
+    @keyframes spin { to { transform: rotate(360deg); } }
+    .loading-text { margin-top: 18px; font-size: 12px; color: var(--text-sub); font-family: var(--mono); letter-spacing: 0.5px; }
+
+    /* ─── Leaflet 팝업 오버라이드 ──────────── */
+    .leaflet-popup-content-wrapper {
+      background: var(--surface2) !important;
+      border: 1px solid var(--border2) !important;
+      border-radius: 10px !important;
+      box-shadow: 0 8px 32px rgba(0,0,0,0.6) !important;
+      color: var(--text) !important;
+    }
+    .leaflet-popup-tip { background: var(--surface2) !important; }
+    .leaflet-popup-content { margin: 14px 16px !important; }
+
+    .popup-rank { font-size: 10px; color: var(--text-sub); font-family: var(--mono); margin-bottom: 4px; }
+    .popup-name { font-size: 15px; font-weight: 700; margin-bottom: 6px; }
+    .popup-brand { display: inline-block; border-radius: 4px; padding: 2px 8px; font-size: 11px; color:#fff; margin-bottom: 10px; }
+    .popup-price {
+      font-size: 24px; font-weight: 800; color: var(--green);
+      font-family: var(--mono);
+      text-shadow: 0 0 20px rgba(6,214,160,0.5);
+      margin-bottom: 4px;
+    }
+    .popup-price span { font-size: 14px; color: var(--text-sub); font-weight: 400; }
+    .popup-addr { font-size: 11px; color: var(--text-sub); line-height: 1.5; }
+
+    /* ─── 마커 ──────────────────────────────── */
+    .c-marker {
+      width: 32px; height: 32px;
+      border-radius: 50% 50% 50% 0;
+      transform: rotate(-45deg);
+      display: flex; align-items: center; justify-content: center;
+      border: 2px solid rgba(255,255,255,0.25);
+      box-shadow: 0 4px 14px rgba(0,0,0,0.5);
+    }
+    .c-marker span {
+      transform: rotate(45deg);
+      font-size: 12px; font-weight: 800;
+      color: #000; font-family: var(--mono);
+    }
+
+    /* ─── 전국평균 인포박스 ────────────────── */
+    .avg-panel {
+      position: absolute;
+      top: 12px; right: 12px;
+      z-index: 999;
+      background: rgba(14,20,32,0.92);
+      border: 1px solid var(--border2);
+      border-radius: 10px;
+      padding: 12px 16px;
+      backdrop-filter: blur(8px);
+      min-width: 220px;
+    }
+    .avg-panel-title {
+      font-size: 10px; font-weight: 600; letter-spacing: 1px;
+      text-transform: uppercase; color: var(--text-sub);
+      margin-bottom: 10px; font-family: var(--mono);
+    }
+    .avg-row {
+      display: flex; justify-content: space-between; align-items: center;
+      padding: 4px 0;
+      border-bottom: 1px solid var(--border);
+      font-size: 12px;
+    }
+    .avg-row:last-child { border-bottom: none; }
+    .avg-name { color: var(--text-sub); }
+    .avg-val { font-family: var(--mono); font-weight: 600; color: var(--text); }
+  </style>
+</head>
+<body>
+<div class="app">
+
+  <!-- 헤더 -->
+  <header>
+    <div class="logo">
+      <div class="logo-icon">⛽</div>
+      <div>
+        <div class="logo-text">오피넷 <span>최저가</span> 주유소</div>
+        <div class="logo-sub">OPINET REAL-TIME DASHBOARD</div>
+      </div>
+    </div>
+    <div class="controls">
+      <select id="prodcd">
+        <option value="B027">🔵 보통휘발유</option>
+        <option value="D047">⚫ 자동차경유</option>
+        <option value="B034">🟡 고급휘발유</option>
+        <option value="C004">🟤 실내등유</option>
+        <option value="K015">🟠 자동차부탄</option>
+      </select>
+      <select id="area">
+        <option value="">🗺 전국</option>
+        <option value="01">서울</option>
+        <option value="02">경기</option>
+        <option value="03">강원</option>
+        <option value="04">충북</option>
+        <option value="05">충남</option>
+        <option value="06">전북</option>
+        <option value="07">전남</option>
+        <option value="08">경북</option>
+        <option value="09">경남</option>
+        <option value="10">제주</option>
+        <option value="11">부산</option>
+        <option value="12">대구</option>
+        <option value="13">인천</option>
+        <option value="14">광주</option>
+        <option value="15">대전</option>
+        <option value="16">울산</option>
+        <option value="17">세종</option>
+      </select>
+      <select id="cnt">
+        <option value="10">TOP 10</option>
+        <option value="15">TOP 15</option>
+        <option value="20">TOP 20</option>
+      </select>
+      <button class="btn btn-query" id="query-btn" onclick="loadData()">🔄 조회</button>
+      <span class="proxy-badge" id="proxy-badge">PROXY: 준비중</span>
+    </div>
+  </header>
+
+  <!-- 메인 -->
+  <div class="main">
+
+    <!-- 로딩 오버레이 -->
+    <div class="loading-overlay" id="loading">
+      <div class="spinner-wrap">
+        <div class="spinner-ring"></div>
+        <div class="spinner-ring"></div>
+        <div class="spinner-ring"></div>
+      </div>
+      <div class="loading-text" id="loading-msg">데이터 수신 중...</div>
+    </div>
+
+    <!-- 사이드바 -->
+    <div class="sidebar">
+      <div class="stats">
+        <div class="stat">
+          <div class="stat-label">최저가</div>
+          <div class="stat-value green" id="s-min">—</div>
+        </div>
+        <div class="stat">
+          <div class="stat-label">평균가</div>
+          <div class="stat-value yellow" id="s-avg">—</div>
+        </div>
+        <div class="stat">
+          <div class="stat-label">최고가</div>
+          <div class="stat-value red" id="s-max">—</div>
+        </div>
+      </div>
+      <div class="section-hd">
+        <span class="section-hd-title">순위 목록</span>
+        <span class="badge" id="result-badge">—</span>
+      </div>
+      <div class="error-bar" id="err-bar"></div>
+      <div class="rank-list" id="rank-list">
+        <div class="no-data">
+          <div class="no-data-icon">⛽</div>
+          조건 선택 후 [조회]를 클릭하세요
+        </div>
+      </div>
+      <div class="update-bar" id="update-bar">마지막 업데이트: —</div>
+    </div>
+
+    <!-- 지도 -->
+    <div id="map"></div>
+
+    <!-- 전국 평균가 패널 -->
+    <div class="avg-panel" id="avg-panel" style="display:none;">
+      <div class="avg-panel-title">📊 전국 평균가 (원/L)</div>
+      <div id="avg-rows"></div>
+    </div>
+  </div>
+</div>
+
+<script src="https://unpkg.com/leaflet@1.9.4/dist/leaflet.js"></script>
+<script>
+/* ══════════════════════════════════════════════════════
+   상수 / 설정
+══════════════════════════════════════════════════════ */
+const API_KEY  = "F260330688";
+const OPINET   = "https://www.opinet.co.kr/api";
+
+// CORS 프록시 목록 (순서대로 시도)
+const PROXIES = [
+  url => `https://corsproxy.io/?${encodeURIComponent(url)}`,
+  url => `https://api.allorigins.win/raw?url=${encodeURIComponent(url)}`,
+  url => `https://thingproxy.freeboard.io/fetch/${url}`,
+];
+let activeProxy = 0;
+
+const PRODUCTS = {
+  B027:"보통휘발유", D047:"자동차경유", B034:"고급휘발유",
+  C004:"실내등유",  K015:"자동차부탄"
+};
+const AREAS = {
+  "":"전국","01":"서울","02":"경기","03":"강원","04":"충북",
+  "05":"충남","06":"전북","07":"전남","08":"경북","09":"경남",
+  "10":"제주","11":"부산","12":"대구","13":"인천","14":"광주",
+  "15":"대전","16":"울산","17":"세종"
+};
+const BRANDS = {
+  SKE:"SK에너지", GSC:"GS칼텍스", HDO:"현대오일뱅크", SOL:"S-OIL",
+  RTE:"자영알뜰", RTX:"고속도로알뜰", NHO:"농협알뜰", ETC:"자가상표",
+  E1G:"E1", SKG:"SK가스", RTO:"자영알뜰"
+};
+const BRAND_COLORS = {
+  SKE:"#FF6B35", GSC:"#4CAF50", HDO:"#2196F3", SOL:"#9C27B0",
+  RTE:"#FF9800", RTX:"#009688", NHO:"#3F51B5", ETC:"#607D8B",
+  E1G:"#E91E63", SKG:"#795548", RTO:"#FF5722"
+};
+
+// 순위별 색상 (1위 → 녹색, 상위권 → 노랑, 하위 → 빨강)
+const RANK_COLORS = [
+  "#06d6a0","#19e6ac","#2ef5ba",          // 1-3
+  "#ffd166","#ffc84d","#ffbe33",          // 4-6
+  "#ff9f43","#ff8c1a",                    // 7-8
+  "#ef476f","#f05d80","#f27090",          // 9-11
+  "#e83e5a","#dd3550","#d12c46","#c5233c",// 12-15
+  "#e91e63","#c2185b","#ad1457","#880e4f","#6a0f3c" // 16-20
+];
+const rankColor = r => RANK_COLORS[r-1] || "#3d5270";
+
+/* ══════════════════════════════════════════════════════
+   Leaflet 지도 초기화
+══════════════════════════════════════════════════════ */
+const map = L.map('map', { center:[36.5,127.8], zoom:7, zoomControl:true });
+L.tileLayer('https://{s}.basemaps.cartocdn.com/dark_all/{z}/{x}/{y}{r}.png', {
+  attribution:'&copy; OSM &copy; CARTO', subdomains:'abcd', maxZoom:19
+}).addTo(map);
+
+let markers = [], currentData = [];
+
+/* ══════════════════════════════════════════════════════
+   KATEC → WGS84 변환 (선형 근사)
+══════════════════════════════════════════════════════ */
+function katecToWgs84(x, y) {
+  // KATEC: CM=128°E, FE=400000, FN=600000, Bessel 1841
+  // 선형 근사: 오차 ~수백 m (pyproj 없는 브라우저 환경)
+  const lon = 128.0 + (x - 400000) / 88600;
+  const lat = 38.0  + (y - 600000) / 111000;
+  return { lat: Math.round(lat*1e6)/1e6, lon: Math.round(lon*1e6)/1e6 };
+}
+
+/* ══════════════════════════════════════════════════════
+   프록시 fetch 헬퍼
+══════════════════════════════════════════════════════ */
+async function proxyFetch(targetUrl) {
+  // 현재 프록시부터 순서대로 시도
+  for (let i = 0; i < PROXIES.length; i++) {
+    const idx = (activeProxy + i) % PROXIES.length;
+    const proxyUrl = PROXIES[idx](targetUrl);
+    try {
+      const res = await fetch(proxyUrl, { signal: AbortSignal.timeout(12000) });
+      if (!res.ok) throw new Error(`HTTP ${res.status}`);
+      const text = await res.text();
+      // allorigins는 {contents:"..."} 형태로 래핑되는 경우가 있음
+      let json;
+      try { json = JSON.parse(text); } catch { throw new Error("JSON 파싱 실패"); }
+      if (json.contents) { json = JSON.parse(json.contents); } // allorigins 래핑 해제
+      // 성공 → 이 프록시를 기본으로 설정
+      activeProxy = idx;
+      updateProxyBadge(idx, true);
+      return json;
+    } catch(e) {
+      console.warn(`Proxy ${idx} failed:`, e.message);
+    }
+  }
+  updateProxyBadge(activeProxy, false);
+  throw new Error("모든 CORS 프록시 연결에 실패했습니다. 네트워크를 확인하거나 잠시 후 다시 시도해 주세요.");
+}
+
+function updateProxyBadge(idx, ok) {
+  const names = ["corsproxy.io","allorigins","thingproxy"];
+  const el = document.getElementById('proxy-badge');
+  el.textContent = `PROXY: ${names[idx]}`;
+  el.className = `proxy-badge ${ok ? 'ok' : 'fail'}`;
+}
+
+/* ══════════════════════════════════════════════════════
+   데이터 로드
+══════════════════════════════════════════════════════ */
+async function loadData() {
+  setLoading(true);
+  hideError();
+  setBtnLoading(true);
+
+  const prodcd = document.getElementById('prodcd').value;
+  const area   = document.getElementById('area').value;
+  const cnt    = document.getElementById('cnt').value;
+
+  try {
+    // ① 최저가 주유소 조회
+    setLoadingMsg("오피넷 API 연결 중...");
+    let url = `${OPINET}/lowTop10.do?code=${API_KEY}&out=json&prodcd=${prodcd}&cnt=${cnt}`;
+    if (area) url += `&area=${area}`;
+
+    const data = await proxyFetch(url);
+    const raw = data?.RESULT?.OIL ?? [];
+    if (!Array.isArray(raw)) throw new Error("API 응답 형식 오류");
+
+    setLoadingMsg("좌표 변환 중...");
+
+    currentData = raw.map((s, i) => {
+      const x = parseFloat(s.GIS_X_COOR || 0) || 0;
+      const y = parseFloat(s.GIS_Y_COOR || 0) || 0;
+      const { lat, lon } = katecToWgs84(x, y);
+      const bc = s.POLL_DIV_CD || "ETC";
+      return {
+        rank: i + 1,
+        id:    s.UNI_ID   || "",
+        name:  s.OS_NM    || "",
+        price: parseInt(parseFloat(s.PRICE || 0)) || 0,
+        brand: BRANDS[bc] || bc,
+        brandCode:  bc,
+        brandColor: BRAND_COLORS[bc] || "#607D8B",
+        address: s.NEW_ADR || s.VAN_ADR || "",
+        lat, lon
+      };
+    });
+
+    // ② 지도 마커 갱신
+    setLoadingMsg("지도 마커 표시 중...");
+    markers.forEach(m => map.removeLayer(m));
+    markers = [];
+    const bounds = [];
+    currentData.forEach(s => {
+      if (!s.lat || !s.lon) return;
+      const m = createMarker(s);
+      m.addTo(map);
+      markers.push(m);
+      bounds.push([s.lat, s.lon]);
+    });
+    if (bounds.length) map.fitBounds(bounds, { padding:[60,60] });
+
+    // ③ 사이드바 렌더
+    renderList(currentData, prodcd, area);
+
+    // ④ 전국 평균가 (비동기, 실패해도 무방)
+    loadAvg();
+
+  } catch(e) {
+    showError(e.message);
+  } finally {
+    setLoading(false);
+    setBtnLoading(false);
+  }
+}
+
+async function loadAvg() {
+  try {
+    const url = `${OPINET}/avgAllPrice.do?code=${API_KEY}&out=json`;
+    const data = await proxyFetch(url);
+    const oils = data?.RESULT?.OIL ?? [];
+    if (!oils.length) return;
+    const panel = document.getElementById('avg-panel');
+    const rows  = document.getElementById('avg-rows');
+    const order = ["B027","D047","B034","C004","K015"];
+    const map2  = {};
+    oils.forEach(o => { map2[o.PRODCD] = o; });
+    rows.innerHTML = order.map(cd => {
+      const o = map2[cd];
+      if (!o) return '';
+      return `<div class="avg-row">
+        <span class="avg-name">${PRODUCTS[cd] || cd}</span>
+        <span class="avg-val">${parseInt(parseFloat(o.PRICE||0)).toLocaleString()}원</span>
+      </div>`;
+    }).join('');
+    panel.style.display = 'block';
+  } catch(e) { /* 전국평균 실패는 무시 */ }
+}
+
+/* ══════════════════════════════════════════════════════
+   마커 생성
+══════════════════════════════════════════════════════ */
+function createMarker(s) {
+  const color = rankColor(s.rank);
+  const icon = L.divIcon({
+    className: '',
+    html: `<div class="c-marker" style="background:${color}"><span>${s.rank}</span></div>`,
+    iconSize:[32,32], iconAnchor:[16,32], popupAnchor:[0,-34]
+  });
+  const m = L.marker([s.lat, s.lon], { icon }).bindPopup(`
+    <div class="popup-rank">#${s.rank} 최저가 주유소</div>
+    <div class="popup-name">${s.name}</div>
+    <div class="popup-brand" style="background:${s.brandColor}">${s.brand}</div>
+    <div class="popup-price">${s.price.toLocaleString()}<span> 원/L</span></div>
+    <div class="popup-addr">📍 ${s.address || '주소 정보 없음'}</div>
+  `, { maxWidth:260 });
+  m.on('click', () => highlight(s.rank));
+  return m;
+}
+
+/* ══════════════════════════════════════════════════════
+   사이드바 렌더링
+══════════════════════════════════════════════════════ */
+function renderList(data, prodcd, area) {
+  if (!data.length) {
+    document.getElementById('rank-list').innerHTML =
+      '<div class="no-data"><div class="no-data-icon">🔍</div>해당 조건의 데이터가 없습니다</div>';
+    return;
+  }
+  const prices  = data.map(d => d.price);
+  const minP    = Math.min(...prices);
+  const maxP    = Math.max(...prices);
+  const avgP    = Math.round(prices.reduce((a,b)=>a+b,0)/prices.length);
+
+  document.getElementById('s-min').textContent = minP.toLocaleString();
+  document.getElementById('s-avg').textContent = avgP.toLocaleString();
+  document.getElementById('s-max').textContent = maxP.toLocaleString();
+  document.getElementById('result-badge').textContent =
+    `${AREAS[area]||area||'전국'} · ${PRODUCTS[prodcd]||prodcd} · ${data.length}개`;
+  document.getElementById('update-bar').textContent =
+    `마지막 업데이트: ${new Date().toLocaleString('ko-KR')}`;
+
+  document.getElementById('rank-list').innerHTML = data.map(s => {
+    const diff = s.price - minP;
+    const diffHtml = diff > 0
+      ? `<span style="color:var(--red)">+${diff.toLocaleString()}</span>`
+      : `<span style="color:var(--green)">최저</span>`;
+    return `
+    <div class="rank-item" id="ri-${s.rank}" onclick="focusStation(${s.rank})">
+      <div class="rank-num" style="background:${rankColor(s.rank)}">${s.rank}</div>
+      <div class="rank-info">
+        <div class="rank-name">${s.name}</div>
+        <div class="rank-addr">${s.address||'주소 정보 없음'}</div>
+        <div class="rank-brand-tag" style="background:${s.brandColor}">${s.brand}</div>
+      </div>
+      <div class="rank-price">
+        <div class="rank-price-val" style="color:${rankColor(s.rank)}">${s.price.toLocaleString()}</div>
+        <div class="rank-price-unit">원/L</div>
+        <div class="rank-price-diff">${diffHtml}</div>
+      </div>
+    </div>`;
+  }).join('');
+}
+
+/* ══════════════════════════════════════════════════════
+   인터랙션
+══════════════════════════════════════════════════════ */
+function focusStation(rank) {
+  const s = currentData.find(d => d.rank === rank);
+  if (!s) return;
+  map.flyTo([s.lat, s.lon], 15, { duration:0.7 });
+  const m = markers[rank-1];
+  if (m) setTimeout(() => m.openPopup(), 400);
+  highlight(rank);
+}
+function highlight(rank) {
+  document.querySelectorAll('.rank-item').forEach(el => el.classList.remove('active'));
+  const el = document.getElementById(`ri-${rank}`);
+  if (el) { el.classList.add('active'); el.scrollIntoView({ behavior:'smooth', block:'nearest' }); }
+}
+
+/* ══════════════════════════════════════════════════════
+   UI 유틸
+══════════════════════════════════════════════════════ */
+function setLoading(on) {
+  document.getElementById('loading').classList.toggle('on', on);
+}
+function setLoadingMsg(msg) {
+  document.getElementById('loading-msg').textContent = msg;
+}
+function setBtnLoading(on) {
+  const btn = document.getElementById('query-btn');
+  btn.classList.toggle('loading', on);
+  btn.textContent = on ? '⏳ 조회 중...' : '🔄 조회';
+}
+function showError(msg) {
+  const el = document.getElementById('err-bar');
+  el.style.display = 'block';
+  el.innerHTML = `⚠ ${msg}<br><small style="color:var(--text-dim);margin-top:4px;display:block">
+    오피넷 API는 CORS 프록시를 통해 호출됩니다. 프록시 서버가 일시적으로 불안정할 수 있습니다.
+    잠시 후 다시 [조회]를 클릭해 보세요.</small>`;
+}
+function hideError() {
+  document.getElementById('err-bar').style.display = 'none';
+}
+
+/* ══════════════════════════════════════════════════════
+   초기 실행
+══════════════════════════════════════════════════════ */
+window.addEventListener('load', () => {
+  updateProxyBadge(0, null);
+  document.getElementById('proxy-badge').className = 'proxy-badge';
+  document.getElementById('proxy-badge').textContent = 'PROXY: 대기중';
+  // 자동 조회 없이 대기 (사용자가 직접 클릭)
+});
+</script>
+</body>
+</html>
