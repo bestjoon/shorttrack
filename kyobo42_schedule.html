@@ -1627,18 +1627,34 @@ function applySeongnamFilter(dayId, isOn) {
   const section = document.getElementById(dayId);
   if (!section) return;
 
+  // 전체 일정(경기 목록·정빙 등)은 항상 유지하고,
+  // 조편성(heat-card)만 성남팀 선수가 포함된 조로 필터링
   section.querySelectorAll('.time-group').forEach(tg => {
+    const heatCards = tg.querySelectorAll('.heat-card');
+
     if (!isOn) {
-      tg.classList.remove('hidden');
+      // 필터 해제: 모든 조 다시 표시, 펼침 상태는 접기로 초기화
+      heatCards.forEach(hc => hc.classList.remove('hidden'));
+      tg.classList.remove('open');
       return;
     }
-    // 이 경기에 성남팀 선수가 있는지 확인
-    const hasSeongnam = Array.from(tg.querySelectorAll('.athlete-name.seongnam')).length > 0;
+
+    let hasSeongnam = false;
+    heatCards.forEach(hc => {
+      const heatHasSeongnam = hc.querySelectorAll('.athlete-name.seongnam').length > 0;
+      if (heatHasSeongnam) {
+        hc.classList.remove('hidden');
+        hasSeongnam = true;
+      } else {
+        hc.classList.add('hidden');
+      }
+    });
+
+    // 성남팀 선수가 있는 경기만 자동 펼침, 나머지는 접힌 채 일정 유지
     if (hasSeongnam) {
-      tg.classList.remove('hidden');
-      tg.classList.add('open'); // 자동 펼치기
+      tg.classList.add('open');
     } else {
-      tg.classList.add('hidden');
+      tg.classList.remove('open');
     }
   });
 }
