@@ -1,0 +1,1754 @@
+<!DOCTYPE html>
+<html lang="ko">
+<head>
+<meta charset="UTF-8">
+<meta name="viewport" content="width=device-width, initial-scale=1.0">
+<title>제42회 교보생명컵 꿈나무 체육대회 (쇼트트랙)</title>
+<link href="https://fonts.googleapis.com/css2?family=Black+Han+Sans&family=Noto+Sans+KR:wght@300;400;500;700&display=swap" rel="stylesheet">
+<style>
+  :root {
+    --ice: #e8f4fb;
+    --deep: #0a1628;
+    --blue: #1a6fa8;
+    --accent: #00c9ff;
+    --gold: #f5c842;
+    --silver: #b8c4cc;
+    --track: #0d3b5c;
+    --card: #0f2540;
+    --border: #1e3f62;
+    --text: #cde0f0;
+    --muted: #6a8fa8;
+    --day1: #1a6fa8;
+    --day2: #0e8a6e;
+  }
+
+  * { margin: 0; padding: 0; box-sizing: border-box; }
+
+  body {
+    background: var(--deep);
+    color: var(--text);
+    font-family: 'Noto Sans KR', sans-serif;
+    min-height: 100vh;
+    overflow-x: hidden;
+  }
+
+  body::before {
+    content: '';
+    position: fixed;
+    inset: 0;
+    background:
+      radial-gradient(ellipse 80% 40% at 50% 20%, rgba(0,201,255,0.06) 0%, transparent 70%),
+      radial-gradient(ellipse 60% 60% at 80% 80%, rgba(26,111,168,0.08) 0%, transparent 60%);
+    pointer-events: none;
+    z-index: 0;
+  }
+
+  .container { position: relative; z-index: 1; max-width: 1100px; margin: 0 auto; padding: 0 6px 60px; }
+
+  @media (min-width: 600px) {
+    .container { padding: 0 14px 60px; }
+  }
+
+  /* Header */
+  header {
+    text-align: center;
+    padding: 18px 0 14px;
+    border-bottom: 1px solid var(--border);
+    margin-bottom: 16px;
+  }
+
+  header h1 {
+    font-family: 'Black Han Sans', sans-serif;
+    font-size: clamp(18px, 3.5vw, 28px);
+    letter-spacing: -0.5px;
+    line-height: 1.3;
+    background: linear-gradient(135deg, #fff 0%, var(--accent) 100%);
+    -webkit-background-clip: text;
+    -webkit-text-fill-color: transparent;
+    background-clip: text;
+    margin-bottom: 6px;
+  }
+
+  .date-chips {
+    display: flex;
+    justify-content: center;
+    gap: 10px;
+    margin-top: 6px;
+    flex-wrap: wrap;
+  }
+
+  .date-chip {
+    padding: 3px 14px;
+    border-radius: 20px;
+    font-size: 12px;
+    font-weight: 500;
+    color: var(--muted);
+    letter-spacing: 0.5px;
+  }
+
+  .cheer-text {
+    margin-top: 4px;
+    font-size: 11px;
+    color: #ffe066;
+    letter-spacing: 1px;
+    font-weight: 700;
+    opacity: 0.85;
+  }
+
+  .notice-text {
+    margin-top: 6px;
+    font-size: 10px;
+    color: var(--muted);
+    letter-spacing: 0.3px;
+  }
+
+  /* Search */
+  .search-wrap {
+    position: sticky;
+    top: 0;
+    z-index: 100;
+    background: rgba(10,22,40,0.95);
+    backdrop-filter: blur(12px);
+    padding: 10px 0;
+    border-bottom: 1px solid var(--border);
+    margin-bottom: 18px;
+  }
+
+  .search-inner {
+    max-width: 1100px;
+    margin: 0 auto;
+    padding: 0 10px;
+    display: flex;
+    gap: 10px;
+    align-items: center;
+  }
+
+  .search-box {
+    flex: 1;
+    position: relative;
+  }
+
+  .search-icon {
+    position: absolute;
+    left: 14px;
+    top: 50%;
+    transform: translateY(-50%);
+    color: var(--muted);
+    font-size: 16px;
+  }
+
+  #searchInput {
+    width: 100%;
+    background: var(--card);
+    border: 1px solid var(--border);
+    border-radius: 10px;
+    padding: 10px 14px 10px 40px;
+    color: white;
+    font-size: 14px;
+    font-family: 'Noto Sans KR', sans-serif;
+    transition: border-color 0.2s, box-shadow 0.2s;
+    outline: none;
+  }
+
+  #searchInput:focus {
+    border-color: var(--accent);
+    box-shadow: 0 0 0 3px rgba(0,201,255,0.12);
+  }
+
+  #searchInput::placeholder { color: var(--muted); }
+
+  #searchCount {
+    font-size: 12px;
+    color: var(--accent);
+    white-space: nowrap;
+    font-weight: 600;
+    min-width: 48px;
+    text-align: right;
+  }
+
+  #searchResults {
+    position: absolute;
+    top: 100%;
+    left: 0;
+    right: 0;
+    background: var(--card);
+    border: 1px solid var(--border);
+    border-top: none;
+    border-radius: 0 0 10px 10px;
+    max-height: 260px;
+    overflow-y: auto;
+    z-index: 200;
+    display: none;
+    box-shadow: 0 12px 32px rgba(0,0,0,0.5);
+  }
+
+  .search-result-item {
+    padding: 10px 16px;
+    cursor: pointer;
+    display: flex;
+    align-items: center;
+    gap: 10px;
+    border-bottom: 1px solid rgba(30,63,98,0.5);
+    transition: background 0.15s;
+  }
+
+  .search-result-item:hover { background: rgba(0,201,255,0.08); }
+  .search-result-item:last-child { border-bottom: none; }
+
+  .result-name { font-weight: 600; font-size: 14px; color: white; }
+  .result-meta { font-size: 12px; color: var(--muted); }
+
+  /* Day tabs */
+  .day-tabs {
+    display: flex;
+    gap: 6px;
+    margin-bottom: 16px;
+    flex-wrap: nowrap;
+  }
+
+  .day-tab {
+    padding: 8px 0;
+    border-radius: 8px;
+    font-size: 12px;
+    font-weight: 700;
+    cursor: pointer;
+    border: 1px solid transparent;
+    transition: all 0.2s;
+    letter-spacing: 0.3px;
+    white-space: nowrap;
+    flex: 2;
+    text-align: center;
+  }
+
+  .day-tab.all { flex: 1; }
+
+  .day-tab.d1 { color: #7ec8f0; border-color: var(--day1); background: rgba(26,111,168,0.1); }
+  .day-tab.d1.active, .day-tab.d1:hover { background: var(--day1); color: white; }
+  .day-tab.d2 { color: #7ef0d4; border-color: var(--day2); background: rgba(14,138,110,0.1); }
+  .day-tab.d2.active, .day-tab.d2:hover { background: var(--day2); color: white; }
+  .day-tab.all { color: var(--text); border-color: var(--border); background: rgba(255,255,255,0.05); }
+  .day-tab.all.active, .day-tab.all:hover { background: rgba(255,255,255,0.12); color: white; }
+
+  /* Day section */
+  .day-section { margin-bottom: 32px; }
+
+  .day-header {
+    display: flex;
+    align-items: center;
+    gap: 12px;
+    margin-bottom: 14px;
+    padding-bottom: 10px;
+    border-bottom: 1px solid var(--border);
+  }
+
+  .day-dot {
+    width: 12px; height: 12px;
+    border-radius: 50%;
+    flex-shrink: 0;
+  }
+  .d1 .day-dot { background: var(--day1); box-shadow: 0 0 10px var(--day1); }
+  .d2 .day-dot { background: var(--day2); box-shadow: 0 0 10px var(--day2); }
+
+  .day-title {
+    font-family: 'Black Han Sans', sans-serif;
+    font-size: 20px;
+    letter-spacing: 0.5px;
+  }
+
+  .day-date {
+    font-size: 12px;
+    color: var(--muted);
+    margin-left: auto;
+    letter-spacing: 1px;
+  }
+
+  /* Time group */
+  .time-group {
+    margin-bottom: 8px;
+    border: 1px solid var(--border);
+    border-radius: 12px;
+    overflow: hidden;
+    transition: box-shadow 0.2s, border-color 0.2s;
+  }
+
+  .time-group:hover { box-shadow: 0 4px 20px rgba(0,201,255,0.06); }
+
+  .day-section.d1 .time-group { border-color: rgba(26,111,168,0.5); }
+  .day-section.d1 .time-group:hover { box-shadow: 0 4px 20px rgba(26,111,168,0.14); }
+  .day-section.d2 .time-group { border-color: rgba(14,138,110,0.55); }
+  .day-section.d2 .time-group:hover { box-shadow: 0 4px 20px rgba(14,138,110,0.15); }
+
+  .day-section.d1 .heat-card { border-color: rgba(26,111,168,0.3); }
+  .day-section.d2 .heat-card { border-color: rgba(14,138,110,0.3); }
+
+  .time-group-header {
+    display: flex;
+    align-items: center;
+    gap: 8px;
+    padding: 9px 10px;
+    background: var(--card);
+    cursor: pointer;
+    user-select: none;
+    transition: background 0.15s;
+  }
+
+  .time-group-header:hover { background: rgba(255,255,255,0.04); }
+
+  .event-num {
+    font-size: 10px;
+    font-weight: 800;
+    color: var(--muted);
+    flex-shrink: 0;
+    letter-spacing: 0.3px;
+    min-width: 20px;
+  }
+
+  .event-header-main {
+    flex: 1;
+    min-width: 0;
+    display: flex;
+    flex-direction: column;
+    gap: 2px;
+  }
+
+  .time-badge {
+    font-size: 11px;
+    font-weight: 700;
+    padding: 2px 7px;
+    border-radius: 6px;
+    letter-spacing: 0.5px;
+    flex-shrink: 0;
+  }
+  .day-section.d1 .time-badge { background: rgba(26,111,168,0.25); color: #7ec8f0; }
+  .day-section.d2 .time-badge { background: rgba(14,138,110,0.25); color: #7ef0d4; }
+
+  .event-name {
+    font-size: 13px;
+    font-weight: 600;
+    color: white;
+    line-height: 1.35;
+    white-space: normal;
+    word-break: keep-all;
+  }
+
+  .event-meta {
+    font-size: 10px;
+    color: var(--muted);
+    display: flex;
+    flex-direction: column;
+    align-items: flex-end;
+    flex-shrink: 0;
+    gap: 1px;
+    text-align: right;
+  }
+
+  .event-meta-round { font-size: 10px; color: var(--muted); white-space: nowrap; }
+  .event-meta-detail { font-size: 10px; color: var(--muted); opacity: 0.7; white-space: nowrap; }
+
+  .toggle-icon {
+    color: var(--muted);
+    font-size: 16px;
+    transition: transform 0.25s;
+    flex-shrink: 0;
+  }
+
+  .time-group.open .toggle-icon { transform: rotate(180deg); }
+
+  .time-group-body {
+    display: none;
+    padding: 0 6px 10px;
+    background: rgba(10,22,40,0.5);
+    border-top: 1px solid var(--border);
+  }
+
+  @media (min-width: 600px) {
+    .time-group-body { padding: 0 14px 14px; }
+  }
+
+  .time-group.open .time-group-body { display: block; }
+
+  /* Heat (조) */
+  .heats-grid {
+    display: grid;
+    grid-template-columns: repeat(auto-fill, minmax(280px, 1fr));
+    gap: 10px;
+    margin-top: 12px;
+  }
+
+  .heat-card {
+    background: var(--card);
+    border: 1px solid var(--border);
+    border-radius: 10px;
+    overflow: hidden;
+    transition: border-color 0.2s, box-shadow 0.2s;
+  }
+
+  .heat-card:hover { border-color: var(--accent); box-shadow: 0 2px 12px rgba(0,201,255,0.1); }
+
+  .heat-card.highlight {
+    border-color: var(--gold) !important;
+    box-shadow: 0 0 0 2px rgba(245,200,66,0.25), 0 4px 20px rgba(245,200,66,0.15) !important;
+  }
+
+  .heat-title {
+    padding: 7px 12px;
+    font-size: 11px;
+    font-weight: 700;
+    letter-spacing: 1px;
+    text-align: center;
+    border-bottom: 1px solid var(--border);
+  }
+  .day-section.d1 .heat-title { background: rgba(26,111,168,0.2); color: #7ec8f0; }
+  .day-section.d2 .heat-title { background: rgba(14,138,110,0.2); color: #7ef0d4; }
+
+  .heat-athletes { list-style: none; padding: 5px 0; }
+
+  .heat-athlete {
+    display: flex;
+    align-items: center;
+    gap: 8px;
+    padding: 5px 10px;
+    font-size: 13px;
+    transition: background 0.15s;
+    cursor: default;
+  }
+
+  .heat-athlete:hover { background: rgba(255,255,255,0.04); }
+
+  .heat-athlete.highlighted {
+    background: rgba(245,200,66,0.12);
+    border-radius: 5px;
+  }
+
+  .lane-dot {
+    width: 10px; height: 10px;
+    border-radius: 50%;
+    flex-shrink: 0;
+    border: 1.5px solid rgba(255,255,255,0.2);
+  }
+
+  .athlete-name {
+    font-weight: 500;
+    color: #e0eefa;
+    flex: 1;
+  }
+
+  .athlete-org {
+    font-size: 10px;
+    color: var(--muted);
+    text-align: right;
+    max-width: 90px;
+    line-height: 1.3;
+  }
+
+  .athlete-record {
+    font-size: 11px;
+    font-weight: 700;
+    color: var(--accent);
+    white-space: nowrap;
+    flex-shrink: 0;
+    min-width: 68px;
+    text-align: right;
+  }
+
+  .athlete-record.dnf { color: #e63946; font-size: 10px; }
+
+  .rank-badge {
+    font-size: 10px;
+    font-weight: 800;
+    color: var(--muted);
+    min-width: 16px;
+    text-align: center;
+    flex-shrink: 0;
+  }
+  .rank-badge.r1 { color: #f5c842; }
+  .rank-badge.r2 { color: #b8c4cc; }
+  .rank-badge.r3 { color: #cd7f32; }
+
+  /* Lane colors */
+  .lane-white { background: #f0f0f0; }
+  .lane-yellow { background: #f5c842; }
+  .lane-red { background: #e63946; }
+  .lane-blue { background: #4895ef; }
+  .lane-violet { background: #9b5de5; }
+  .lane-black { background: #3a3a4a; }
+  .lane-orange { background: #f4823a; }
+  .lane-green { background: #2fbf71; }
+
+  .athlete-name.seongnam { color: #ffe066; font-weight: 700; }
+
+  .athlete-name.seongnam::after {
+    content: ' ✓';
+    font-size: 11px;
+    font-weight: 900;
+    color: #ffe066;
+    vertical-align: middle;
+  }
+
+  /* Ice resurfacing row */
+  .ice-break {
+    display: flex;
+    align-items: center;
+    gap: 12px;
+    padding: 6px 14px;
+    background: rgba(0,201,255,0.04);
+    border: 1px solid rgba(0,201,255,0.12);
+    border-radius: 8px;
+    margin: 4px 0;
+  }
+
+  .ice-break-time {
+    font-size: 11px;
+    font-weight: 700;
+    color: var(--accent);
+    opacity: 0.7;
+    letter-spacing: 0.5px;
+    min-width: 42px;
+    flex-shrink: 0;
+  }
+
+  .ice-break-label {
+    font-size: 11px;
+    color: rgba(0,201,255,0.55);
+    letter-spacing: 0.5px;
+    display: flex;
+    align-items: center;
+    gap: 6px;
+  }
+
+  .ice-break-line {
+    flex: 1;
+    height: 1px;
+    background: linear-gradient(to right, rgba(0,201,255,0.2), transparent);
+  }
+
+  /* TBD placeholder */
+  .tbd-note {
+    text-align: center;
+    color: var(--muted);
+    font-size: 12px;
+    padding: 14px;
+    font-style: italic;
+  }
+
+  .highlight-target { scroll-margin-top: 70px; }
+
+  /* Section collapse-all */
+  .section-controls {
+    display: flex;
+    gap: 8px;
+    margin-bottom: 12px;
+    flex-wrap: wrap;
+  }
+
+  .ctrl-btn {
+    padding: 6px 12px;
+    font-size: 11px;
+    font-weight: 600;
+    letter-spacing: 0.5px;
+    border-radius: 6px;
+    cursor: pointer;
+    border: 1px solid var(--border);
+    background: rgba(255,255,255,0.04);
+    color: var(--muted);
+    font-family: 'Noto Sans KR', sans-serif;
+    transition: all 0.15s;
+  }
+  .ctrl-btn:hover { background: rgba(255,255,255,0.1); color: var(--text); }
+
+  .ctrl-btn.seongnam-btn {
+    border-color: rgba(255,224,102,0.4);
+    color: #ffe066;
+    background: rgba(255,224,102,0.06);
+    margin-left: auto;
+  }
+  .ctrl-btn.seongnam-btn:hover { background: rgba(255,224,102,0.15); color: #ffe066; }
+  .ctrl-btn.seongnam-btn.active {
+    background: rgba(255,224,102,0.22);
+    border-color: #ffe066;
+    color: #ffe066;
+    box-shadow: 0 0 8px rgba(255,224,102,0.25);
+  }
+
+  ::-webkit-scrollbar { width: 6px; height: 6px; }
+  ::-webkit-scrollbar-track { background: var(--deep); }
+  ::-webkit-scrollbar-thumb { background: var(--border); border-radius: 3px; }
+  ::-webkit-scrollbar-thumb:hover { background: var(--blue); }
+
+  .hidden { display: none !important; }
+
+  @media (max-width: 600px) {
+    .heats-grid { grid-template-columns: 1fr; }
+    header h1 { font-size: 20px; }
+    header { padding: 20px 0 14px; }
+    .search-inner { padding: 0 6px; }
+    .athlete-org { max-width: 110px; }
+  }
+</style>
+</head>
+<body>
+
+<div class="search-wrap">
+  <div class="search-inner">
+    <div class="search-box">
+      <span class="search-icon">🔍</span>
+      <input type="text" id="searchInput" placeholder="선수 이름으로 검색..." autocomplete="off">
+      <div id="searchResults"></div>
+    </div>
+    <span id="searchCount"></span>
+  </div>
+</div>
+
+<div class="container">
+  <header>
+    <h1>제42회 교보생명컵<br>꿈나무 체육대회 · 쇼트트랙</h1>
+    <div class="date-chips">
+      <span class="date-chip">2026년 7월 23일(목) ~ 24일(금)</span>
+    </div>
+    <div class="cheer-text">🏆 고양 어울림누리빙상장 · 성남팀 화이팅!!</div>
+    <div class="notice-text">※ 경기 당일 사정에 따라 일정이 변동될 수 있으니 수시로 확인해주세요</div>
+  </header>
+
+  <div class="day-tabs">
+    <button class="day-tab all active" onclick="filterDay('all', this)">전체</button>
+    <button class="day-tab d1" onclick="filterDay('day1', this)">1일차 · 7.23(목)</button>
+    <button class="day-tab d2" onclick="filterDay('day2', this)">2일차 · 7.24(금)</button>
+  </div>
+
+  <div id="schedule"></div>
+</div>
+
+<script>
+// ============================================================
+// DATA
+// ============================================================
+// 성남팀 선수 명단
+const SEONGNAM_TEAM = new Set([
+  '최하빈','이소윤','한지아','임정현','백시원','송라호',
+  '백준우','김이겸','윤우재','이도빈','송차호',
+]);
+
+const LANE_COLORS = {
+  '흰W': { cls: 'lane-white', label: '흰(W)' },
+  '노Y': { cls: 'lane-yellow', label: '노(Y)' },
+  '빨R': { cls: 'lane-red', label: '빨(R)' },
+  '파B': { cls: 'lane-blue', label: '파(B)' },
+  '보V': { cls: 'lane-violet', label: '보(V)' },
+  '검B': { cls: 'lane-black', label: '검(B)' },
+  '주O': { cls: 'lane-orange', label: '주(O)' },
+  '초G': { cls: 'lane-green', label: '초(G)' },
+};
+
+// schedule data structure:
+// { day, dayLabel, dayDate, events: [ { num, time, name, meta, heats: [ { heatName, athletes: [{lane, name, org, record}] } ] } ] }
+// type:'ice' → 정빙 / note → 조편성 미제공 안내
+
+const scheduleData = [
+// ===== DAY 1 (7/23 목) =====
+{
+  day: 'day1', dayLabel: '1일차', dayDate: '2026년 7월 23일 (목)',
+  events: [
+    {
+      num: 2, time: '08:00', name: '여자초등5,6학년 1500M 준준결승', meta: '5조 (T3+3)',
+      heats: [
+        { heatName: '준준결승 1조', athletes: [
+          {lane:'흰W',name:'김세원',org:'곡정초등학교'},
+          {lane:'노Y',name:'김가빈',org:'서울목동초등학교'},
+          {lane:'빨R',name:'유지안',org:'과천갈현초등학교'},
+          {lane:'파B',name:'박예율',org:'서울당중초등학교'},
+          {lane:'보V',name:'박나은',org:'청계초등학교'},
+        ]},
+        { heatName: '준준결승 2조', athletes: [
+          {lane:'흰W',name:'백이슬',org:'서울우신초등학교'},
+          {lane:'노Y',name:'이채아',org:'박달초등학교'},
+          {lane:'빨R',name:'고다하',org:'강릉교동초등학교'},
+          {lane:'파B',name:'이지우',org:'수원송림초등학교'},
+          {lane:'보V',name:'박세경',org:'광주화정초등학교'},
+        ]},
+        { heatName: '준준결승 3조', athletes: [
+          {lane:'흰W',name:'김연우',org:'평촌초등학교'},
+          {lane:'노Y',name:'곽혜원',org:'안일초등학교'},
+          {lane:'빨R',name:'김소율',org:'고창초등학교'},
+          {lane:'파B',name:'양지유',org:'각화초등학교'},
+          {lane:'보V',name:'김서진',org:'삼봉초등학교'},
+        ]},
+        { heatName: '준준결승 4조', athletes: [
+          {lane:'흰W',name:'윤재아',org:'인천도담초등학교'},
+          {lane:'노Y',name:'김지안',org:'용문초등학교'},
+          {lane:'빨R',name:'박하랑',org:'서울정목초등학교'},
+          {lane:'파B',name:'이소윤',org:'죽전초등학교'},
+          {lane:'보V',name:'최하빈',org:'CIYA 국제학교'},
+          {lane:'검B',name:'김라임',org:'대전신평초등학교'},
+        ]},
+        { heatName: '준준결승 5조', athletes: [
+          {lane:'흰W',name:'강윤서',org:'인천장아초등학교'},
+          {lane:'노Y',name:'홍이재',org:'서울연희초등학교'},
+          {lane:'빨R',name:'유채은',org:'양동초등학교'},
+          {lane:'파B',name:'남연후',org:'대자초등학교'},
+          {lane:'보V',name:'방혜원',org:'대구동도초등학교'},
+          {lane:'검B',name:'박규리',org:'양주덕현초등학교'},
+        ]},
+      ]
+    },
+    {
+      num: 3, time: '08:00', name: '남자초등5,6학년 1500M 준준결승', meta: '6조 (T3+3)',
+      heats: [
+        { heatName: '준준결승 1조', athletes: [
+          {lane:'흰W',name:'최지안',org:'원일초등학교'},
+          {lane:'노Y',name:'김민재',org:'인천송빛초등학교'},
+          {lane:'빨R',name:'이승호',org:'고창초등학교'},
+          {lane:'파B',name:'김태이',org:'버들개초등학교'},
+          {lane:'보V',name:'송지호',org:'청수초등학교'},
+        ]},
+        { heatName: '준준결승 2조', athletes: [
+          {lane:'흰W',name:'박단빈',org:'목운초등학교'},
+          {lane:'노Y',name:'노현우',org:'부민초등학교'},
+          {lane:'빨R',name:'김하준',org:'명지초등학교'},
+          {lane:'파B',name:'김민준',org:'신곡초등학교'},
+          {lane:'보V',name:'양성빈',org:'하안북초등학교'},
+        ]},
+        { heatName: '준준결승 3조', athletes: [
+          {lane:'흰W',name:'이루한',org:'인천봉수초등학교'},
+          {lane:'노Y',name:'김시환',org:'청수초등학교'},
+          {lane:'빨R',name:'박은우',org:'한밭초등학교'},
+          {lane:'파B',name:'변하람',org:'천안용소초등학교'},
+          {lane:'보V',name:'윤재원',org:'대구노변초등학교'},
+        ]},
+        { heatName: '준준결승 4조', athletes: [
+          {lane:'흰W',name:'문서준',org:'서울세륜초등학교'},
+          {lane:'노Y',name:'유지안',org:'의정부송산초등학교'},
+          {lane:'빨R',name:'김주헌',org:'남천초등학교'},
+          {lane:'파B',name:'박강유',org:'광주상무초등학교'},
+          {lane:'보V',name:'임도윤',org:'대구용지초등학교'},
+          {lane:'검B',name:'이동하',org:'서울대치초등학교'},
+        ]},
+        { heatName: '준준결승 5조', athletes: [
+          {lane:'흰W',name:'김하루',org:'원흥초등학교'},
+          {lane:'노Y',name:'전승헌',org:'영훈초등학교'},
+          {lane:'빨R',name:'안정빈',org:'성남매송초등학교'},
+          {lane:'파B',name:'이지호',org:'인천고잔초등학교'},
+          {lane:'보V',name:'임정현',org:'의정부청룡초등학교'},
+          {lane:'검B',name:'이준서',org:'신리초등학교'},
+        ]},
+        { heatName: '준준결승 6조', athletes: [
+          {lane:'흰W',name:'허태영',org:'보름초등학교'},
+          {lane:'노Y',name:'조윤',org:'대구국제학교'},
+          {lane:'빨R',name:'권우진',org:'먼우금초등학교'},
+          {lane:'파B',name:'엄태율',org:'은빛초등학교'},
+          {lane:'보V',name:'임태민',org:'의정부호동초등학교'},
+          {lane:'검B',name:'황시원',org:'삼봉초등학교'},
+        ]},
+      ]
+    },
+    { type: 'ice', time: '08:55', label: 'couse' },
+    {
+      num: 4, time: '09:05', name: '여자초등3,4학년 1500M 준결승', meta: '3조 (T2+1)',
+      heats: [
+        { heatName: '준결승 1조', athletes: [
+          {lane:'흰W',name:'김연솔',org:'서울영도초등학교'},
+          {lane:'노Y',name:'이유주',org:'세곡초등학교'},
+          {lane:'빨R',name:'김태희',org:'성남송현초등학교'},
+          {lane:'파B',name:'고다흰',org:'강릉교동초등학교'},
+          {lane:'보V',name:'이민아',org:'유안초등학교'},
+          {lane:'검B',name:'김규리',org:'대구달산초등학교'},
+          {lane:'주O',name:'최에스더',org:'안양중앙초등학교'},
+        ]},
+        { heatName: '준결승 2조', athletes: [
+          {lane:'흰W',name:'곽다혜',org:'서울정수초등학교'},
+          {lane:'노Y',name:'강소민',org:'서울신사초등학교'},
+          {lane:'빨R',name:'박서아',org:'성남매송초등학교'},
+          {lane:'파B',name:'이설희',org:'만호초등학교'},
+          {lane:'보V',name:'김은우',org:'과천율목초등학교'},
+          {lane:'검B',name:'김태리',org:'성남판교초등학교'},
+          {lane:'주O',name:'하정윤',org:'동래초등학교'},
+        ]},
+        { heatName: '준결승 3조', athletes: [
+          {lane:'흰W',name:'추하은',org:'운흥초등학교'},
+          {lane:'노Y',name:'한지아',org:'이매초등학교'},
+          {lane:'빨R',name:'이나윤',org:'서울목동초등학교'},
+          {lane:'파B',name:'서이엘',org:'서울거원초등학교'},
+          {lane:'보V',name:'윤서아',org:'동성초등학교'},
+          {lane:'검B',name:'김영서',org:'광주상무초등학교'},
+          {lane:'주O',name:'이태린',org:'대전동산초등학교'},
+        ]},
+      ]
+    },
+    {
+      num: 5, time: '09:05', name: '여자초등5,6학년 1500M 준결승', meta: '3조 (T2+1)',
+      heats: [
+        { heatName: '준결승 1조', athletes: [] },
+        { heatName: '준결승 2조', athletes: [] },
+        { heatName: '준결승 3조', athletes: [] },
+      ]
+    },
+    {
+      num: 6, time: '09:05', name: '남자초등3,4학년 1500M 준결승', meta: '3조 (T2+1)',
+      heats: [
+        { heatName: '준결승 1조', athletes: [
+          {lane:'흰W',name:'김태윤',org:'성남송현초등학교'},
+          {lane:'노Y',name:'전장현',org:'성라초등학교'},
+          {lane:'빨R',name:'조준형',org:'안양부안초등학교'},
+          {lane:'파B',name:'박서준',org:'수원중촌초등학교'},
+          {lane:'보V',name:'정예찬',org:'서울광희초등학교'},
+          {lane:'검B',name:'하지혁',org:'서울가락초등학교'},
+        ]},
+        { heatName: '준결승 2조', athletes: [
+          {lane:'흰W',name:'백준우',org:'성남매송초등학교'},
+          {lane:'노Y',name:'이강우',org:'용인둔전초등학교'},
+          {lane:'빨R',name:'김이겸',org:'성남송현초등학교'},
+          {lane:'파B',name:'김태호',org:'버들개초등학교'},
+          {lane:'보V',name:'이하준',org:'인천일반'},
+          {lane:'검B',name:'배준민',org:'대구달산초등학교'},
+        ]},
+        { heatName: '준결승 3조', athletes: [
+          {lane:'흰W',name:'전이준',org:'서울금북초등학교'},
+          {lane:'노Y',name:'박건우',org:'고양화수초등학교'},
+          {lane:'빨R',name:'김태평',org:'버들개초등학교'},
+          {lane:'파B',name:'이지헌',org:'목운초등학교'},
+          {lane:'보V',name:'윤태인',org:'원중초등학교'},
+          {lane:'검B',name:'이시안',org:'광주상무초등학교'},
+        ]},
+      ]
+    },
+    {
+      num: 7, time: '09:05', name: '남자초등5,6학년 1500M 준결승', meta: '3조 (T2+1)',
+      heats: [
+        { heatName: '준결승 1조', athletes: [] },
+        { heatName: '준결승 2조', athletes: [] },
+        { heatName: '준결승 3조', athletes: [] },
+      ]
+    },
+    { type: 'ice', time: '10:05', label: 'couse' },
+    {
+      num: 8, time: '10:15', name: '여자초등1,2학년 1500M 결승', meta: '',
+      heats: [
+        { heatName: '결승', athletes: [
+          {lane:'흰W',name:'이예하',org:'공세초등학교'},
+        ]},
+      ]
+    },
+    {
+      num: 9, time: '10:15', name: '여자초등3,4학년 1500M 결승', meta: '',
+      heats: [ { heatName: '결승', athletes: [] } ]
+    },
+    {
+      num: 10, time: '10:15', name: '여자초등5,6학년 1500M 결승', meta: '',
+      heats: [ { heatName: '결승', athletes: [] } ]
+    },
+    {
+      num: 11, time: '10:15', name: '남자초등1,2학년 1500M 결승', meta: '',
+      heats: [
+        { heatName: '결승', athletes: [
+          {lane:'흰W',name:'유준모',org:'서울우장초등학교'},
+          {lane:'노Y',name:'박민준',org:'서울포이초등학교'},
+          {lane:'빨R',name:'이주안',org:'광주상무초등학교'},
+          {lane:'파B',name:'김성원',org:'성북초등학교'},
+        ]},
+      ]
+    },
+    {
+      num: 12, time: '10:15', name: '남자초등3,4학년 1500M 결승', meta: '',
+      heats: [ { heatName: '결승', athletes: [] } ]
+    },
+    {
+      num: 13, time: '10:15', name: '남자초등5,6학년 1500M 결승', meta: '',
+      heats: [ { heatName: '결승', athletes: [] } ]
+    },
+    { num: 14, time: '10:15', name: '유치부여자 111M', meta: '4조', round: '🌱 유치부', note: '유치부 조편성은 별도 안내' },
+    { num: 15, time: '10:15', name: '유치부남자 111M', meta: '3조', round: '🌱 유치부', note: '유치부 조편성은 별도 안내' },
+    { num: 16, time: '10:15', name: '유치부여자 222M', meta: '4조', round: '🌱 유치부', note: '유치부 조편성은 별도 안내' },
+    { num: 17, time: '10:15', name: '유치부남자 222M', meta: '5조', round: '🌱 유치부', note: '유치부 조편성은 별도 안내' },
+    { type: 'ice', time: '11:05', label: 'full' },
+    {
+      num: 18, time: '11:20', name: '여자초등3,4학년 500M 예선', meta: '5조 (T3+1)',
+      heats: [
+        { heatName: '예선 1조', athletes: [
+          {lane:'흰W',name:'김연솔',org:'서울영도초등학교'},
+          {lane:'노Y',name:'이나윤',org:'서울목동초등학교'},
+          {lane:'빨R',name:'서이엘',org:'서울거원초등학교'},
+          {lane:'파B',name:'김태리',org:'성남판교초등학교'},
+          {lane:'보V',name:'김영서',org:'광주상무초등학교'},
+        ]},
+        { heatName: '예선 2조', athletes: [
+          {lane:'흰W',name:'고다흰',org:'강릉교동초등학교'},
+          {lane:'노Y',name:'강소민',org:'서울신사초등학교'},
+          {lane:'빨R',name:'이민아',org:'유안초등학교'},
+          {lane:'파B',name:'김규리',org:'대구달산초등학교'},
+        ]},
+        { heatName: '예선 3조', athletes: [
+          {lane:'흰W',name:'이유주',org:'세곡초등학교'},
+          {lane:'노Y',name:'박서아',org:'성남매송초등학교'},
+          {lane:'빨R',name:'이설희',org:'만호초등학교'},
+          {lane:'파B',name:'이태린',org:'대전동산초등학교'},
+        ]},
+        { heatName: '예선 4조', athletes: [
+          {lane:'흰W',name:'추하은',org:'운흥초등학교'},
+          {lane:'노Y',name:'한지아',org:'이매초등학교'},
+          {lane:'빨R',name:'최에스더',org:'안양중앙초등학교'},
+          {lane:'파B',name:'하정윤',org:'동래초등학교'},
+        ]},
+        { heatName: '예선 5조', athletes: [
+          {lane:'흰W',name:'곽다혜',org:'서울정수초등학교'},
+          {lane:'노Y',name:'김태희',org:'성남송현초등학교'},
+          {lane:'빨R',name:'윤서아',org:'동성초등학교'},
+          {lane:'파B',name:'김은우',org:'과천율목초등학교'},
+        ]},
+      ]
+    },
+    {
+      num: 19, time: '11:20', name: '여자초등5,6학년 500M 예선', meta: '6조 (T3+2)',
+      heats: [
+        { heatName: '예선 1조', athletes: [
+          {lane:'흰W',name:'김세원',org:'곡정초등학교'},
+          {lane:'노Y',name:'김가빈',org:'서울목동초등학교'},
+          {lane:'빨R',name:'유채은',org:'양동초등학교'},
+          {lane:'파B',name:'이지우',org:'수원송림초등학교'},
+        ]},
+        { heatName: '예선 2조', athletes: [
+          {lane:'흰W',name:'강윤서',org:'인천장아초등학교'},
+          {lane:'노Y',name:'김소율',org:'고창초등학교'},
+          {lane:'빨R',name:'이채아',org:'박달초등학교'},
+          {lane:'파B',name:'김서진',org:'삼봉초등학교'},
+        ]},
+        { heatName: '예선 3조', athletes: [
+          {lane:'흰W',name:'곽혜원',org:'안일초등학교'},
+          {lane:'노Y',name:'양지유',org:'각화초등학교'},
+          {lane:'빨R',name:'남연후',org:'대자초등학교'},
+          {lane:'파B',name:'김라임',org:'대전신평초등학교'},
+        ]},
+        { heatName: '예선 4조', athletes: [
+          {lane:'흰W',name:'김지안',org:'용문초등학교'},
+          {lane:'노Y',name:'박하랑',org:'서울정목초등학교'},
+          {lane:'빨R',name:'고다하',org:'강릉교동초등학교'},
+          {lane:'파B',name:'박규리',org:'양주덕현초등학교'},
+          {lane:'보V',name:'박나은',org:'청계초등학교'},
+        ]},
+        { heatName: '예선 5조', athletes: [
+          {lane:'흰W',name:'김연우',org:'평촌초등학교'},
+          {lane:'노Y',name:'백이슬',org:'서울우신초등학교'},
+          {lane:'빨R',name:'윤재아',org:'인천도담초등학교'},
+          {lane:'파B',name:'박세경',org:'광주화정초등학교'},
+          {lane:'보V',name:'방혜원',org:'대구동도초등학교'},
+        ]},
+        { heatName: '예선 6조', athletes: [
+          {lane:'흰W',name:'유지안',org:'과천갈현초등학교'},
+          {lane:'노Y',name:'이소윤',org:'죽전초등학교'},
+          {lane:'빨R',name:'홍이재',org:'서울연희초등학교'},
+          {lane:'파B',name:'박예율',org:'서울당중초등학교'},
+          {lane:'보V',name:'최하빈',org:'CIYA 국제학교'},
+        ]},
+      ]
+    },
+    { type: 'ice', time: '11:55', label: 'couse' },
+    {
+      num: 20, time: '12:05', name: '남자초등5,6학년 500M 예선', meta: '7조 (T2+6)',
+      heats: [
+        { heatName: '예선 1조', athletes: [
+          {lane:'흰W',name:'최지안',org:'원일초등학교'},
+          {lane:'노Y',name:'노현우',org:'부민초등학교'},
+          {lane:'빨R',name:'이동하',org:'서울대치초등학교'},
+          {lane:'파B',name:'임정현',org:'의정부청룡초등학교'},
+          {lane:'보V',name:'이준서',org:'신리초등학교'},
+        ]},
+        { heatName: '예선 2조', athletes: [
+          {lane:'흰W',name:'조윤',org:'대구국제학교'},
+          {lane:'노Y',name:'김민재',org:'인천송빛초등학교'},
+          {lane:'빨R',name:'변하람',org:'천안용소초등학교'},
+          {lane:'파B',name:'윤재원',org:'대구노변초등학교'},
+          {lane:'보V',name:'황시원',org:'삼봉초등학교'},
+        ]},
+        { heatName: '예선 3조', athletes: [
+          {lane:'흰W',name:'김시환',org:'청수초등학교'},
+          {lane:'노Y',name:'이루한',org:'인천봉수초등학교'},
+          {lane:'빨R',name:'박강유',org:'광주상무초등학교'},
+          {lane:'파B',name:'박은우',org:'한밭초등학교'},
+          {lane:'보V',name:'김태이',org:'버들개초등학교'},
+        ]},
+        { heatName: '예선 4조', athletes: [
+          {lane:'흰W',name:'허태영',org:'보름초등학교'},
+          {lane:'노Y',name:'이승호',org:'고창초등학교'},
+          {lane:'빨R',name:'권우진',org:'먼우금초등학교'},
+          {lane:'파B',name:'임도윤',org:'대구용지초등학교'},
+          {lane:'보V',name:'이지호',org:'인천고잔초등학교'},
+        ]},
+        { heatName: '예선 5조', athletes: [
+          {lane:'흰W',name:'전승헌',org:'영훈초등학교'},
+          {lane:'노Y',name:'김하루',org:'원흥초등학교'},
+          {lane:'빨R',name:'엄태율',org:'은빛초등학교'},
+          {lane:'파B',name:'송지호',org:'청수초등학교'},
+          {lane:'보V',name:'김주헌',org:'남천초등학교'},
+        ]},
+        { heatName: '예선 6조', athletes: [
+          {lane:'흰W',name:'박단빈',org:'목운초등학교'},
+          {lane:'노Y',name:'유지안',org:'의정부송산초등학교'},
+          {lane:'빨R',name:'김민준',org:'신곡초등학교'},
+          {lane:'파B',name:'양성빈',org:'하안북초등학교'},
+        ]},
+        { heatName: '예선 7조', athletes: [
+          {lane:'흰W',name:'김하준',org:'명지초등학교'},
+          {lane:'노Y',name:'문서준',org:'서울세륜초등학교'},
+          {lane:'빨R',name:'임태민',org:'의정부호동초등학교'},
+          {lane:'파B',name:'안정빈',org:'성남매송초등학교'},
+        ]},
+      ]
+    },
+    { type: 'ice', time: '12:25', label: 'couse' },
+    {
+      num: 21, time: '12:55', name: '여자초등3,4학년 500M 준준결승', meta: '4조 (T2+2)',
+      heats: [
+        { heatName: '준준결승 1조', athletes: [] },
+        { heatName: '준준결승 2조', athletes: [] },
+        { heatName: '준준결승 3조', athletes: [] },
+        { heatName: '준준결승 4조', athletes: [] },
+      ]
+    },
+    {
+      num: 22, time: '12:55', name: '여자초등5,6학년 500M 준준결승', meta: '4조 (T2+2)',
+      heats: [
+        { heatName: '준준결승 1조', athletes: [] },
+        { heatName: '준준결승 2조', athletes: [] },
+        { heatName: '준준결승 3조', athletes: [] },
+        { heatName: '준준결승 4조', athletes: [] },
+      ]
+    },
+    { type: 'ice', time: '13:20', label: 'couse' },
+    {
+      num: 23, time: '13:30', name: '남자초등3,4학년 500M 준준결승', meta: '4조 (T2+2)',
+      heats: [
+        { heatName: '준준결승 1조', athletes: [
+          {lane:'흰W',name:'백준우',org:'성남매송초등학교'},
+          {lane:'노Y',name:'이시안',org:'광주상무초등학교'},
+          {lane:'빨R',name:'김이겸',org:'성남송현초등학교'},
+          {lane:'파B',name:'하지혁',org:'서울가락초등학교'},
+          {lane:'보V',name:'배준민',org:'대구달산초등학교'},
+        ]},
+        { heatName: '준준결승 2조', athletes: [
+          {lane:'흰W',name:'조준형',org:'안양부안초등학교'},
+          {lane:'노Y',name:'전이준',org:'서울금북초등학교'},
+          {lane:'빨R',name:'정예찬',org:'서울광희초등학교'},
+          {lane:'파B',name:'이지헌',org:'목운초등학교'},
+          {lane:'보V',name:'박서준',org:'수원중촌초등학교'},
+        ]},
+        { heatName: '준준결승 3조', athletes: [
+          {lane:'흰W',name:'이강우',org:'용인둔전초등학교'},
+          {lane:'노Y',name:'전장현',org:'성라초등학교'},
+          {lane:'빨R',name:'김태호',org:'버들개초등학교'},
+          {lane:'파B',name:'이하준',org:'인천일반'},
+        ]},
+        { heatName: '준준결승 4조', athletes: [
+          {lane:'흰W',name:'김태윤',org:'성남송현초등학교'},
+          {lane:'노Y',name:'박건우',org:'고양화수초등학교'},
+          {lane:'빨R',name:'김태평',org:'버들개초등학교'},
+          {lane:'파B',name:'윤태인',org:'원중초등학교'},
+        ]},
+      ]
+    },
+    {
+      num: 24, time: '13:30', name: '남자초등5,6학년 500M 준준결승', meta: '4조 (T2+2)',
+      heats: [
+        { heatName: '준준결승 1조', athletes: [] },
+        { heatName: '준준결승 2조', athletes: [] },
+        { heatName: '준준결승 3조', athletes: [] },
+        { heatName: '준준결승 4조', athletes: [] },
+      ]
+    },
+    { type: 'ice', time: '13:55', label: 'couse' },
+    {
+      num: 25, time: '14:05', name: '여자초등3,4학년 500M 준결승', meta: '2조 (T2+1)',
+      heats: [
+        { heatName: '준결승 1조', athletes: [] },
+        { heatName: '준결승 2조', athletes: [] },
+      ]
+    },
+    {
+      num: 26, time: '14:05', name: '여자초등5,6학년 500M 준결승', meta: '2조 (T2+1)',
+      heats: [
+        { heatName: '준결승 1조', athletes: [] },
+        { heatName: '준결승 2조', athletes: [] },
+      ]
+    },
+    {
+      num: 27, time: '14:05', name: '남자초등3,4학년 500M 준결승', meta: '2조 (T2+1)',
+      heats: [
+        { heatName: '준결승 1조', athletes: [] },
+        { heatName: '준결승 2조', athletes: [] },
+      ]
+    },
+    {
+      num: 28, time: '14:05', name: '남자초등5,6학년 500M 준결승', meta: '2조 (T2+1)',
+      heats: [
+        { heatName: '준결승 1조', athletes: [] },
+        { heatName: '준결승 2조', athletes: [] },
+      ]
+    },
+    { type: 'ice', time: '14:30', label: 'couse' },
+    {
+      num: 29, time: '14:40', name: '여자초등1,2학년 500M 결승', meta: '',
+      heats: [
+        { heatName: '결승', athletes: [
+          {lane:'흰W',name:'이예하',org:'공세초등학교'},
+        ]},
+      ]
+    },
+    {
+      num: 30, time: '14:40', name: '여자초등3,4학년 500M 결승', meta: '',
+      heats: [ { heatName: '결승', athletes: [] } ]
+    },
+    {
+      num: 31, time: '14:40', name: '여자초등5,6학년 500M 결승', meta: '',
+      heats: [ { heatName: '결승', athletes: [] } ]
+    },
+    {
+      num: 32, time: '14:40', name: '남자초등1,2학년 500M 결승', meta: '',
+      heats: [
+        { heatName: '결승', athletes: [
+          {lane:'흰W',name:'유준모',org:'서울우장초등학교'},
+          {lane:'노Y',name:'김성원',org:'성북초등학교'},
+          {lane:'빨R',name:'박민준',org:'서울포이초등학교'},
+          {lane:'파B',name:'이주안',org:'광주상무초등학교'},
+        ]},
+      ]
+    },
+    {
+      num: 33, time: '14:40', name: '남자초등3,4학년 500M 결승', meta: '',
+      heats: [ { heatName: '결승', athletes: [] } ]
+    },
+    {
+      num: 34, time: '14:40', name: '남자초등5,6학년 500M 결승', meta: '',
+      heats: [ { heatName: '결승', athletes: [] } ]
+    },
+    { type: 'ice', time: '15:00', label: 'full' },
+    { num: 35, time: '15:15', name: '동호인 여자 1부 333M', meta: '6조', round: '⛸️ 동호인', note: '동호인 조편성은 별도 안내' },
+    { num: 36, time: '15:15', name: '동호인 여자 2부 333M', meta: '13조', round: '⛸️ 동호인', note: '동호인 조편성은 별도 안내' },
+    { num: 37, time: '15:15', name: '동호인 여자 3부 333M', meta: '10조', round: '⛸️ 동호인', note: '동호인 조편성은 별도 안내' },
+    { type: 'ice', time: '16:05', label: 'couse' },
+    { num: 38, time: '16:15', name: '동호인 여자 4부 333M', meta: '16조', round: '⛸️ 동호인', note: '동호인 조편성은 별도 안내' },
+    { num: 39, time: '16:15', name: '동호인 여자 5부 333M', meta: '8조', round: '⛸️ 동호인', note: '동호인 조편성은 별도 안내' },
+    { num: 40, time: '16:15', name: '동호인 여자 6부 333M', meta: '10조', round: '⛸️ 동호인', note: '동호인 조편성은 별도 안내' },
+    { type: 'ice', time: '17:10', label: 'couse' },
+    { num: 41, time: '17:20', name: '동호인 남자 1부 333M', meta: '11조', round: '⛸️ 동호인', note: '동호인 조편성은 별도 안내' },
+    { num: 42, time: '17:20', name: '동호인 남자 2부 333M', meta: '14조', round: '⛸️ 동호인', note: '동호인 조편성은 별도 안내' },
+    { num: 43, time: '17:20', name: '동호인 남자 3부 333M', meta: '14조', round: '⛸️ 동호인', note: '동호인 조편성은 별도 안내' },
+    { type: 'ice', time: '18:20', label: 'couse' },
+    { num: 44, time: '18:30', name: '동호인 남자 4부 333M', meta: '16조', round: '⛸️ 동호인', note: '동호인 조편성은 별도 안내' },
+    { num: 45, time: '18:30', name: '동호인 남자 5부 333M', meta: '10조', round: '⛸️ 동호인', note: '동호인 조편성은 별도 안내' },
+    { num: 46, time: '18:30', name: '동호인 남자 6부 333M', meta: '8조', round: '⛸️ 동호인', note: '동호인 조편성은 별도 안내' },
+  ]
+},
+// ===== DAY 2 (7/24 금) =====
+{
+  day: 'day2', dayLabel: '2일차', dayDate: '2026년 7월 24일 (금)',
+  events: [
+    {
+      num: 1, time: '09:00', name: '여자초등3,4학년 1000M 예선', meta: '5조 (T3+1)',
+      heats: [
+        { heatName: '예선 1조', athletes: [
+          {lane:'흰W',name:'김연솔',org:'서울영도초등학교'},
+          {lane:'노Y',name:'박서아',org:'성남매송초등학교'},
+          {lane:'빨R',name:'서이엘',org:'서울거원초등학교'},
+          {lane:'파B',name:'하정윤',org:'동래초등학교'},
+          {lane:'보V',name:'최에스더',org:'안양중앙초등학교'},
+        ]},
+        { heatName: '예선 2조', athletes: [
+          {lane:'흰W',name:'곽다혜',org:'서울정수초등학교'},
+          {lane:'노Y',name:'이유주',org:'세곡초등학교'},
+          {lane:'빨R',name:'이설희',org:'만호초등학교'},
+          {lane:'파B',name:'김규리',org:'대구달산초등학교'},
+        ]},
+        { heatName: '예선 3조', athletes: [
+          {lane:'흰W',name:'한지아',org:'이매초등학교'},
+          {lane:'노Y',name:'이나윤',org:'서울목동초등학교'},
+          {lane:'빨R',name:'이민아',org:'유안초등학교'},
+          {lane:'파B',name:'김태리',org:'성남판교초등학교'},
+        ]},
+        { heatName: '예선 4조', athletes: [
+          {lane:'흰W',name:'고다흰',org:'강릉교동초등학교'},
+          {lane:'노Y',name:'강소민',org:'서울신사초등학교'},
+          {lane:'빨R',name:'윤서아',org:'동성초등학교'},
+          {lane:'파B',name:'김영서',org:'광주상무초등학교'},
+        ]},
+        { heatName: '예선 5조', athletes: [
+          {lane:'흰W',name:'추하은',org:'운흥초등학교'},
+          {lane:'노Y',name:'김태희',org:'성남송현초등학교'},
+          {lane:'빨R',name:'김은우',org:'과천율목초등학교'},
+          {lane:'파B',name:'이태린',org:'대전동산초등학교'},
+        ]},
+      ]
+    },
+    {
+      num: 2, time: '09:00', name: '여자초등5,6학년 1000M 예선', meta: '6조 (T3+2)',
+      heats: [
+        { heatName: '예선 1조', athletes: [
+          {lane:'흰W',name:'김연우',org:'평촌초등학교'},
+          {lane:'노Y',name:'홍이재',org:'서울연희초등학교'},
+          {lane:'빨R',name:'박하랑',org:'서울정목초등학교'},
+          {lane:'파B',name:'이지우',org:'수원송림초등학교'},
+        ]},
+        { heatName: '예선 2조', athletes: [
+          {lane:'흰W',name:'이소윤',org:'죽전초등학교'},
+          {lane:'노Y',name:'남연후',org:'대자초등학교'},
+          {lane:'빨R',name:'강윤서',org:'인천장아초등학교'},
+          {lane:'파B',name:'방혜원',org:'대구동도초등학교'},
+        ]},
+        { heatName: '예선 3조', athletes: [
+          {lane:'흰W',name:'김지안',org:'용문초등학교'},
+          {lane:'노Y',name:'김소율',org:'고창초등학교'},
+          {lane:'빨R',name:'양지유',org:'각화초등학교'},
+          {lane:'파B',name:'박예율',org:'서울당중초등학교'},
+        ]},
+        { heatName: '예선 4조', athletes: [
+          {lane:'흰W',name:'윤재아',org:'인천도담초등학교'},
+          {lane:'노Y',name:'곽혜원',org:'안일초등학교'},
+          {lane:'빨R',name:'유채은',org:'양동초등학교'},
+          {lane:'파B',name:'박규리',org:'양주덕현초등학교'},
+          {lane:'보V',name:'최하빈',org:'CIYA 국제학교'},
+        ]},
+        { heatName: '예선 5조', athletes: [
+          {lane:'흰W',name:'김가빈',org:'서울목동초등학교'},
+          {lane:'노Y',name:'이채아',org:'박달초등학교'},
+          {lane:'빨R',name:'고다하',org:'강릉교동초등학교'},
+          {lane:'파B',name:'박나은',org:'청계초등학교'},
+          {lane:'보V',name:'김라임',org:'대전신평초등학교'},
+        ]},
+        { heatName: '예선 6조', athletes: [
+          {lane:'흰W',name:'백이슬',org:'서울우신초등학교'},
+          {lane:'노Y',name:'유지안',org:'과천갈현초등학교'},
+          {lane:'빨R',name:'김세원',org:'곡정초등학교'},
+          {lane:'파B',name:'김서진',org:'삼봉초등학교'},
+          {lane:'보V',name:'박세경',org:'광주화정초등학교'},
+        ]},
+      ]
+    },
+    { type: 'ice', time: '09:40', label: 'couse' },
+    {
+      num: 3, time: '09:50', name: '남자초등5,6학년 1000M 예선', meta: '7조 (T2+6)',
+      heats: [
+        { heatName: '예선 1조', athletes: [
+          {lane:'흰W',name:'문서준',org:'서울세륜초등학교'},
+          {lane:'노Y',name:'조윤',org:'대구국제학교'},
+          {lane:'빨R',name:'김민준',org:'신곡초등학교'},
+          {lane:'파B',name:'임정현',org:'의정부청룡초등학교'},
+          {lane:'보V',name:'양성빈',org:'하안북초등학교'},
+        ]},
+        { heatName: '예선 2조', athletes: [
+          {lane:'흰W',name:'박단빈',org:'목운초등학교'},
+          {lane:'노Y',name:'이승호',org:'고창초등학교'},
+          {lane:'빨R',name:'안정빈',org:'성남매송초등학교'},
+          {lane:'파B',name:'김태이',org:'버들개초등학교'},
+          {lane:'보V',name:'윤재원',org:'대구노변초등학교'},
+        ]},
+        { heatName: '예선 3조', athletes: [
+          {lane:'흰W',name:'최지안',org:'원일초등학교'},
+          {lane:'노Y',name:'전승헌',org:'영훈초등학교'},
+          {lane:'빨R',name:'황시원',org:'삼봉초등학교'},
+          {lane:'파B',name:'박은우',org:'한밭초등학교'},
+          {lane:'보V',name:'박강유',org:'광주상무초등학교'},
+        ]},
+        { heatName: '예선 4조', athletes: [
+          {lane:'흰W',name:'이루한',org:'인천봉수초등학교'},
+          {lane:'노Y',name:'노현우',org:'부민초등학교'},
+          {lane:'빨R',name:'임태민',org:'의정부호동초등학교'},
+          {lane:'파B',name:'엄태율',org:'은빛초등학교'},
+          {lane:'보V',name:'이지호',org:'인천고잔초등학교'},
+        ]},
+        { heatName: '예선 5조', athletes: [
+          {lane:'흰W',name:'김시환',org:'청수초등학교'},
+          {lane:'노Y',name:'유지안',org:'의정부송산초등학교'},
+          {lane:'빨R',name:'임도윤',org:'대구용지초등학교'},
+          {lane:'파B',name:'권우진',org:'먼우금초등학교'},
+          {lane:'보V',name:'변하람',org:'천안용소초등학교'},
+        ]},
+        { heatName: '예선 6조', athletes: [
+          {lane:'흰W',name:'허태영',org:'보름초등학교'},
+          {lane:'노Y',name:'김하루',org:'원흥초등학교'},
+          {lane:'빨R',name:'이동하',org:'서울대치초등학교'},
+          {lane:'파B',name:'송지호',org:'청수초등학교'},
+        ]},
+        { heatName: '예선 7조', athletes: [
+          {lane:'흰W',name:'김민재',org:'인천송빛초등학교'},
+          {lane:'노Y',name:'김하준',org:'명지초등학교'},
+          {lane:'빨R',name:'이준서',org:'신리초등학교'},
+          {lane:'파B',name:'김주헌',org:'남천초등학교'},
+        ]},
+      ]
+    },
+    { type: 'ice', time: '10:15', label: 'couse' },
+    {
+      num: 4, time: '10:25', name: '여자초등3,4학년 1000M 준준결승', meta: '4조 (T2+2)',
+      heats: [
+        { heatName: '준준결승 1조', athletes: [] },
+        { heatName: '준준결승 2조', athletes: [] },
+        { heatName: '준준결승 3조', athletes: [] },
+        { heatName: '준준결승 4조', athletes: [] },
+      ]
+    },
+    {
+      num: 5, time: '10:25', name: '여자초등5,6학년 1000M 준준결승', meta: '4조 (T2+2)',
+      heats: [
+        { heatName: '준준결승 1조', athletes: [] },
+        { heatName: '준준결승 2조', athletes: [] },
+        { heatName: '준준결승 3조', athletes: [] },
+        { heatName: '준준결승 4조', athletes: [] },
+      ]
+    },
+    { type: 'ice', time: '10:55', label: 'couse' },
+    {
+      num: 6, time: '11:05', name: '남자초등3,4학년 1000M 준준결승', meta: '4조 (T2+2)',
+      heats: [
+        { heatName: '준준결승 1조', athletes: [
+          {lane:'흰W',name:'백준우',org:'성남매송초등학교'},
+          {lane:'노Y',name:'김태호',org:'버들개초등학교'},
+          {lane:'빨R',name:'정예찬',org:'서울광희초등학교'},
+          {lane:'파B',name:'이하준',org:'인천일반'},
+          {lane:'보V',name:'이지헌',org:'목운초등학교'},
+        ]},
+        { heatName: '준준결승 2조', athletes: [
+          {lane:'흰W',name:'김태윤',org:'성남송현초등학교'},
+          {lane:'노Y',name:'전장현',org:'성라초등학교'},
+          {lane:'빨R',name:'윤태인',org:'원중초등학교'},
+          {lane:'파B',name:'배준민',org:'대구달산초등학교'},
+          {lane:'보V',name:'이시안',org:'광주상무초등학교'},
+        ]},
+        { heatName: '준준결승 3조', athletes: [
+          {lane:'흰W',name:'이강우',org:'용인둔전초등학교'},
+          {lane:'노Y',name:'박건우',org:'고양화수초등학교'},
+          {lane:'빨R',name:'하지혁',org:'서울가락초등학교'},
+          {lane:'파B',name:'김이겸',org:'성남송현초등학교'},
+        ]},
+        { heatName: '준준결승 4조', athletes: [
+          {lane:'흰W',name:'전이준',org:'서울금북초등학교'},
+          {lane:'노Y',name:'조준형',org:'안양부안초등학교'},
+          {lane:'빨R',name:'박서준',org:'수원중촌초등학교'},
+          {lane:'파B',name:'김태평',org:'버들개초등학교'},
+        ]},
+      ]
+    },
+    {
+      num: 7, time: '11:05', name: '남자초등5,6학년 1000M 준준결승', meta: '4조 (T2+2)',
+      heats: [
+        { heatName: '준준결승 1조', athletes: [] },
+        { heatName: '준준결승 2조', athletes: [] },
+        { heatName: '준준결승 3조', athletes: [] },
+        { heatName: '준준결승 4조', athletes: [] },
+      ]
+    },
+    { type: 'ice', time: '11:35', label: 'couse' },
+    {
+      num: 8, time: '11:45', name: '여자초등3,4학년 1000M 준결승', meta: '2조 (T2+1)',
+      heats: [
+        { heatName: '준결승 1조', athletes: [] },
+        { heatName: '준결승 2조', athletes: [] },
+      ]
+    },
+    {
+      num: 9, time: '11:45', name: '여자초등5,6학년 1000M 준결승', meta: '2조 (T2+1)',
+      heats: [
+        { heatName: '준결승 1조', athletes: [] },
+        { heatName: '준결승 2조', athletes: [] },
+      ]
+    },
+    {
+      num: 10, time: '11:45', name: '남자초등3,4학년 1000M 준결승', meta: '2조 (T2+1)',
+      heats: [
+        { heatName: '준결승 1조', athletes: [] },
+        { heatName: '준결승 2조', athletes: [] },
+      ]
+    },
+    {
+      num: 11, time: '11:45', name: '남자초등5,6학년 1000M 준결승', meta: '2조 (T2+1)',
+      heats: [
+        { heatName: '준결승 1조', athletes: [] },
+        { heatName: '준결승 2조', athletes: [] },
+      ]
+    },
+    { type: 'ice', time: '12:15', label: 'couse' },
+    {
+      num: 12, time: '12:25', name: '여자초등1,2학년 1000M 결승', meta: '',
+      heats: [
+        { heatName: '결승', athletes: [
+          {lane:'흰W',name:'이예하',org:'공세초등학교'},
+        ]},
+      ]
+    },
+    {
+      num: 13, time: '12:25', name: '여자초등3,4학년 1000M 결승', meta: '',
+      heats: [ { heatName: '결승', athletes: [] } ]
+    },
+    {
+      num: 14, time: '12:25', name: '여자초등5,6학년 1000M 결승', meta: '',
+      heats: [ { heatName: '결승', athletes: [] } ]
+    },
+    {
+      num: 15, time: '12:25', name: '남자초등1,2학년 1000M 결승', meta: '',
+      heats: [
+        { heatName: '결승', athletes: [
+          {lane:'흰W',name:'유준모',org:'서울우장초등학교'},
+          {lane:'노Y',name:'박민준',org:'서울포이초등학교'},
+          {lane:'빨R',name:'김성원',org:'성북초등학교'},
+          {lane:'파B',name:'이주안',org:'광주상무초등학교'},
+        ]},
+      ]
+    },
+    {
+      num: 16, time: '12:25', name: '남자초등3,4학년 1000M 결승', meta: '',
+      heats: [ { heatName: '결승', athletes: [] } ]
+    },
+    {
+      num: 17, time: '12:25', name: '남자초등5,6학년 1000M 결승', meta: '',
+      heats: [ { heatName: '결승', athletes: [] } ]
+    },
+    { type: 'ice', time: '12:50', label: 'full' },
+    { num: 18, time: '13:20', name: '동호인 여자 1부 500M', meta: '4조', round: '⛸️ 동호인', note: '동호인 조편성은 별도 안내' },
+    { num: 19, time: '13:20', name: '동호인 여자 2부 500M', meta: '12조', round: '⛸️ 동호인', note: '동호인 조편성은 별도 안내' },
+    { type: 'ice', time: '13:55', label: 'couse' },
+    { num: 20, time: '14:05', name: '동호인 여자 3부 500M', meta: '9조', round: '⛸️ 동호인', note: '동호인 조편성은 별도 안내' },
+    { num: 21, time: '14:05', name: '동호인 여자 4부 500M', meta: '15조', round: '⛸️ 동호인', note: '동호인 조편성은 별도 안내' },
+    { type: 'ice', time: '14:55', label: 'couse' },
+    { num: 22, time: '15:05', name: '동호인 여자 5부 500M', meta: '9조', round: '⛸️ 동호인', note: '동호인 조편성은 별도 안내' },
+    { num: 23, time: '15:05', name: '동호인 여자 6부 500M', meta: '10조', round: '⛸️ 동호인', note: '동호인 조편성은 별도 안내' },
+    { type: 'ice', time: '15:45', label: 'couse' },
+    { num: 24, time: '15:55', name: '동호인 남자 1부 500M', meta: '9조', round: '⛸️ 동호인', note: '동호인 조편성은 별도 안내' },
+    { num: 25, time: '15:55', name: '동호인 남자 2부 500M', meta: '11조', round: '⛸️ 동호인', note: '동호인 조편성은 별도 안내' },
+    { type: 'ice', time: '16:40', label: 'couse' },
+    { num: 26, time: '16:50', name: '동호인 남자 3부 500M', meta: '12조', round: '⛸️ 동호인', note: '동호인 조편성은 별도 안내' },
+    { num: 27, time: '16:50', name: '동호인 남자 4부 500M', meta: '14조', round: '⛸️ 동호인', note: '동호인 조편성은 별도 안내' },
+    { type: 'ice', time: '17:45', label: 'couse' },
+    { num: 28, time: '17:55', name: '동호인 남자 5부 500M', meta: '9조', round: '⛸️ 동호인', note: '동호인 조편성은 별도 안내' },
+    { num: 29, time: '17:55', name: '동호인 남자 6부 500M', meta: '7조', round: '⛸️ 동호인', note: '동호인 조편성은 별도 안내' },
+    { type: 'ice', time: '18:30', label: 'couse' },
+    { num: 30, time: '18:45', name: '동호인 여자 1부 500M SF', meta: '', round: '🏆 SF', note: '동호인 조편성은 별도 안내' },
+    { num: 31, time: '18:45', name: '동호인 여자 2부 500M SF', meta: '', round: '🏆 SF', note: '동호인 조편성은 별도 안내' },
+    { num: 32, time: '18:45', name: '동호인 여자 3부 500M SF', meta: '', round: '🏆 SF', note: '동호인 조편성은 별도 안내' },
+    { num: 33, time: '18:45', name: '동호인 여자 4부 500M SF', meta: '', round: '🏆 SF', note: '동호인 조편성은 별도 안내' },
+    { num: 34, time: '18:45', name: '동호인 여자 5부 500M SF', meta: '', round: '🏆 SF', note: '동호인 조편성은 별도 안내' },
+    { num: 35, time: '18:45', name: '동호인 여자 6부 500M SF', meta: '', round: '🏆 SF', note: '동호인 조편성은 별도 안내' },
+    { type: 'ice', time: '19:05', label: 'couse' },
+    { num: 36, time: '19:15', name: '동호인 남자 1부 500M SF', meta: '', round: '🏆 SF', note: '동호인 조편성은 별도 안내' },
+    { num: 37, time: '19:15', name: '동호인 남자 2부 500M SF', meta: '', round: '🏆 SF', note: '동호인 조편성은 별도 안내' },
+    { num: 38, time: '19:15', name: '동호인 남자 3부 500M SF', meta: '', round: '🏆 SF', note: '동호인 조편성은 별도 안내' },
+    { num: 39, time: '19:15', name: '동호인 남자 4부 500M SF', meta: '', round: '🏆 SF', note: '동호인 조편성은 별도 안내' },
+    { num: 40, time: '19:15', name: '동호인 남자 5부 500M SF', meta: '', round: '🏆 SF', note: '동호인 조편성은 별도 안내' },
+    { num: 41, time: '19:15', name: '동호인 남자 6부 500M SF', meta: '', round: '🏆 SF', note: '동호인 조편성은 별도 안내' },
+  ]
+},
+];
+
+// ============================================================
+// BUILD ATHLETE INDEX
+// ============================================================
+const athleteIndex = [];
+let eventUidCounter = 0;
+
+scheduleData.forEach(day => {
+  day.events.forEach(event => {
+    if (event.type === 'ice' || !event.heats) return;
+    const eid = 'event-' + (eventUidCounter++);
+    event._uid = eid;
+    event.heats.forEach((heat, hi) => {
+      const hid = eid + '-h' + hi;
+      heat._uid = hid;
+      heat.athletes.forEach(a => {
+        if (a.name) {
+          athleteIndex.push({
+            name: a.name,
+            org: a.org,
+            eventName: event.name,
+            heatName: heat.heatName,
+            day: day.dayLabel,
+            eventUid: eid,
+            heatUid: hid,
+          });
+        }
+      });
+    });
+  });
+});
+
+// ============================================================
+// RENDER
+// ============================================================
+function renderSchedule() {
+  const container = document.getElementById('schedule');
+  container.innerHTML = '';
+
+  scheduleData.forEach(day => {
+    const section = document.createElement('div');
+    section.className = `day-section ${day.day === 'day1' ? 'd1' : 'd2'} `;
+    section.classList.add(day.day);
+    section.id = day.day;
+
+    section.innerHTML = `
+      <div class="day-header">
+        <div class="day-dot"></div>
+        <div class="day-title">${day.dayLabel}</div>
+        <div class="day-date">${day.dayDate}</div>
+      </div>
+      <div class="section-controls">
+        <button class="ctrl-btn" onclick="toggleAll('${day.day}', true)">▼ 모두 펼치기</button>
+        <button class="ctrl-btn" onclick="toggleAll('${day.day}', false)">▲ 모두 접기</button>
+        <button class="ctrl-btn seongnam-btn" id="seongnam-btn-${day.day}" onclick="toggleSeongnamOnly('${day.day}', this)">⭐ 성남팀 only</button>
+      </div>
+    `;
+
+    day.events.forEach(event => {
+      // Ice resurfacing row
+      if (event.type === 'ice') {
+        const ice = document.createElement('div');
+        ice.className = 'ice-break';
+        ice.innerHTML = `
+          <span class="ice-break-time">${event.time}</span>
+          <span class="ice-break-label">🧊 빙판정리 (${event.label === 'full' ? 'Full' : 'Track'})</span>
+          <span class="ice-break-line"></span>
+        `;
+        section.appendChild(ice);
+        return;
+      }
+
+      const tg = document.createElement('div');
+      tg.className = `time-group highlight-target ${day.day}`;
+      if (event._uid) tg.id = event._uid;
+
+      const hasData = event.heats ? event.heats.some(h => h.athletes.length > 0) : false;
+      const roundLabel = event.round ? event.round :
+                         event.name.includes('결승') && !event.name.includes('준') ? '🏆 결승' :
+                         event.name.includes('준준결승') ? '🔹 준준결승' :
+                         event.name.includes('준결승') ? '🥈 준결승' : '🔸 예선';
+
+      tg.innerHTML = `
+        <div class="time-group-header" onclick="toggleGroup(this.parentElement)">
+          <span class="time-badge">${event.time}</span>
+          <span class="event-num">${event.num ? event.num + '.' : ''}</span>
+          <div class="event-header-main">
+            <span class="event-name">${event.name}</span>
+          </div>
+          <div class="event-meta">
+            <span class="event-meta-round">${roundLabel}</span>
+            <span class="event-meta-detail">${event.meta || ''}</span>
+          </div>
+          <span class="toggle-icon">▼</span>
+        </div>
+        <div class="time-group-body">
+          ${event.note ? `<div class="tbd-note">✦ ${event.note}</div>` : renderHeats(event.heats, hasData)}
+        </div>
+      `;
+      section.appendChild(tg);
+    });
+
+    container.appendChild(section);
+  });
+}
+
+function parseRecord(rec) {
+  if (!rec) return Infinity;
+  if (typeof rec === 'string' && (rec.includes('DNF') || rec.includes('PEN') || rec.includes('DSQ') || rec.includes('NO TIME'))) return Infinity;
+  // format: mm:ss.mmm
+  const m = String(rec).match(/^(\d+):(\d+\.\d+)$/);
+  if (m) return parseFloat(m[1]) * 60 + parseFloat(m[2]);
+  const s = String(rec).match(/^(\d+\.\d+)$/);
+  if (s) return parseFloat(s[1]);
+  return Infinity;
+}
+
+function renderHeats(heats, hasData) {
+  if (!hasData) {
+    const allEmpty = heats.every(h => h.athletes.length === 0);
+    if (allEmpty) return `<div class="tbd-note">✦ 해당 조편성은 이전 라운드 결과에 따라 결정됩니다</div>`;
+  }
+
+  let html = '<div class="heats-grid">';
+  heats.forEach(heat => {
+    html += `<div class="heat-card" id="${heat._uid}">
+      <div class="heat-title">${heat.heatName}</div>`;
+    if (heat.athletes.length === 0) {
+      html += `<div class="tbd-note">결과에 따라 결정</div>`;
+    } else {
+      // 기록이 있으면 순위(기록순) 정렬, 없으면 명단 순서 유지
+      const hasRecords = heat.athletes.some(a => a.record);
+      let athletes = [...heat.athletes];
+      if (hasRecords) {
+        athletes.sort((a, b) => parseRecord(a.record) - parseRecord(b.record));
+      }
+      html += `<ul class="heat-athletes">`;
+      athletes.forEach((a, i) => {
+        const lc = LANE_COLORS[a.lane] || { cls: 'lane-white', label: a.lane };
+        const isSpecial = a.record && (String(a.record).includes('DNF') || String(a.record).includes('PEN') || String(a.record).includes('DSQ') || String(a.record).includes('NO TIME'));
+        const recHtml = a.record
+          ? `<span class="athlete-record${isSpecial ? ' dnf' : ''}">${a.record}</span>`
+          : '';
+        const rankHtml = hasRecords && !isSpecial && parseRecord(a.record) !== Infinity
+          ? `<span class="rank-badge r${i + 1}">${i + 1}</span>`
+          : (hasRecords ? `<span class="rank-badge"></span>` : '');
+        html += `<li class="heat-athlete" data-name="${a.name}">
+          ${rankHtml}
+          <span class="lane-dot ${lc.cls}" title="${lc.label}"></span>
+          <span class="athlete-name${SEONGNAM_TEAM.has(a.name) ? ' seongnam' : ''}">${a.name}</span>
+          <span class="athlete-org">${a.org}</span>
+          ${recHtml}
+        </li>`;
+      });
+      html += `</ul>`;
+    }
+    html += `</div>`;
+  });
+  html += '</div>';
+  return html;
+}
+
+// ============================================================
+// TOGGLE
+// ============================================================
+function toggleGroup(el) {
+  el.classList.toggle('open');
+}
+
+function toggleAll(dayId, open) {
+  const section = document.getElementById(dayId);
+  if (!section) return;
+  section.querySelectorAll('.time-group').forEach(tg => {
+    if (open) tg.classList.add('open');
+    else tg.classList.remove('open');
+  });
+}
+
+// ============================================================
+// SEONGNAM ONLY FILTER
+// ============================================================
+const seongnamOnlyState = {}; // dayId → boolean
+
+function toggleSeongnamOnly(dayId, btn) {
+  seongnamOnlyState[dayId] = !seongnamOnlyState[dayId];
+  const isOn = seongnamOnlyState[dayId];
+  btn.classList.toggle('active', isOn);
+  btn.textContent = isOn ? '⭐ 성남팀 only ON' : '⭐ 성남팀 only';
+  applySeongnamFilter(dayId, isOn);
+}
+
+function applySeongnamFilter(dayId, isOn) {
+  const section = document.getElementById(dayId);
+  if (!section) return;
+
+  section.querySelectorAll('.time-group').forEach(tg => {
+    if (!isOn) {
+      tg.classList.remove('hidden');
+      return;
+    }
+    // 이 경기에 성남팀 선수가 있는지 확인
+    const hasSeongnam = Array.from(tg.querySelectorAll('.athlete-name.seongnam')).length > 0;
+    if (hasSeongnam) {
+      tg.classList.remove('hidden');
+      tg.classList.add('open'); // 자동 펼치기
+    } else {
+      tg.classList.add('hidden');
+    }
+  });
+}
+
+// ============================================================
+// DAY FILTER
+// ============================================================
+function filterDay(day, btn) {
+  document.querySelectorAll('.day-tab').forEach(b => b.classList.remove('active'));
+  btn.classList.add('active');
+
+  document.querySelectorAll('.day-section').forEach(s => {
+    if (day === 'all' || s.id === day) {
+      s.classList.remove('hidden');
+      // 성남팀 only 상태 유지 재적용
+      if (seongnamOnlyState[s.id]) applySeongnamFilter(s.id, true);
+    } else {
+      s.classList.add('hidden');
+    }
+  });
+}
+
+// ============================================================
+// SEARCH
+// ============================================================
+const searchInput = document.getElementById('searchInput');
+const searchResults = document.getElementById('searchResults');
+const searchCount = document.getElementById('searchCount');
+
+searchInput.addEventListener('input', handleSearch);
+searchInput.addEventListener('keydown', e => {
+  if (e.key === 'Escape') { closeSearch(); searchInput.blur(); }
+});
+
+document.addEventListener('click', e => {
+  if (!e.target.closest('.search-box')) closeSearch();
+});
+
+function handleSearch() {
+  const q = searchInput.value.trim();
+  clearHighlights();
+
+  if (!q) {
+    closeSearch();
+    searchCount.textContent = '';
+    return;
+  }
+
+  const results = athleteIndex.filter(a => a.name.includes(q));
+  searchCount.textContent = results.length ? `${results.length}건` : '없음';
+
+  if (!results.length) {
+    searchResults.innerHTML = '<div class="search-result-item"><span class="result-name">검색 결과 없음</span></div>';
+    searchResults.style.display = 'block';
+    return;
+  }
+
+  searchResults.innerHTML = results.slice(0, 20).map((r, i) => `
+    <div class="search-result-item" onclick="goToAthlete(${athleteIndex.indexOf(r)})">
+      <div>
+        <div class="result-name">${r.name}</div>
+        <div class="result-meta">${r.day} · ${r.eventName} · ${r.heatName} · ${r.org}</div>
+      </div>
+    </div>
+  `).join('');
+  searchResults.style.display = 'block';
+}
+
+function goToAthlete(idx) {
+  const r = athleteIndex[idx];
+  closeSearch();
+  clearHighlights();
+  searchInput.value = r.name;
+  searchCount.textContent = '';
+
+  // Show all days (reset filter)
+  document.querySelectorAll('.day-tab').forEach(b => b.classList.remove('active'));
+  document.querySelector('.day-tab.all').classList.add('active');
+  document.querySelectorAll('.day-section').forEach(s => s.classList.remove('hidden'));
+
+  // Open the event group
+  const eventEl = document.getElementById(r.eventUid);
+  if (eventEl) {
+    eventEl.classList.add('open');
+    setTimeout(() => {
+      const heatEl = document.getElementById(r.heatUid);
+      if (heatEl) {
+        heatEl.classList.add('highlight');
+        heatEl.querySelectorAll('.heat-athlete').forEach(row => {
+          if (row.dataset.name === r.name) {
+            row.classList.add('highlighted');
+          }
+        });
+      }
+      eventEl.scrollIntoView({ behavior: 'smooth', block: 'start' });
+    }, 50);
+  }
+}
+
+function clearHighlights() {
+  document.querySelectorAll('.heat-card.highlight').forEach(el => el.classList.remove('highlight'));
+  document.querySelectorAll('.heat-athlete.highlighted').forEach(el => el.classList.remove('highlighted'));
+}
+
+function closeSearch() {
+  searchResults.style.display = 'none';
+}
+
+renderSchedule();
+filterDay('all', document.querySelector('.day-tab.all'));
+</script>
+</body>
+</html>
