@@ -805,28 +805,28 @@ const scheduleData = [
       num: 6, time: '09:05', name: '남자초등3,4학년 1500M 준결승', meta: '3조 (T2+1)',
       heats: [
         { heatName: '준결승 1조', athletes: [
-          {lane:'흰W',name:'김태윤',org:'성남송현초등학교'},
-          {lane:'노Y',name:'전장현',org:'성라초등학교'},
-          {lane:'빨R',name:'조준형',org:'안양부안초등학교'},
-          {lane:'파B',name:'박서준',org:'수원중촌초등학교'},
-          {lane:'보V',name:'정예찬',org:'서울광희초등학교'},
-          {lane:'검B',name:'하지혁',org:'서울가락초등학교'},
+          {lane:'흰W',name:'김태윤',org:'성남송현초등학교',record:'02:49.868'},
+          {lane:'노Y',name:'전장현',org:'성라초등학교',record:'02:56.020'},
+          {lane:'빨R',name:'조준형',org:'안양부안초등학교',record:'02:56.037'},
+          {lane:'파B',name:'박서준',org:'수원중촌초등학교',record:'NO TIME'},
+          {lane:'보V',name:'정예찬',org:'서울광희초등학교',record:'02:50.805'},
+          {lane:'검B',name:'하지혁',org:'서울가락초등학교',record:'02:50.038'},
         ]},
         { heatName: '준결승 2조', athletes: [
-          {lane:'흰W',name:'백준우',org:'성남매송초등학교'},
-          {lane:'노Y',name:'이강우',org:'용인둔전초등학교'},
-          {lane:'빨R',name:'김이겸',org:'성남송현초등학교'},
-          {lane:'파B',name:'김태호',org:'버들개초등학교'},
-          {lane:'보V',name:'이하준',org:'인천일반'},
-          {lane:'검B',name:'배준민',org:'대구달산초등학교'},
+          {lane:'흰W',name:'백준우',org:'성남매송초등학교',record:'02:48.911'},
+          {lane:'노Y',name:'이강우',org:'용인둔전초등학교',record:'02:50.856'},
+          {lane:'빨R',name:'김이겸',org:'성남송현초등학교',record:'02:49.005'},
+          {lane:'파B',name:'김태호',org:'버들개초등학교',record:'02:50.288'},
+          {lane:'보V',name:'이하준',org:'인천일반',record:'02:49.320'},
+          {lane:'검B',name:'배준민',org:'대구달산초등학교',record:'02:49.242'},
         ]},
         { heatName: '준결승 3조', athletes: [
-          {lane:'흰W',name:'전이준',org:'서울금북초등학교'},
-          {lane:'노Y',name:'박건우',org:'고양화수초등학교'},
-          {lane:'빨R',name:'김태평',org:'버들개초등학교'},
-          {lane:'파B',name:'이지헌',org:'목운초등학교'},
-          {lane:'보V',name:'윤태인',org:'원중초등학교'},
-          {lane:'검B',name:'이시안',org:'광주상무초등학교'},
+          {lane:'흰W',name:'전이준',org:'서울금북초등학교',record:'02:55.775'},
+          {lane:'노Y',name:'박건우',org:'고양화수초등학교',record:'02:55.729'},
+          {lane:'빨R',name:'김태평',org:'버들개초등학교',record:'02:55.513'},
+          {lane:'파B',name:'이지헌',org:'목운초등학교',record:'02:55.919'},
+          {lane:'보V',name:'윤태인',org:'원중초등학교',record:'02:55.582'},
+          {lane:'검B',name:'이시안',org:'광주상무초등학교',record:'03:09.240'},
         ]},
       ]
     },
@@ -908,7 +908,15 @@ const scheduleData = [
     },
     {
       num: 12, time: '10:15', name: '남자초등3,4학년 1500M 결승', meta: '',
-      heats: [ { heatName: '결승', athletes: [] } ]
+      heats: [ { heatName: '결승', athletes: [
+        {lane:'흰W',name:'백준우',org:'성남매송초등학교'},
+        {lane:'노Y',name:'김이겸',org:'성남송현초등학교'},
+        {lane:'빨R',name:'배준민',org:'대구달산초등학교'},
+        {lane:'파B',name:'김태윤',org:'성남송현초등학교'},
+        {lane:'보V',name:'하지혁',org:'서울가락초등학교'},
+        {lane:'검B',name:'김태평',org:'버들개초등학교'},
+        {lane:'주O',name:'윤태인',org:'원중초등학교'},
+      ] } ]
     },
     {
       num: 13, time: '10:15', name: '남자초등5,6학년 1500M 결승', meta: '',
