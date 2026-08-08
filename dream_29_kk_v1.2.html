@@ -1,0 +1,1286 @@
+<!DOCTYPE html>
+<html lang="ko">
+<head>
+<meta charset="UTF-8">
+<meta name="viewport" content="width=device-width, initial-scale=1.0">
+<title>제29회 전국남녀 쇼트트랙 꿈나무선수권 경기도대표 선발대회</title>
+<link href="https://fonts.googleapis.com/css2?family=Black+Han+Sans&family=Noto+Sans+KR:wght@300;400;500;700&display=swap" rel="stylesheet">
+<style>
+  :root {
+    --deep: #0a1628;
+    --blue: #1a6fa8;
+    --accent: #00c9ff;
+    --gold: #f5c842;
+    --card: #0f2540;
+    --border: #1e3f62;
+    --text: #cde0f0;
+    --muted: #6a8fa8;
+    --day1: #1a6fa8;
+  }
+
+  * { margin: 0; padding: 0; box-sizing: border-box; }
+
+  body {
+    background: var(--deep);
+    color: var(--text);
+    font-family: 'Noto Sans KR', sans-serif;
+    min-height: 100vh;
+    overflow-x: hidden;
+  }
+
+  body::before {
+    content: '';
+    position: fixed;
+    inset: 0;
+    background:
+      radial-gradient(ellipse 80% 40% at 50% 20%, rgba(0,201,255,0.06) 0%, transparent 70%),
+      radial-gradient(ellipse 60% 60% at 80% 80%, rgba(26,111,168,0.08) 0%, transparent 60%);
+    pointer-events: none;
+    z-index: 0;
+  }
+
+  .container { position: relative; z-index: 1; max-width: 1100px; margin: 0 auto; padding: 0 4px 50px; }
+  @media (min-width: 600px) { .container { padding: 0 14px 60px; } }
+
+  /* Header */
+  header {
+    text-align: center;
+    padding: 14px 0 12px;
+    border-bottom: 1px solid var(--border);
+    margin-bottom: 12px;
+  }
+
+  header h1 {
+    font-family: 'Black Han Sans', sans-serif;
+    font-size: clamp(17px, 3.5vw, 28px);
+    letter-spacing: -0.5px;
+    line-height: 1.3;
+    background: linear-gradient(135deg, #fff 0%, var(--accent) 100%);
+    -webkit-background-clip: text;
+    -webkit-text-fill-color: transparent;
+    background-clip: text;
+    margin-bottom: 6px;
+  }
+
+  .date-chips { display: flex; justify-content: center; gap: 10px; margin-top: 4px; flex-wrap: wrap; }
+
+  .date-chip {
+    padding: 3px 14px;
+    border-radius: 20px;
+    font-size: 12px;
+    font-weight: 500;
+    color: var(--muted);
+    letter-spacing: 0.5px;
+  }
+
+  .cheer-text {
+    margin-top: 4px;
+    font-size: 11px;
+    color: #ffe066;
+    letter-spacing: 1px;
+    font-weight: 700;
+    opacity: 0.85;
+  }
+
+  .notice-text {
+    margin-top: 6px;
+    font-size: 10px;
+    color: var(--muted);
+    letter-spacing: 0.3px;
+    line-height: 1.5;
+  }
+
+  /* Search */
+  .search-wrap {
+    position: sticky;
+    top: 0;
+    z-index: 100;
+    background: rgba(10,22,40,0.95);
+    backdrop-filter: blur(12px);
+    padding: 8px 0;
+    border-bottom: 1px solid var(--border);
+    margin-bottom: 12px;
+  }
+
+  .search-inner {
+    max-width: 1100px;
+    margin: 0 auto;
+    padding: 0 8px;
+    display: flex;
+    gap: 10px;
+    align-items: center;
+  }
+
+  .search-box { flex: 1; position: relative; }
+
+  .search-icon {
+    position: absolute;
+    left: 14px; top: 50%;
+    transform: translateY(-50%);
+    color: var(--muted);
+    font-size: 16px;
+  }
+
+  #searchInput {
+    width: 100%;
+    background: var(--card);
+    border: 1px solid var(--border);
+    border-radius: 10px;
+    padding: 9px 14px 9px 40px;
+    color: white;
+    font-size: 14px;
+    font-family: 'Noto Sans KR', sans-serif;
+    transition: border-color 0.2s, box-shadow 0.2s;
+    outline: none;
+  }
+
+  #searchInput:focus { border-color: var(--accent); box-shadow: 0 0 0 3px rgba(0,201,255,0.12); }
+  #searchInput::placeholder { color: var(--muted); }
+
+  #searchCount {
+    font-size: 12px;
+    color: var(--accent);
+    white-space: nowrap;
+    font-weight: 600;
+    min-width: 44px;
+    text-align: right;
+  }
+
+  #searchResults {
+    position: absolute;
+    top: 100%; left: 0; right: 0;
+    background: var(--card);
+    border: 1px solid var(--border);
+    border-top: none;
+    border-radius: 0 0 10px 10px;
+    max-height: 260px;
+    overflow-y: auto;
+    z-index: 200;
+    display: none;
+    box-shadow: 0 12px 32px rgba(0,0,0,0.5);
+  }
+
+  .search-result-item {
+    padding: 10px 16px;
+    cursor: pointer;
+    border-bottom: 1px solid rgba(30,63,98,0.5);
+    transition: background 0.15s;
+  }
+  .search-result-item:hover { background: rgba(0,201,255,0.08); }
+  .search-result-item:last-child { border-bottom: none; }
+  .result-name { font-weight: 600; font-size: 14px; color: white; }
+  .result-meta { font-size: 12px; color: var(--muted); }
+
+  /* Distance tabs */
+  .day-tabs { display: flex; gap: 5px; margin-bottom: 10px; flex-wrap: nowrap; }
+
+  .day-tab {
+    padding: 8px 0;
+    border-radius: 8px;
+    font-size: 12px;
+    font-weight: 700;
+    cursor: pointer;
+    border: 1px solid var(--border);
+    background: rgba(255,255,255,0.05);
+    color: var(--text);
+    font-family: 'Noto Sans KR', sans-serif;
+    transition: all 0.2s;
+    letter-spacing: 0.3px;
+    white-space: nowrap;
+    flex: 1;
+    text-align: center;
+  }
+  .day-tab:hover { background: rgba(255,255,255,0.12); color: white; }
+  .day-tab.active {
+    background: var(--day1);
+    border-color: var(--day1);
+    color: white;
+    box-shadow: 0 0 10px rgba(26,111,168,0.4);
+  }
+
+  /* Group chips */
+  .group-tabs { display: flex; gap: 4px; margin-bottom: 12px; flex-wrap: wrap; }
+
+  .group-tab {
+    padding: 5px 9px;
+    border-radius: 20px;
+    font-size: 11px;
+    font-weight: 600;
+    cursor: pointer;
+    border: 1px solid var(--border);
+    background: rgba(255,255,255,0.04);
+    color: var(--muted);
+    font-family: 'Noto Sans KR', sans-serif;
+    transition: all 0.15s;
+  }
+  .group-tab:hover { color: var(--text); background: rgba(255,255,255,0.1); }
+  .group-tab.active { background: rgba(0,201,255,0.16); border-color: var(--accent); color: var(--accent); }
+
+  /* Day section */
+  .day-section { margin-bottom: 24px; }
+
+  .day-header {
+    display: flex;
+    align-items: center;
+    gap: 10px;
+    margin-bottom: 12px;
+    padding-bottom: 9px;
+    border-bottom: 1px solid var(--border);
+  }
+
+  .day-dot {
+    width: 12px; height: 12px;
+    border-radius: 50%;
+    flex-shrink: 0;
+    background: var(--day1);
+    box-shadow: 0 0 10px var(--day1);
+  }
+
+  .day-title { font-family: 'Black Han Sans', sans-serif; font-size: 18px; letter-spacing: 0.5px; }
+  .day-date { font-size: 11px; color: var(--muted); margin-left: auto; letter-spacing: 0.8px; }
+
+  /* Event group */
+  .time-group {
+    margin-bottom: 6px;
+    border: 1px solid rgba(26,111,168,0.5);
+    border-radius: 12px;
+    overflow: hidden;
+    transition: box-shadow 0.2s, border-color 0.2s;
+  }
+  .time-group:hover { box-shadow: 0 4px 20px rgba(26,111,168,0.14); }
+
+  .time-group-header {
+    display: flex;
+    align-items: center;
+    gap: 7px;
+    padding: 9px 8px;
+    background: var(--card);
+    cursor: pointer;
+    user-select: none;
+    transition: background 0.15s;
+  }
+  .time-group-header:hover { background: rgba(255,255,255,0.04); }
+
+  .time-badge {
+    font-size: 11px;
+    font-weight: 700;
+    padding: 2px 7px;
+    border-radius: 6px;
+    letter-spacing: 0.5px;
+    flex-shrink: 0;
+    background: rgba(26,111,168,0.25);
+    color: #7ec8f0;
+    min-width: 34px;
+    text-align: center;
+  }
+  .time-badge.no { background: rgba(255,255,255,0.06); color: var(--muted); }
+
+  .event-header-main { flex: 1; min-width: 0; display: flex; flex-direction: column; gap: 2px; }
+
+  .event-name {
+    font-size: 13px;
+    font-weight: 600;
+    color: white;
+    line-height: 1.35;
+    white-space: normal;
+    word-break: keep-all;
+  }
+
+  .event-meta {
+    font-size: 10px;
+    color: var(--muted);
+    display: flex;
+    flex-direction: column;
+    align-items: flex-end;
+    flex-shrink: 0;
+    gap: 1px;
+    text-align: right;
+  }
+  .event-meta-round { white-space: nowrap; }
+  .event-meta-detail { opacity: 0.7; white-space: nowrap; }
+
+  .toggle-icon { color: var(--muted); font-size: 15px; transition: transform 0.25s; flex-shrink: 0; }
+  .time-group.open .toggle-icon { transform: rotate(180deg); }
+
+  .time-group-body {
+    display: none;
+    padding: 0 5px 8px;
+    background: rgba(10,22,40,0.5);
+    border-top: 1px solid var(--border);
+  }
+  @media (min-width: 600px) { .time-group-body { padding: 0 14px 14px; } }
+  .time-group.open .time-group-body { display: block; }
+
+  /* Heats */
+  .heats-grid {
+    display: grid;
+    grid-template-columns: repeat(auto-fill, minmax(280px, 1fr));
+    gap: 8px;
+    margin-top: 10px;
+  }
+
+  .heat-card {
+    background: var(--card);
+    border: 1px solid rgba(26,111,168,0.3);
+    border-radius: 10px;
+    overflow: hidden;
+    transition: border-color 0.2s, box-shadow 0.2s;
+  }
+  .heat-card:hover { border-color: var(--accent); box-shadow: 0 2px 12px rgba(0,201,255,0.1); }
+  .heat-card.highlight {
+    border-color: var(--gold) !important;
+    box-shadow: 0 0 0 2px rgba(245,200,66,0.25), 0 4px 20px rgba(245,200,66,0.15) !important;
+  }
+
+  .heat-title {
+    padding: 7px 12px;
+    font-size: 11px;
+    font-weight: 700;
+    letter-spacing: 1px;
+    text-align: center;
+    border-bottom: 1px solid var(--border);
+    background: rgba(26,111,168,0.2);
+    color: #7ec8f0;
+  }
+
+  .heat-athletes { list-style: none; padding: 4px 0; }
+
+  .heat-athlete {
+    display: flex;
+    align-items: center;
+    gap: 7px;
+    padding: 5px 9px;
+    font-size: 13px;
+    transition: background 0.15s;
+  }
+  .heat-athlete:hover { background: rgba(255,255,255,0.04); }
+  .heat-athlete.highlighted { background: rgba(245,200,66,0.12); border-radius: 5px; }
+
+  .lane-dot {
+    width: 10px; height: 10px;
+    border-radius: 50%;
+    flex-shrink: 0;
+    border: 1.5px solid rgba(255,255,255,0.2);
+  }
+
+  .athlete-name { font-weight: 500; color: #e0eefa; flex: 1; }
+  .athlete-org { font-size: 10px; color: var(--muted); text-align: right; max-width: 100px; line-height: 1.3; }
+
+  .athlete-record {
+    font-size: 11px;
+    font-weight: 700;
+    color: var(--accent);
+    white-space: nowrap;
+    flex-shrink: 0;
+    min-width: 66px;
+    text-align: right;
+  }
+  .athlete-record.dnf { color: #e63946; font-size: 10px; }
+
+  .rank-badge {
+    font-size: 10px;
+    font-weight: 800;
+    color: var(--muted);
+    min-width: 14px;
+    text-align: center;
+    flex-shrink: 0;
+  }
+  .rank-badge.r1 { color: #f5c842; }
+  .rank-badge.r2 { color: #b8c4cc; }
+  .rank-badge.r3 { color: #cd7f32; }
+
+  .q-badge {
+    font-size: 9px;
+    font-weight: 800;
+    color: #06263d;
+    background: var(--accent);
+    border-radius: 3px;
+    padding: 1px 4px;
+    letter-spacing: 0.5px;
+    flex-shrink: 0;
+  }
+  .q-badge.plus { background: #7fe3a0; }
+
+  /* Lane colors */
+  .lane-white  { background: #f0f0f0; }
+  .lane-yellow { background: #f5c842; }
+  .lane-red    { background: #e63946; }
+  .lane-blue   { background: #4895ef; }
+  .lane-violet { background: #9b5de5; }
+  .lane-black  { background: #3a3a4a; }
+  .lane-orange { background: #f4823a; }
+  .lane-green  { background: #2fbf71; }
+
+  .athlete-name.seongnam { color: #ffe066; font-weight: 700; }
+  .athlete-name.seongnam::after {
+    content: ' ✓';
+    font-size: 11px;
+    font-weight: 900;
+    color: #ffe066;
+    vertical-align: middle;
+  }
+
+  /* Ice resurfacing */
+  .ice-break {
+    display: flex;
+    align-items: center;
+    gap: 10px;
+    padding: 6px 12px;
+    background: rgba(0,201,255,0.04);
+    border: 1px solid rgba(0,201,255,0.12);
+    border-radius: 8px;
+    margin: 4px 0;
+  }
+  .ice-break-time {
+    font-size: 11px;
+    font-weight: 700;
+    color: var(--accent);
+    opacity: 0.75;
+    letter-spacing: 0.5px;
+    min-width: 38px;
+    flex-shrink: 0;
+  }
+  .ice-break-label {
+    font-size: 11px;
+    color: rgba(0,201,255,0.6);
+    letter-spacing: 0.5px;
+    white-space: nowrap;
+  }
+  .ice-break-line { flex: 1; height: 1px; background: linear-gradient(to right, rgba(0,201,255,0.2), transparent); }
+
+  .tbd-note { text-align: center; color: var(--muted); font-size: 12px; padding: 12px; font-style: italic; }
+
+  .highlight-target { scroll-margin-top: 62px; }
+
+  /* Controls */
+  .section-controls { display: flex; gap: 6px; margin-bottom: 10px; flex-wrap: wrap; }
+
+  .ctrl-btn {
+    padding: 6px 10px;
+    font-size: 11px;
+    font-weight: 600;
+    letter-spacing: 0.4px;
+    border-radius: 6px;
+    cursor: pointer;
+    border: 1px solid var(--border);
+    background: rgba(255,255,255,0.04);
+    color: var(--muted);
+    font-family: 'Noto Sans KR', sans-serif;
+    transition: all 0.15s;
+  }
+  .ctrl-btn:hover { background: rgba(255,255,255,0.1); color: var(--text); }
+
+  .ctrl-btn.seongnam-btn {
+    border-color: rgba(255,224,102,0.4);
+    color: #ffe066;
+    background: rgba(255,224,102,0.06);
+    margin-left: auto;
+  }
+  .ctrl-btn.seongnam-btn:hover { background: rgba(255,224,102,0.15); color: #ffe066; }
+  .ctrl-btn.seongnam-btn.active {
+    background: rgba(255,224,102,0.22);
+    border-color: #ffe066;
+    color: #ffe066;
+    box-shadow: 0 0 8px rgba(255,224,102,0.25);
+  }
+
+  /* Master control sheet */
+  .master-block { margin-bottom: 18px; }
+
+  .master-block-title {
+    font-size: 12px;
+    font-weight: 700;
+    color: var(--accent);
+    letter-spacing: 0.5px;
+    margin: 0 0 6px 2px;
+    display: flex;
+    align-items: baseline;
+    gap: 6px;
+  }
+  .master-block-title .cnt { color: var(--muted); font-weight: 500; font-size: 10px; }
+
+  .table-scroll {
+    overflow-x: auto;
+    border: 1px solid var(--border);
+    border-radius: 10px;
+    background: var(--card);
+    -webkit-overflow-scrolling: touch;
+  }
+
+  table.master { border-collapse: separate; border-spacing: 0; width: 100%; font-size: 11px; white-space: nowrap; }
+
+  table.master th, table.master td {
+    border-right: 1px solid rgba(30,63,98,0.9);
+    border-bottom: 1px solid rgba(30,63,98,0.9);
+    padding: 4px 5px;
+    text-align: center;
+  }
+
+  table.master thead th {
+    background: #143255;
+    color: #9fd4f0;
+    font-weight: 700;
+    font-size: 10px;
+    letter-spacing: 0.3px;
+    position: sticky;
+    top: 0;
+  }
+  table.master thead th.dist-head { background: #17406b; color: #d6efff; }
+
+  table.master td { background: var(--card); }
+  table.master td.name { text-align: left; font-weight: 600; color: #e0eefa; }
+  table.master td.name.seongnam { color: #ffe066; }
+  table.master td.org { text-align: left; color: var(--muted); font-size: 10px; }
+  table.master td.fa { background: rgba(72,149,239,0.16); font-weight: 700; color: #bcdcff; }
+  table.master td.rk { background: rgba(245,200,66,0.10); font-weight: 700; color: #f0d891; }
+  table.master td.fp { font-weight: 800; color: #ffffff; }
+  table.master td.trk { background: rgba(245,200,66,0.18); font-weight: 800; color: var(--gold); }
+  table.master td.pen { color: #e63946; font-size: 9px; letter-spacing: 0; }
+
+  table.master th.c-no, table.master td.c-no { position: sticky; left: 0; z-index: 2; min-width: 26px; }
+  table.master th.c-name, table.master td.c-name { position: sticky; left: 26px; z-index: 2; min-width: 58px; }
+  table.master thead th.c-no, table.master thead th.c-name { z-index: 3; }
+
+  .master-note { font-size: 10px; color: var(--muted); margin: 8px 2px 0; line-height: 1.6; }
+
+  ::-webkit-scrollbar { width: 6px; height: 6px; }
+  ::-webkit-scrollbar-track { background: var(--deep); }
+  ::-webkit-scrollbar-thumb { background: var(--border); border-radius: 3px; }
+
+  .hidden { display: none !important; }
+
+  .updated-at { text-align: center; font-size: 10px; color: var(--muted); padding: 16px 0 0; letter-spacing: 0.5px; }
+
+  @media (max-width: 600px) {
+    .heats-grid { grid-template-columns: 1fr; }
+    header h1 { font-size: 19px; }
+    .search-inner { padding: 0 4px; }
+    .athlete-org { max-width: 110px; }
+    .day-tab { font-size: 11px; }
+  }
+</style>
+</head>
+<body>
+
+<div class="search-wrap">
+  <div class="search-inner">
+    <div class="search-box">
+      <span class="search-icon">🔍</span>
+      <input type="text" id="searchInput" placeholder="선수 이름으로 검색..." autocomplete="off">
+      <div id="searchResults"></div>
+    </div>
+    <span id="searchCount"></span>
+  </div>
+</div>
+
+<div class="container">
+  <header>
+    <h1>제29회 전국남녀 쇼트트랙<br>꿈나무선수권 경기도대표 선발대회</h1>
+    <div class="date-chips">
+      <span class="date-chip">2026년 8월 15일(토) 18:00 · 성남 탄천 실내빙상장</span>
+    </div>
+    <div class="cheer-text">🏆 성남팀 화이팅!!</div>
+    <div class="notice-text">※ 좌측 시각은 해당 경기가 속한 세션의 시작 시각입니다<br>※ 경기 당일 사정에 따라 일정이 변동될 수 있으니 수시로 확인해주세요</div>
+  </header>
+
+  <div class="day-tabs" id="distTabs"></div>
+  <div class="group-tabs" id="groupTabs"></div>
+
+  <div id="schedule"></div>
+  <div id="master"></div>
+
+  <div class="updated-at" id="updatedAt"></div>
+</div>
+
+<script>
+// ============================================================
+// 업데이트 안내
+// ------------------------------------------------------------
+// 기록 입력: 선수 문자열 뒤에 기록을 한 칸 띄고 붙이면 됩니다.
+//   '한지아 이매초'  →  '한지아 이매초 02:31.801'
+//   실격/불참은      →  '한지아 이매초 PEN'  (DNF, DNS, DSQ 도 동일)
+// 기록이 하나라도 들어간 조는 자동으로 기록순 정렬 + 순위 뱃지가 붙습니다.
+// 다음 라운드 조편성이 나오면 숫자(예: 5)를 선수 배열로 바꿔 주세요.
+// UPDATED 값을 바꾸면 화면 하단 업데이트 시각이 바뀝니다.
+// ============================================================
+const UPDATED = '2026-08-07 수정 일정표 · 조편성 기준';
+
+// 성남팀 선수 명단
+const SEONGNAM_TEAM = new Set([
+  '최하빈','이소윤','한지아','임정현',
+  '백시원','백준우','김이겸',
+]);
+
+// 출발 위치(아웃코스) — 조 안의 순서대로 배정됩니다
+const LANES = [
+  { cls: 'lane-white',  label: '흰(W)' },
+  { cls: 'lane-yellow', label: '노(Y)' },
+  { cls: 'lane-red',    label: '빨(R)' },
+  { cls: 'lane-blue',   label: '파(B)' },
+  { cls: 'lane-violet', label: '보(V)' },
+  { cls: 'lane-black',  label: '검(B)' },
+  { cls: 'lane-orange', label: '주(O)' },
+  { cls: 'lane-green',  label: '초(G)' },
+];
+
+const GROUPS = {
+  W56: '여자 5-6학년', W34: '여자 3-4학년', W12: '여자 1-2학년',
+  M56: '남자 5-6학년', M34: '남자 3-4학년', M12: '남자 1-2학년',
+};
+
+// ============================================================
+// 경기 일정 · 조편성  (제29회 예선 프로그램 / 감독자회의 자료)
+//   heats 의 원소 = 선수 배열(조편성 확정) 또는 숫자(자리 수만 정해진 미정 조)
+// ============================================================
+const PROGRAM = [
+  { ice: '빙판정리 및 시합준비 (18:00~18:10 날 검사 / 소집장소)', time:'18:00' },
+
+  // ── 18:30 · 1500M 준결승 ────────────────────────────────
+  { n:1, time:'18:30', dist:'1500M', grp:'W34', round:'준결승', adv:'2조 (T3+1)', heats:[
+    ['한지아 이매초','박서아 성남매송초','김태리 판교초','최에스더 안양중앙초','박지선 성남신흥초'],
+    ['이유주 세곡초','김태희 성남송현초','김은우 과천율목초','김수리 판교초'],
+  ]},
+  { n:2, time:'18:30', dist:'1500M', grp:'W56', round:'준결승', adv:'3조 (T2+1)', heats:[
+    ['김세원 곡정초','김소율 김포고창초','이소윤 죽전초','신혜담 가현초','박규리 양주덕현초'],
+    ['김연우 평촌초','유지안 과천갈현초','최하빈 CIYA국제학교','정은채 이의초','박나은 청계초'],
+    ['곽혜원 안일초','이채아 박달초','강세윤 오마초','김서진 삼봉초','이지우 수원송림초','조민지 궁내초'],
+  ]},
+  { n:3, time:'18:30', dist:'1500M', grp:'M34', round:'준결승', adv:'2조 (T3+1)', heats:[
+    ['김태윤 성남송현초','이강우 용인둔전초','전장현 성라초','박서준 수원중촌초','김태호 버들개초'],
+    ['백준우 성남매송초','박건우 고양화수초','조준형 안양부안초','김태평 버들개초','윤태인 원중초','김이겸 성남송현초'],
+  ]},
+  { n:4, time:'18:30', dist:'1500M', grp:'M56', round:'준결승', adv:'3조 (T2+1)', heats:[
+    ['최지안 수원원일초','김시환 청수초','이승호 김포고창초','안정빈 성남매송초','백시원 한별초'],
+    ['김하루 원흥초','김현종 과천갈현초','임정현 의정부청룡초','양성빈 하안북초','강구윤 초롱초'],
+    ['허태영 보름초','유세윤 이솔초','김태이 버들개초','송지호 청수초','엄태율 은빛초','황시원 삼봉초'],
+  ]},
+  { ice: '빙판정리', time:'19:20' },
+
+  // ── 19:35 · 1500M 결승 ──────────────────────────────────
+  { n:5, time:'19:35', dist:'1500M', grp:'W34', round:'결승', heats:[7] },
+  { n:6, time:'19:35', dist:'1500M', grp:'W56', round:'결승', heats:[7] },
+  { n:7, time:'19:35', dist:'1500M', grp:'M34', round:'결승', heats:[7] },
+  { n:8, time:'19:35', dist:'1500M', grp:'M56', round:'결승', heats:[7] },
+  { ice: '빙판정리 (Full)', time:'19:55' },
+
+  // ── 20:10 · 500M 준준결승 ───────────────────────────────
+  { n:9, time:'20:10', dist:'500M', grp:'W56', round:'준준결승', adv:'4조 (T2+2)', heats:[
+    ['김세원 곡정초','이지우 수원송림초','김서진 삼봉초','강세윤 오마초'],
+    ['곽혜원 안일초','이채아 박달초','박규리 양주덕현초','최하빈 CIYA국제학교'],
+    ['김연우 평촌초','김소율 김포고창초','박나은 청계초','정은채 이의초'],
+    ['유지안 과천갈현초','이소윤 죽전초','신혜담 가현초','조민지 궁내초'],
+  ]},
+  { n:10, time:'20:10', dist:'500M', grp:'M34', round:'준준결승', adv:'3조 (T2+2)', heats:[
+    ['백준우 성남매송초','전장현 성라초','김이겸 성남송현초'],
+    ['조준형 안양부안초','박건우 고양화수초','김태호 버들개초','박서준 수원중촌초'],
+    ['이강우 용인둔전초','김태윤 성남송현초','김태평 버들개초','윤태인 원중초'],
+  ]},
+  { n:11, time:'20:10', dist:'500M', grp:'M56', round:'준준결승', adv:'4조 (T2+2)', heats:[
+    ['최지안 수원원일초','엄태율 은빛초','양성빈 하안북초','송지호 청수초'],
+    ['김시환 청수초','이승호 김포고창초','황시원 삼봉초','김태이 버들개초'],
+    ['유세윤 이솔초','김현종 과천갈현초','안정빈 성남매송초','임정현 의정부청룡초'],
+    ['허태영 보름초','김하루 원흥초','백시원 한별초','강구윤 초롱초'],
+  ]},
+  { ice: '빙판정리', time:'20:40' },
+
+  // ── 20:55 · 500M 준결승 ─────────────────────────────────
+  { n:12, time:'20:55', dist:'500M', grp:'W34', round:'준결승', adv:'2조 (T2+1)', heats:[
+    ['이유주 세곡초','박서아 성남매송초','김태리 판교초','김은우 과천율목초','박지선 성남신흥초'],
+    ['김태희 성남송현초','한지아 이매초','최에스더 안양중앙초','김수리 판교초'],
+  ]},
+  { n:13, time:'20:55', dist:'500M', grp:'W56', round:'준결승', adv:'2조 (T2+1)', heats:[5,5] },
+  { n:14, time:'20:55', dist:'500M', grp:'M34', round:'준결승', adv:'2조 (T2+1)', heats:[4,4] },
+  { n:15, time:'20:55', dist:'500M', grp:'M56', round:'준결승', adv:'2조 (T2+1)', heats:[5,5] },
+  { ice: '빙판정리', time:'21:20' },
+
+  // ── 21:35 · 500M 결승 ───────────────────────────────────
+  { n:16, time:'21:35', dist:'500M', grp:'W12', round:'결승', heats:[['이예하 공세초']] },
+  { n:17, time:'21:35', dist:'500M', grp:'W34', round:'결승', heats:[5] },
+  { n:18, time:'21:35', dist:'500M', grp:'W56', round:'결승', heats:[5] },
+  { n:19, time:'21:35', dist:'500M', grp:'M12', round:'결승', heats:[['송차호 초림초']] },
+  { n:20, time:'21:35', dist:'500M', grp:'M34', round:'결승', heats:[5] },
+  { n:21, time:'21:35', dist:'500M', grp:'M56', round:'결승', heats:[5] },
+  { ice: '빙판정리 (Full)', time:'21:50' },
+
+  // ── 22:05 · 1000M 준준결승 ──────────────────────────────
+  { n:22, time:'22:05', dist:'1000M', grp:'W56', round:'준준결승', adv:'4조 (T2+2)', heats:[
+    ['김연우 평촌초','이지우 수원송림초','최하빈 CIYA국제학교','정은채 이의초'],
+    ['이소윤 죽전초','김세원 곡정초','조민지 궁내초','박규리 양주덕현초'],
+    ['유지안 과천갈현초','김소율 김포고창초','신혜담 가현초','김서진 삼봉초'],
+    ['이채아 박달초','곽혜원 안일초','박나은 청계초','강세윤 오마초'],
+  ]},
+  { n:23, time:'22:05', dist:'1000M', grp:'M34', round:'준준결승', adv:'3조 (T2+2)', heats:[
+    ['백준우 성남매송초','전장현 성라초','윤태인 원중초'],
+    ['김태윤 성남송현초','박건우 고양화수초','박서준 수원중촌초','김태평 버들개초'],
+    ['이강우 용인둔전초','조준형 안양부안초','김이겸 성남송현초','김태호 버들개초'],
+  ]},
+  { n:24, time:'22:05', dist:'1000M', grp:'M56', round:'준준결승', adv:'4조 (T2+2)', heats:[
+    ['유세윤 이솔초','송지호 청수초','양성빈 하안북초','강구윤 초롱초'],
+    ['최지안 수원원일초','이승호 김포고창초','안정빈 성남매송초','백시원 한별초'],
+    ['김시환 청수초','김하루 원흥초','황시원 삼봉초','임정현 의정부청룡초'],
+    ['허태영 보름초','김현종 과천갈현초','엄태율 은빛초','김태이 버들개초'],
+  ]},
+  { ice: '빙판정리', time:'22:40' },
+
+  // ── 22:55 · 1000M 준결승 ────────────────────────────────
+  { n:25, time:'22:55', dist:'1000M', grp:'W34', round:'준결승', adv:'2조 (T2+1)', heats:[
+    ['한지아 이매초','박서아 성남매송초','박지선 성남신흥초','김수리 판교초','김은우 과천율목초'],
+    ['김태희 성남송현초','이유주 세곡초','최에스더 안양중앙초','김태리 판교초'],
+  ]},
+  { n:26, time:'22:55', dist:'1000M', grp:'W56', round:'준결승', adv:'2조 (T2+1)', heats:[5,5] },
+  { n:27, time:'22:55', dist:'1000M', grp:'M34', round:'준결승', adv:'2조 (T2+1)', heats:[4,4] },
+  { n:28, time:'22:55', dist:'1000M', grp:'M56', round:'준결승', adv:'2조 (T2+1)', heats:[5,5] },
+  { ice: '빙판정리', time:'23:25' },
+
+  // ── 23:40 · 1000M 결승 ──────────────────────────────────
+  { n:29, time:'23:40', dist:'1000M', grp:'W34', round:'결승', heats:[5] },
+  { n:30, time:'23:40', dist:'1000M', grp:'W56', round:'결승', heats:[5] },
+  { n:31, time:'23:40', dist:'1000M', grp:'M34', round:'결승', heats:[5] },
+  { n:32, time:'23:40', dist:'1000M', grp:'M56', round:'결승', heats:[5] },
+  { ice: '경기 종료 예정', time:'23:55' },
+];
+
+// ============================================================
+// BUILD
+// ============================================================
+function parseAthlete(str) {
+  const p = String(str).trim().split(/\s+/);
+  return { name: p[0] || '', org: p[1] || '', record: p.slice(2).join(' ') || '' };
+}
+
+const items = [];
+const athleteIndex = [];
+let uid = 0;
+
+PROGRAM.forEach(p => {
+  if (p.ice) { items.push({ ice: p.ice, time: p.time || '' }); return; }
+
+  const ev = {
+    n: p.n, time: p.time || '', dist: p.dist, grp: p.grp, round: p.round,
+    adv: p.adv || '',
+    name: `${GROUPS[p.grp]} ${p.dist} ${p.round}`,
+    _uid: 'ev-' + (uid++),
+    heats: [],
+  };
+
+  (p.heats || []).forEach((h, hi) => {
+    const heat = {
+      title: `${p.round} ${hi + 1}조`,
+      _uid: ev._uid + '-h' + hi,
+      slots: typeof h === 'number' ? h : h.length,
+      athletes: typeof h === 'number' ? [] : h.map(parseAthlete),
+    };
+    ev.heats.push(heat);
+    heat.athletes.forEach(a => {
+      if (!a.name) return;
+      athleteIndex.push({
+        name: a.name, org: a.org,
+        eventName: ev.name, heatTitle: heat.title,
+        eventUid: ev._uid, heatUid: heat._uid,
+      });
+    });
+  });
+
+  items.push(ev);
+});
+
+// ============================================================
+// RENDER
+// ============================================================
+function roundIcon(r) {
+  if (r === '결승') return '🏆 결승';
+  if (r === '준결승') return '🥈 준결승';
+  if (r === '준준결승') return '🔹 준준결승';
+  return '🔸 ' + r;
+}
+
+function parseRecord(rec) {
+  if (!rec) return Infinity;
+  let m = String(rec).match(/^(\d+):(\d+\.?\d*)$/);
+  if (m) return parseFloat(m[1]) * 60 + parseFloat(m[2]);
+  m = String(rec).match(/^(\d+\.?\d*)$/);
+  if (m) return parseFloat(m[1]);
+  return Infinity;
+}
+
+function isSpecial(rec) {
+  const s = String(rec || '').toUpperCase();
+  return !!s && (s.includes('DNF') || s.includes('DNS') || s.includes('PEN') ||
+                 s.includes('DSQ') || s.includes('NO TIME') || s.includes('AD'));
+}
+
+// 'T2+1' → 조별 상위 2명 자동 진출 + 각 조 3위 중 기록 상위 1명 추가 진출
+function computeQualifiers(ev) {
+  const q = new Map();
+  const m = String(ev.adv || '').match(/T(\d+)(?:\+(\d+))?/);
+  if (!m) return q;
+
+  const auto = parseInt(m[1], 10);
+  const extra = m[2] ? parseInt(m[2], 10) : 0;
+  const nextPlace = [];
+
+  ev.heats.forEach(heat => {
+    const scored = heat.athletes
+      .filter(a => a.record && !isSpecial(a.record) && parseRecord(a.record) !== Infinity)
+      .sort((x, y) => parseRecord(x.record) - parseRecord(y.record));
+    if (!scored.length) return;
+    scored.slice(0, auto).forEach(a => q.set(akey(a), 'Q'));
+    if (scored[auto]) nextPlace.push(scored[auto]);
+  });
+
+  nextPlace
+    .sort((x, y) => parseRecord(x.record) - parseRecord(y.record))
+    .slice(0, extra)
+    .forEach(a => q.set(akey(a), '+Q'));
+
+  return q;
+}
+
+function renderHeats(ev) {
+  if (!ev.heats.length) return `<div class="tbd-note">✦ 조편성 준비중</div>`;
+
+  const qual = computeQualifiers(ev);
+  let html = '<div class="heats-grid">';
+
+  ev.heats.forEach(heat => {
+    html += `<div class="heat-card" id="${heat._uid}"><div class="heat-title">${heat.title}</div>`;
+
+    if (!heat.athletes.length) {
+      html += `<div class="tbd-note">이전 라운드 결과에 따라 결정 · ${heat.slots}명</div>`;
+    } else {
+      const hasRecords = heat.athletes.some(a => a.record);
+      let list = heat.athletes.map((a, i) => ({ ...a, lane: LANES[i] || LANES[0] }));
+      if (hasRecords) list.sort((a, b) => parseRecord(a.record) - parseRecord(b.record));
+
+      html += '<ul class="heat-athletes">';
+      list.forEach((a, i) => {
+        const sp = isSpecial(a.record);
+        const scored = a.record && !sp && parseRecord(a.record) !== Infinity;
+        const rank = hasRecords
+          ? `<span class="rank-badge${scored ? ' r' + (i + 1) : ''}">${scored ? i + 1 : '-'}</span>`
+          : '';
+        const rec = a.record
+          ? `<span class="athlete-record${sp ? ' dnf' : ''}">${a.record}</span>`
+          : '';
+        const qv = qual.get(akey(a));
+        const qb = qv ? `<span class="q-badge${qv === '+Q' ? ' plus' : ''}">${qv}</span>` : '';
+        html += `<li class="heat-athlete" data-name="${a.name}">
+          ${rank}
+          <span class="lane-dot ${a.lane.cls}" title="${a.lane.label}"></span>
+          <span class="athlete-name${SEONGNAM_TEAM.has(a.name) ? ' seongnam' : ''}">${a.name}</span>
+          <span class="athlete-org">${a.org}</span>
+          ${rec}${qb}
+        </li>`;
+      });
+      html += '</ul>';
+    }
+    html += '</div>';
+  });
+
+  return html + '</div>';
+}
+
+function renderSchedule() {
+  document.getElementById('updatedAt').textContent = '업데이트: ' + UPDATED;
+
+  const section = document.createElement('div');
+  section.className = 'day-section';
+  section.innerHTML = `
+    <div class="day-header">
+      <div class="day-dot"></div>
+      <div class="day-title">경기 순서</div>
+      <div class="day-date">전 32경기 · 18:30~23:55</div>
+    </div>
+    <div class="section-controls">
+      <button class="ctrl-btn" onclick="toggleAll(true)">▼ 모두 펼치기</button>
+      <button class="ctrl-btn" onclick="toggleAll(false)">▲ 모두 접기</button>
+      <button class="ctrl-btn seongnam-btn" onclick="toggleSeongnamOnly(this)">⭐ 성남팀 only</button>
+    </div>
+  `;
+
+  items.forEach(it => {
+    if (it.ice) {
+      const ice = document.createElement('div');
+      ice.className = 'ice-break';
+      ice.innerHTML = `
+        <span class="ice-break-time">${it.time || ''}</span>
+        <span class="ice-break-label">${it.ice.includes('빙판') ? '🧊' : '🏁'} ${it.ice}</span>
+        <span class="ice-break-line"></span>
+      `;
+      section.appendChild(ice);
+      return;
+    }
+
+    const tg = document.createElement('div');
+    tg.className = 'time-group highlight-target';
+    tg.id = it._uid;
+    tg.dataset.dist = it.dist;
+    tg.dataset.grp = it.grp;
+
+    const drawn = it.heats.some(h => h.athletes.length);
+    const detail = it.adv || (drawn ? `${it.heats.length}조` : '조편성 대기');
+
+    tg.innerHTML = `
+      <div class="time-group-header" onclick="toggleGroup(this.parentElement)">
+        <span class="time-badge${drawn ? '' : ' no'}">${it.time || it.n}</span>
+        <div class="event-header-main"><span class="event-name">${it.n}. ${it.name}</span></div>
+        <div class="event-meta">
+          <span class="event-meta-round">${roundIcon(it.round)}</span>
+          <span class="event-meta-detail">${detail}</span>
+        </div>
+        <span class="toggle-icon">▼</span>
+      </div>
+      <div class="time-group-body">${renderHeats(it)}</div>
+    `;
+    section.appendChild(tg);
+  });
+
+  const c = document.getElementById('schedule');
+  c.innerHTML = '';
+  c.appendChild(section);
+}
+
+// ============================================================
+// 마스터 컨트롤 시트
+//   FA = 결승 획득 점수 / RK = 결승 순위
+//   1500M 은 결승 1~7위, 500M·1000M 은 결승 1~5위까지만 점수 부여
+// ============================================================
+const FA_POINTS = [34, 21, 13, 8, 5, 3, 2, 1];
+const POINT_LIMIT = { '1500M': 7, '500M': 5, '1000M': 5 };
+const DIST_ORDER = ['1500M', '500M', '1000M'];
+const GROUP_ORDER = ['W56', 'W34', 'W12', 'M56', 'M34', 'M12'];
+const ROUND_DEPTH = { '준준결승': 1, '준결승': 2, '결승': 3 };
+
+const akey = a => a.name + '|' + a.org;
+const cmpNum = (p, q) => (p === q ? 0 : (p < q ? -1 : 1));
+
+function buildMaster() {
+  const G = {};
+
+  items.forEach(ev => {
+    if (ev.ice) return;
+
+    const g = G[ev.grp] || (G[ev.grp] = { dists: {}, ath: new Map() });
+    const d = g.dists[ev.dist] || (g.dists[ev.dist] = { qf: false, sf: false, done: false });
+    if (ev.round === '준준결승') d.qf = true;
+    if (ev.round === '준결승') d.sf = true;
+
+    const depth = ROUND_DEPTH[ev.round] || 0;
+
+    ev.heats.forEach(heat => {
+      const rankOf = new Map();
+      heat.athletes
+        .filter(a => a.record && !isSpecial(a.record) && parseRecord(a.record) !== Infinity)
+        .sort((x, y) => parseRecord(x.record) - parseRecord(y.record))
+        .forEach((a, i) => rankOf.set(akey(a), i + 1));
+
+      heat.athletes.forEach(a => {
+        const k = akey(a);
+        if (!g.ath.has(k)) g.ath.set(k, { name: a.name, org: a.org, d: {}, fp: 0, cdr: null });
+        const rec = g.ath.get(k);
+        const cell = rec.d[ev.dist] || (rec.d[ev.dist] = {});
+
+        const sp = isSpecial(a.record) ? String(a.record).toUpperCase() : null;
+        const rk = rankOf.get(k) || null;
+
+        // 도달한 가장 깊은 라운드의 조 순위 → 종목 랭킹 산정 기준
+        if (depth >= (cell._depth || 0)) {
+          cell._depth = depth;
+          cell._place = rk || Infinity;
+          cell._time = a.record ? parseRecord(a.record) : Infinity;
+        }
+
+        if (ev.round === '준준결승') cell.qf = sp || rk || '';
+        else if (ev.round === '준결승') cell.sf = sp || rk || '';
+        else if (ev.round === '결승') {
+          if (a.record) d.done = true;
+          const limit = POINT_LIMIT[ev.dist] || 0;
+          if (rk && rk <= limit) { cell.fa = FA_POINTS[rk - 1]; rec.fp += FA_POINTS[rk - 1]; }
+        }
+      });
+    });
+  });
+
+  // 종목별 랭킹(RK): 결승 종료 후, 결승 미진출자까지 전원 부여
+  //   도달 라운드 → 조 순위 → 기록 순
+  Object.values(G).forEach(g => {
+    Object.keys(g.dists).forEach(dist => {
+      if (!g.dists[dist].done) return;
+      [...g.ath.values()]
+        .filter(r => r.d[dist])
+        .sort((a, b) => {
+          const x = a.d[dist], y = b.d[dist];
+          return cmpNum(y._depth || 0, x._depth || 0)
+            || cmpNum(x._place, y._place)
+            || cmpNum(x._time, y._time)
+            || a.name.localeCompare(b.name, 'ko');
+        })
+        .forEach((r, i) => { r.d[dist].rk = i + 1; });
+    });
+
+    g.ath.forEach(r => {
+      let sum = 0, n = 0;
+      Object.values(r.d).forEach(c => { if (typeof c.rk === 'number') { sum += c.rk; n++; } });
+      r.cdr = n ? sum : null;
+    });
+  });
+
+  return G;
+}
+
+function cellHtml(val, cls) {
+  const isPen = typeof val === 'string' && val !== '';
+  return `<td class="${cls}${isPen ? ' pen' : ''}">${val === undefined || val === null ? '' : val}</td>`;
+}
+
+function renderMaster() {
+  const G = buildMaster();
+  let html = `
+    <div class="day-header">
+      <div class="day-dot"></div>
+      <div class="day-title">마스터 컨트롤 시트</div>
+      <div class="day-date">TOTAL 순위 기준</div>
+    </div>
+  `;
+
+  GROUP_ORDER.forEach(grp => {
+    const g = G[grp];
+    if (!g || !g.ath.size) return;
+
+    const dists = DIST_ORDER.filter(d => g.dists[d]);
+    const subs = {};
+    dists.forEach(d => {
+      const s = [];
+      if (g.dists[d].qf) s.push('QF');
+      if (g.dists[d].sf) s.push('SF');
+      s.push('FA', 'RK');
+      subs[d] = s;
+    });
+
+    const anyDone = DIST_ORDER.some(d => g.dists[d] && g.dists[d].done);
+
+    const rows = [...g.ath.values()].sort((a, b) =>
+      cmpNum(b.fp, a.fp)
+      || cmpNum(a.cdr === null ? Infinity : a.cdr, b.cdr === null ? Infinity : b.cdr)
+      || a.name.localeCompare(b.name, 'ko'));
+
+    let head1 = `<th class="dist-head c-no">&nbsp;</th><th class="dist-head c-name">Distance</th><th class="dist-head">&nbsp;</th>`;
+    dists.forEach(d => { head1 += `<th class="dist-head" colspan="${subs[d].length}">${d.toLowerCase()}</th>`; });
+    head1 += `<th class="dist-head" colspan="3">TOTAL</th>`;
+
+    let head2 = `<th class="c-no">No</th><th class="c-name">Name</th><th>소속</th>`;
+    dists.forEach(d => { subs[d].forEach(s => { head2 += `<th>${s}</th>`; }); });
+    head2 += `<th>FP</th><th>CDR</th><th>RK</th>`;
+
+    let body = '';
+    rows.forEach((r, i) => {
+      body += `<tr>
+        <td class="c-no">${i + 1}</td>
+        <td class="name c-name${SEONGNAM_TEAM.has(r.name) ? ' seongnam' : ''}">${r.name}</td>
+        <td class="org">${r.org}</td>`;
+      dists.forEach(d => {
+        const c = r.d[d] || {};
+        subs[d].forEach(s => {
+          if (s === 'QF') body += cellHtml(c.qf, '');
+          else if (s === 'SF') body += cellHtml(c.sf, '');
+          else if (s === 'FA') body += cellHtml(c.fa, 'fa');
+          else body += cellHtml(c.rk, 'rk');
+        });
+      });
+      body += `<td class="fp">${r.fp || ''}</td><td class="cdr">${r.cdr === null ? '' : r.cdr}</td><td class="trk">${anyDone ? i + 1 : ''}</td>
+      </tr>`;
+    });
+
+    html += `
+      <div class="master-block" data-grp="${grp}">
+        <div class="master-block-title">${GROUPS[grp]}<span class="cnt">${rows.length}명</span></div>
+        <div class="table-scroll">
+          <table class="master">
+            <thead><tr>${head1}</tr><tr>${head2}</tr></thead>
+            <tbody>${body}</tbody>
+          </table>
+        </div>
+      </div>`;
+  });
+
+  html += `<div class="master-note">
+    · FA = 결승 획득 점수(1위 34 · 2위 21 · 3위 13 · 4위 8 · 5위 5 · 6위 3 · 7위 2), RK = 종목 랭킹<br>
+    · 1500m 는 결승 1~7위, 500m · 1000m 는 결승 1~5위까지 점수가 부여됩니다<br>
+    · QF = 준준결승 조 순위, SF = 준결승 조 순위<br>
+    · RK 는 결승 종료 후 전원에게 부여됩니다 — 결승 진출자 우선, 미진출자는 도달 라운드 → 조 순위 → 기록 순<br>
+    · CDR = 종목별 RK 합계 · TOTAL RK 는 FP 내림차순, 동점 시 CDR 오름차순
+  </div>`;
+
+  const el = document.getElementById('master');
+  el.className = 'day-section';
+  el.innerHTML = html;
+}
+
+// ============================================================
+// FILTERS
+// ============================================================
+let distFilter = 'all';
+let grpFilter = 'all';
+
+function buildTabs() {
+  const dists = [['all','전체'],['1500M','1500M'],['500M','500M'],['1000M','1000M']];
+  document.getElementById('distTabs').innerHTML = dists.map(([k, l]) =>
+    `<button class="day-tab${k === 'all' ? ' active' : ''}" data-dist="${k}" onclick="filterDist('${k}', this)">${l}</button>`
+  ).join('');
+
+  const grps = [['all','전체 종별'],['W56','여 5-6'],['W34','여 3-4'],['W12','여 1-2'],['M56','남 5-6'],['M34','남 3-4'],['M12','남 1-2']];
+  document.getElementById('groupTabs').innerHTML = grps.map(([k, l]) =>
+    `<button class="group-tab${k === 'all' ? ' active' : ''}" data-grp="${k}" onclick="filterGrp('${k}', this)">${l}</button>`
+  ).join('');
+}
+
+function filterDist(d, btn) {
+  distFilter = d;
+  document.querySelectorAll('.day-tab').forEach(b => b.classList.remove('active'));
+  btn.classList.add('active');
+  applyFilters();
+}
+
+function filterGrp(g, btn) {
+  grpFilter = g;
+  document.querySelectorAll('.group-tab').forEach(b => b.classList.remove('active'));
+  btn.classList.add('active');
+  applyFilters();
+}
+
+function applyFilters() {
+  document.querySelectorAll('.time-group').forEach(tg => {
+    const ok = (distFilter === 'all' || tg.dataset.dist === distFilter) &&
+               (grpFilter === 'all' || tg.dataset.grp === grpFilter);
+    tg.classList.toggle('hidden', !ok);
+  });
+  const narrowed = distFilter !== 'all' || grpFilter !== 'all';
+  document.querySelectorAll('.ice-break').forEach(el => el.classList.toggle('hidden', narrowed));
+
+  document.querySelectorAll('.master-block').forEach(b => {
+    b.classList.toggle('hidden', !(grpFilter === 'all' || b.dataset.grp === grpFilter));
+  });
+  if (seongnamOnly) applySeongnamFilter(true);
+}
+
+// ============================================================
+// TOGGLE
+// ============================================================
+function toggleGroup(el) { el.classList.toggle('open'); }
+
+function toggleAll(open) {
+  document.querySelectorAll('.time-group:not(.hidden)').forEach(tg => tg.classList.toggle('open', open));
+}
+
+// ============================================================
+// 성남팀 ONLY
+// ============================================================
+let seongnamOnly = false;
+
+function toggleSeongnamOnly(btn) {
+  seongnamOnly = !seongnamOnly;
+  btn.classList.toggle('active', seongnamOnly);
+  btn.textContent = seongnamOnly ? '⭐ 성남팀 only ON' : '⭐ 성남팀 only';
+  applySeongnamFilter(seongnamOnly);
+}
+
+function applySeongnamFilter(isOn) {
+  document.querySelectorAll('.time-group').forEach(tg => {
+    const cards = tg.querySelectorAll('.heat-card');
+    if (!isOn) {
+      cards.forEach(c => c.classList.remove('hidden'));
+      tg.classList.remove('open');
+      return;
+    }
+    let has = false;
+    cards.forEach(c => {
+      const hit = c.querySelectorAll('.athlete-name.seongnam').length > 0;
+      c.classList.toggle('hidden', !hit);
+      if (hit) has = true;
+    });
+    tg.classList.toggle('open', has);
+  });
+}
+
+// ============================================================
+// SEARCH
+// ============================================================
+const searchInput = document.getElementById('searchInput');
+const searchResults = document.getElementById('searchResults');
+const searchCount = document.getElementById('searchCount');
+
+searchInput.addEventListener('input', handleSearch);
+searchInput.addEventListener('keydown', e => {
+  if (e.key === 'Escape') { closeSearch(); searchInput.blur(); }
+});
+document.addEventListener('click', e => {
+  if (!e.target.closest('.search-box')) closeSearch();
+});
+
+function handleSearch() {
+  const q = searchInput.value.trim();
+  clearHighlights();
+
+  if (!q) { closeSearch(); searchCount.textContent = ''; return; }
+
+  const results = athleteIndex.filter(a => a.name.includes(q));
+  searchCount.textContent = results.length ? `${results.length}건` : '없음';
+
+  if (!results.length) {
+    searchResults.innerHTML = '<div class="search-result-item"><span class="result-name">검색 결과 없음</span></div>';
+    searchResults.style.display = 'block';
+    return;
+  }
+
+  searchResults.innerHTML = results.slice(0, 20).map(r => `
+    <div class="search-result-item" onclick="goToAthlete(${athleteIndex.indexOf(r)})">
+      <div class="result-name">${r.name}</div>
+      <div class="result-meta">${r.eventName} · ${r.heatTitle} · ${r.org}</div>
+    </div>
+  `).join('');
+  searchResults.style.display = 'block';
+}
+
+function goToAthlete(idx) {
+  const r = athleteIndex[idx];
+  closeSearch();
+  clearHighlights();
+  searchInput.value = r.name;
+  searchCount.textContent = '';
+
+  distFilter = 'all'; grpFilter = 'all';
+  document.querySelectorAll('.day-tab').forEach(b => b.classList.toggle('active', b.dataset.dist === 'all'));
+  document.querySelectorAll('.group-tab').forEach(b => b.classList.toggle('active', b.dataset.grp === 'all'));
+  applyFilters();
+
+  const evEl = document.getElementById(r.eventUid);
+  if (!evEl) return;
+  evEl.classList.add('open');
+  setTimeout(() => {
+    const heatEl = document.getElementById(r.heatUid);
+    if (heatEl) {
+      heatEl.classList.remove('hidden');
+      heatEl.classList.add('highlight');
+      heatEl.querySelectorAll('.heat-athlete').forEach(row => {
+        if (row.dataset.name === r.name) row.classList.add('highlighted');
+      });
+    }
+    evEl.scrollIntoView({ behavior: 'smooth', block: 'start' });
+  }, 50);
+}
+
+function clearHighlights() {
+  document.querySelectorAll('.heat-card.highlight').forEach(el => el.classList.remove('highlight'));
+  document.querySelectorAll('.heat-athlete.highlighted').forEach(el => el.classList.remove('highlighted'));
+}
+
+function closeSearch() { searchResults.style.display = 'none'; }
+
+// ============================================================
+buildTabs();
+renderSchedule();
+renderMaster();
+applyFilters();
+</script>
+</body>
+</html>
