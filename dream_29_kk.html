@@ -431,6 +431,15 @@
     border-radius: 8px;
     margin: 4px 0;
   }
+  .ice-break-time {
+    font-size: 11px;
+    font-weight: 700;
+    color: var(--accent);
+    opacity: 0.75;
+    letter-spacing: 0.5px;
+    min-width: 38px;
+    flex-shrink: 0;
+  }
   .ice-break-label {
     font-size: 11px;
     color: rgba(0,201,255,0.6);
@@ -568,10 +577,10 @@
   <header>
     <h1>제29회 전국남녀 쇼트트랙<br>꿈나무선수권 경기도대표 선발대회</h1>
     <div class="date-chips">
-      <span class="date-chip">2026년 8월 15일(토) · 성남 탄천 실내빙상장</span>
+      <span class="date-chip">2026년 8월 15일(토) 18:00 · 성남 탄천 실내빙상장</span>
     </div>
     <div class="cheer-text">🏆 성남팀 화이팅!!</div>
-    <div class="notice-text">※ 경기 당일 사정에 따라 일정이 변동될 수 있으니 수시로 확인해주세요</div>
+    <div class="notice-text">※ 좌측 시각은 해당 경기가 속한 세션의 시작 시각입니다<br>※ 경기 당일 사정에 따라 일정이 변동될 수 있으니 수시로 확인해주세요</div>
   </header>
 
   <div class="day-tabs" id="distTabs"></div>
@@ -594,12 +603,12 @@
 // 다음 라운드 조편성이 나오면 숫자(예: 5)를 선수 배열로 바꿔 주세요.
 // UPDATED 값을 바꾸면 화면 하단 업데이트 시각이 바뀝니다.
 // ============================================================
-const UPDATED = '조편성 기준 (감독자회의 자료)';
+const UPDATED = '2026-08-07 수정 일정표 · 조편성 기준';
 
 // 성남팀 선수 명단
 const SEONGNAM_TEAM = new Set([
-  '최하빈','이소윤','한지아','임정현','백시원',
-  '백준우','김이겸','윤우재','이도빈',
+  '최하빈','이소윤','한지아','임정현',
+  '백시원','백준우','김이겸',
 ]);
 
 // 출발 위치(아웃코스) — 조 안의 순서대로 배정됩니다
@@ -624,91 +633,111 @@ const GROUPS = {
 //   heats 의 원소 = 선수 배열(조편성 확정) 또는 숫자(자리 수만 정해진 미정 조)
 // ============================================================
 const PROGRAM = [
-  { n:1, dist:'1500M', grp:'W34', round:'준결승', adv:'2조 (T3+1)', heats:[
+  { ice: '빙판정리 및 시합준비 (18:00~18:10 날 검사 / 소집장소)', time:'18:00' },
+
+  // ── 18:30 · 1500M 준결승 ────────────────────────────────
+  { n:1, time:'18:30', dist:'1500M', grp:'W34', round:'준결승', adv:'2조 (T3+1)', heats:[
     ['한지아 이매초','박서아 성남매송초','김태리 판교초','최에스더 안양중앙초','박지선 성남신흥초'],
     ['이유주 세곡초','김태희 성남송현초','김은우 과천율목초','김수리 판교초'],
   ]},
-  { n:2, dist:'1500M', grp:'W56', round:'준결승', adv:'3조 (T2+1)', heats:[
+  { n:2, time:'18:30', dist:'1500M', grp:'W56', round:'준결승', adv:'3조 (T2+1)', heats:[
     ['김세원 곡정초','김소율 김포고창초','이소윤 죽전초','신혜담 가현초','박규리 양주덕현초'],
     ['김연우 평촌초','유지안 과천갈현초','최하빈 CIYA국제학교','정은채 이의초','박나은 청계초'],
-    ['곽혜원 안일초','이채아 박달초','강세윤 오마초','김서진 삼봉초','이지우 수원송림초'],
+    ['곽혜원 안일초','이채아 박달초','강세윤 오마초','김서진 삼봉초','이지우 수원송림초','조민지 궁내초'],
   ]},
-  { n:3, dist:'1500M', grp:'M34', round:'준결승', adv:'2조 (T3+1)', heats:[
+  { n:3, time:'18:30', dist:'1500M', grp:'M34', round:'준결승', adv:'2조 (T3+1)', heats:[
     ['김태윤 성남송현초','이강우 용인둔전초','전장현 성라초','박서준 수원중촌초','김태호 버들개초'],
     ['백준우 성남매송초','박건우 고양화수초','조준형 안양부안초','김태평 버들개초','윤태인 원중초','김이겸 성남송현초'],
   ]},
-  { n:4, dist:'1500M', grp:'M56', round:'준결승', adv:'3조 (T2+1)', heats:[
+  { n:4, time:'18:30', dist:'1500M', grp:'M56', round:'준결승', adv:'3조 (T2+1)', heats:[
     ['최지안 수원원일초','김시환 청수초','이승호 김포고창초','안정빈 성남매송초','백시원 한별초'],
-    ['김하루 원흥초','김현종 과천갈현초','임정현 의정부청룡초','양성빈 하안북초','조민지 궁내초','강구윤 초롱초'],
+    ['김하루 원흥초','김현종 과천갈현초','임정현 의정부청룡초','양성빈 하안북초','강구윤 초롱초'],
     ['허태영 보름초','유세윤 이솔초','김태이 버들개초','송지호 청수초','엄태율 은빛초','황시원 삼봉초'],
   ]},
-  { ice: 'Track' },
-  { n:5, dist:'1500M', grp:'W34', round:'결승', heats:[7] },
-  { n:6, dist:'1500M', grp:'W56', round:'결승', heats:[7] },
-  { n:7, dist:'1500M', grp:'M34', round:'결승', heats:[7] },
-  { n:8, dist:'1500M', grp:'M56', round:'결승', heats:[7] },
-  { ice: 'Full' },
-  { n:9, dist:'500M', grp:'W56', round:'준준결승', adv:'3조 (T2+2)', heats:[
-    ['김세원 곡정초','김소율 김포고창초','이채아 박달초','이지우 수원송림초','김서진 삼봉초'],
-    ['곽혜원 안일초','이소윤 죽전초','박규리 양주덕현초','최하빈 CIYA국제학교','강세윤 오마초'],
-    ['김연우 평촌초','유지안 과천갈현초','박나은 청계초','정은채 이의초','신혜담 가현초'],
+  { ice: '빙판정리', time:'19:20' },
+
+  // ── 19:35 · 1500M 결승 ──────────────────────────────────
+  { n:5, time:'19:35', dist:'1500M', grp:'W34', round:'결승', heats:[7] },
+  { n:6, time:'19:35', dist:'1500M', grp:'W56', round:'결승', heats:[7] },
+  { n:7, time:'19:35', dist:'1500M', grp:'M34', round:'결승', heats:[7] },
+  { n:8, time:'19:35', dist:'1500M', grp:'M56', round:'결승', heats:[7] },
+  { ice: '빙판정리 (Full)', time:'19:55' },
+
+  // ── 20:10 · 500M 준준결승 ───────────────────────────────
+  { n:9, time:'20:10', dist:'500M', grp:'W56', round:'준준결승', adv:'4조 (T2+2)', heats:[
+    ['김세원 곡정초','이지우 수원송림초','김서진 삼봉초','강세윤 오마초'],
+    ['곽혜원 안일초','이채아 박달초','박규리 양주덕현초','최하빈 CIYA국제학교'],
+    ['김연우 평촌초','김소율 김포고창초','박나은 청계초','정은채 이의초'],
+    ['유지안 과천갈현초','이소윤 죽전초','신혜담 가현초','조민지 궁내초'],
   ]},
-  { n:10, dist:'500M', grp:'M34', round:'준준결승', adv:'3조 (T2+2)', heats:[
+  { n:10, time:'20:10', dist:'500M', grp:'M34', round:'준준결승', adv:'3조 (T2+2)', heats:[
     ['백준우 성남매송초','전장현 성라초','김이겸 성남송현초'],
     ['조준형 안양부안초','박건우 고양화수초','김태호 버들개초','박서준 수원중촌초'],
     ['이강우 용인둔전초','김태윤 성남송현초','김태평 버들개초','윤태인 원중초'],
   ]},
-  { n:11, dist:'500M', grp:'M56', round:'준준결승', adv:'4조 (T2+2)', heats:[
-    ['최지안 수원원일초','엄태율 은빛초','양성빈 하안북초','송지호 청수초','김태이 버들개초'],
-    ['김시환 청수초','이승호 김포고창초','황시원 삼봉초','조민지 궁내초'],
+  { n:11, time:'20:10', dist:'500M', grp:'M56', round:'준준결승', adv:'4조 (T2+2)', heats:[
+    ['최지안 수원원일초','엄태율 은빛초','양성빈 하안북초','송지호 청수초'],
+    ['김시환 청수초','이승호 김포고창초','황시원 삼봉초','김태이 버들개초'],
     ['유세윤 이솔초','김현종 과천갈현초','안정빈 성남매송초','임정현 의정부청룡초'],
     ['허태영 보름초','김하루 원흥초','백시원 한별초','강구윤 초롱초'],
   ]},
-  { ice: 'Track' },
-  { n:12, dist:'500M', grp:'W34', round:'준결승', adv:'2조 (T2+1)', heats:[
+  { ice: '빙판정리', time:'20:40' },
+
+  // ── 20:55 · 500M 준결승 ─────────────────────────────────
+  { n:12, time:'20:55', dist:'500M', grp:'W34', round:'준결승', adv:'2조 (T2+1)', heats:[
     ['이유주 세곡초','박서아 성남매송초','김태리 판교초','김은우 과천율목초','박지선 성남신흥초'],
     ['김태희 성남송현초','한지아 이매초','최에스더 안양중앙초','김수리 판교초'],
   ]},
-  { n:13, dist:'500M', grp:'W56', round:'준결승', adv:'2조 (T2+1)', heats:[4,4] },
-  { n:14, dist:'500M', grp:'M34', round:'준결승', adv:'2조 (T2+1)', heats:[4,4] },
-  { n:15, dist:'500M', grp:'M56', round:'준결승', adv:'2조 (T2+1)', heats:[5,5] },
-  { ice: 'Track' },
-  { n:16, dist:'500M', grp:'W12', round:'결승', heats:[['이예하 공세초']] },
-  { n:17, dist:'500M', grp:'W34', round:'결승', heats:[5] },
-  { n:18, dist:'500M', grp:'W56', round:'결승', heats:[5] },
-  { n:19, dist:'500M', grp:'M12', round:'결승', heats:[['송차호 초림초']] },
-  { n:20, dist:'500M', grp:'M34', round:'결승', heats:[5] },
-  { n:21, dist:'500M', grp:'M56', round:'결승', heats:[5] },
-  { ice: 'Full' },
-  { n:22, dist:'1000M', grp:'W56', round:'준준결승', adv:'3조 (T2+2)', heats:[
-    ['김연우 평촌초','김소율 김포고창초','김세원 곡정초','이지우 수원송림초','최하빈 CIYA국제학교'],
-    ['이소윤 죽전초','곽혜원 안일초','신혜담 가현초','김서진 삼봉초','박나은 청계초'],
-    ['유지안 과천갈현초','이채아 박달초','정은채 이의초','강세윤 오마초','박규리 양주덕현초'],
+  { n:13, time:'20:55', dist:'500M', grp:'W56', round:'준결승', adv:'2조 (T2+1)', heats:[5,5] },
+  { n:14, time:'20:55', dist:'500M', grp:'M34', round:'준결승', adv:'2조 (T2+1)', heats:[4,4] },
+  { n:15, time:'20:55', dist:'500M', grp:'M56', round:'준결승', adv:'2조 (T2+1)', heats:[5,5] },
+  { ice: '빙판정리', time:'21:20' },
+
+  // ── 21:35 · 500M 결승 ───────────────────────────────────
+  { n:16, time:'21:35', dist:'500M', grp:'W12', round:'결승', heats:[['이예하 공세초']] },
+  { n:17, time:'21:35', dist:'500M', grp:'W34', round:'결승', heats:[5] },
+  { n:18, time:'21:35', dist:'500M', grp:'W56', round:'결승', heats:[5] },
+  { n:19, time:'21:35', dist:'500M', grp:'M12', round:'결승', heats:[['송차호 초림초']] },
+  { n:20, time:'21:35', dist:'500M', grp:'M34', round:'결승', heats:[5] },
+  { n:21, time:'21:35', dist:'500M', grp:'M56', round:'결승', heats:[5] },
+  { ice: '빙판정리 (Full)', time:'21:50' },
+
+  // ── 22:05 · 1000M 준준결승 ──────────────────────────────
+  { n:22, time:'22:05', dist:'1000M', grp:'W56', round:'준준결승', adv:'4조 (T2+2)', heats:[
+    ['김연우 평촌초','이지우 수원송림초','최하빈 CIYA국제학교','정은채 이의초'],
+    ['이소윤 죽전초','김세원 곡정초','조민지 궁내초','박규리 양주덕현초'],
+    ['유지안 과천갈현초','김소율 김포고창초','신혜담 가현초','김서진 삼봉초'],
+    ['이채아 박달초','곽혜원 안일초','박나은 청계초','강세윤 오마초'],
   ]},
-  { n:23, dist:'1000M', grp:'M34', round:'준준결승', adv:'3조 (T2+2)', heats:[
+  { n:23, time:'22:05', dist:'1000M', grp:'M34', round:'준준결승', adv:'3조 (T2+2)', heats:[
     ['백준우 성남매송초','전장현 성라초','윤태인 원중초'],
     ['김태윤 성남송현초','박건우 고양화수초','박서준 수원중촌초','김태평 버들개초'],
     ['이강우 용인둔전초','조준형 안양부안초','김이겸 성남송현초','김태호 버들개초'],
   ]},
-  { n:24, dist:'1000M', grp:'M56', round:'준준결승', adv:'4조 (T2+2)', heats:[
-    ['유세윤 이솔초','송지호 청수초','조민지 궁내초','양성빈 하안북초','강구윤 초롱초'],
+  { n:24, time:'22:05', dist:'1000M', grp:'M56', round:'준준결승', adv:'4조 (T2+2)', heats:[
+    ['유세윤 이솔초','송지호 청수초','양성빈 하안북초','강구윤 초롱초'],
     ['최지안 수원원일초','이승호 김포고창초','안정빈 성남매송초','백시원 한별초'],
     ['김시환 청수초','김하루 원흥초','황시원 삼봉초','임정현 의정부청룡초'],
     ['허태영 보름초','김현종 과천갈현초','엄태율 은빛초','김태이 버들개초'],
   ]},
-  { ice: 'Track' },
-  { n:25, dist:'1000M', grp:'W34', round:'준결승', adv:'2조 (T2+1)', heats:[
+  { ice: '빙판정리', time:'22:40' },
+
+  // ── 22:55 · 1000M 준결승 ────────────────────────────────
+  { n:25, time:'22:55', dist:'1000M', grp:'W34', round:'준결승', adv:'2조 (T2+1)', heats:[
     ['한지아 이매초','박서아 성남매송초','박지선 성남신흥초','김수리 판교초','김은우 과천율목초'],
     ['김태희 성남송현초','이유주 세곡초','최에스더 안양중앙초','김태리 판교초'],
   ]},
-  { n:26, dist:'1000M', grp:'W56', round:'준결승', adv:'2조 (T2+1)', heats:[4,4] },
-  { n:27, dist:'1000M', grp:'M34', round:'준결승', adv:'2조 (T2+1)', heats:[4,4] },
-  { n:28, dist:'1000M', grp:'M56', round:'준결승', adv:'2조 (T2+1)', heats:[5,5] },
-  { ice: 'Track' },
-  { n:29, dist:'1000M', grp:'W34', round:'결승', heats:[5] },
-  { n:30, dist:'1000M', grp:'W56', round:'결승', heats:[5] },
-  { n:31, dist:'1000M', grp:'M34', round:'결승', heats:[5] },
-  { n:32, dist:'1000M', grp:'M56', round:'결승', heats:[5] },
+  { n:26, time:'22:55', dist:'1000M', grp:'W56', round:'준결승', adv:'2조 (T2+1)', heats:[5,5] },
+  { n:27, time:'22:55', dist:'1000M', grp:'M34', round:'준결승', adv:'2조 (T2+1)', heats:[4,4] },
+  { n:28, time:'22:55', dist:'1000M', grp:'M56', round:'준결승', adv:'2조 (T2+1)', heats:[5,5] },
+  { ice: '빙판정리', time:'23:25' },
+
+  // ── 23:40 · 1000M 결승 ──────────────────────────────────
+  { n:29, time:'23:40', dist:'1000M', grp:'W34', round:'결승', heats:[5] },
+  { n:30, time:'23:40', dist:'1000M', grp:'W56', round:'결승', heats:[5] },
+  { n:31, time:'23:40', dist:'1000M', grp:'M34', round:'결승', heats:[5] },
+  { n:32, time:'23:40', dist:'1000M', grp:'M56', round:'결승', heats:[5] },
+  { ice: '경기 종료 예정', time:'23:55' },
 ];
 
 // ============================================================
@@ -724,10 +753,10 @@ const athleteIndex = [];
 let uid = 0;
 
 PROGRAM.forEach(p => {
-  if (p.ice) { items.push({ ice: p.ice }); return; }
+  if (p.ice) { items.push({ ice: p.ice, time: p.time || '' }); return; }
 
   const ev = {
-    n: p.n, dist: p.dist, grp: p.grp, round: p.round,
+    n: p.n, time: p.time || '', dist: p.dist, grp: p.grp, round: p.round,
     adv: p.adv || '',
     name: `${GROUPS[p.grp]} ${p.dist} ${p.round}`,
     _uid: 'ev-' + (uid++),
@@ -860,7 +889,7 @@ function renderSchedule() {
     <div class="day-header">
       <div class="day-dot"></div>
       <div class="day-title">경기 순서</div>
-      <div class="day-date">전 32경기 · 8월 15일(토)</div>
+      <div class="day-date">전 32경기 · 18:30~23:55</div>
     </div>
     <div class="section-controls">
       <button class="ctrl-btn" onclick="toggleAll(true)">▼ 모두 펼치기</button>
@@ -874,7 +903,8 @@ function renderSchedule() {
       const ice = document.createElement('div');
       ice.className = 'ice-break';
       ice.innerHTML = `
-        <span class="ice-break-label">🧊 빙판정리 (${it.ice})</span>
+        <span class="ice-break-time">${it.time || ''}</span>
+        <span class="ice-break-label">${it.ice.includes('빙판') ? '🧊' : '🏁'} ${it.ice}</span>
         <span class="ice-break-line"></span>
       `;
       section.appendChild(ice);
@@ -892,8 +922,8 @@ function renderSchedule() {
 
     tg.innerHTML = `
       <div class="time-group-header" onclick="toggleGroup(this.parentElement)">
-        <span class="time-badge${drawn ? '' : ' no'}">${it.n}</span>
-        <div class="event-header-main"><span class="event-name">${it.name}</span></div>
+        <span class="time-badge${drawn ? '' : ' no'}">${it.time || it.n}</span>
+        <div class="event-header-main"><span class="event-name">${it.n}. ${it.name}</span></div>
         <div class="event-meta">
           <span class="event-meta-round">${roundIcon(it.round)}</span>
           <span class="event-meta-detail">${detail}</span>
