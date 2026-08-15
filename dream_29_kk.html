@@ -400,6 +400,7 @@
     flex-shrink: 0;
   }
   .q-badge.plus { background: #7fe3a0; }
+  .q-badge.ad { background: #f4a261; }
 
   /* Lane colors */
   .lane-white  { background: #f0f0f0; }
@@ -603,7 +604,7 @@
 // 다음 라운드 조편성이 나오면 숫자(예: 5)를 선수 배열로 바꿔 주세요.
 // UPDATED 값을 바꾸면 화면 하단 업데이트 시각이 바뀝니다.
 // ============================================================
-const UPDATED = '1000m 준결승 25경기까지 종료 · 결승 조편성 확정';
+const UPDATED = '1000m 준결승 전 경기 종료 · 결승 조편성 확정';
 
 // 성남팀 선수 명단
 const SEONGNAM_TEAM = new Set([
@@ -759,8 +760,8 @@ const PROGRAM = [
     ['김태평 버들개초 1:51.62','조준형 안양부안초 1:51.14','백준우 성남매송초 1:51.45','윤태인 원중초 1:52.49'],
   ]},
   { n:26, time:'22:50', dist:'1000M', grp:'M56', round:'준결승', adv:'2조 (T2+1)', heats:[
-    ['임정현 의정부청룡초','김하루 원흥초','김시환 청수초','엄태율 은빛초','허태영 보름초'],
-    ['최지안 수원원일초','이승호 김포고창초','안정빈 성남매송초','유세윤 이솔초','송지호 청수초'],
+    ['임정현 의정부청룡초 1:40.76','김하루 원흥초 1:43.09','김시환 청수초 1:58.31 AD','엄태율 은빛초 PEN(S3)','허태영 보름초 1:42.48'],
+    ['최지안 수원원일초 1:50.90','이승호 김포고창초 1:52.43','안정빈 성남매송초 1:51.68','유세윤 이솔초 1:50.31','송지호 청수초 1:52.62'],
   ]},
   { ice: '빙판정리', time:'23:20' },
 
@@ -774,7 +775,9 @@ const PROGRAM = [
   { n:29, time:'23:35', dist:'1000M', grp:'M34', round:'결승', heats:[
     ['김태윤 성남송현초','김이겸 성남송현초','이강우 용인둔전초','조준형 안양부안초','백준우 성남매송초'],
   ]},
-  { n:30, time:'23:35', dist:'1000M', grp:'M56', round:'결승', heats:[5] },
+  { n:30, time:'23:35', dist:'1000M', grp:'M56', round:'결승', heats:[
+    ['임정현 의정부청룡초','허태영 보름초','최지안 수원원일초','유세윤 이솔초','김시환 청수초'],
+  ]},
   { ice: '경기 종료 예정', time:'23:50' },
 ];
 
@@ -783,7 +786,12 @@ const PROGRAM = [
 // ============================================================
 function parseAthlete(str) {
   const p = String(str).trim().split(/\s+/);
-  return { name: p[0] || '', org: p[1] || '', record: p.slice(2).join(' ') || '' };
+  const rest = p.slice(2);
+  // 'AD' = 심판 판정 진출(Advanced). 기록과 별개로 진출 처리
+  let adv = false;
+  const i = rest.findIndex(t => t.toUpperCase() === 'AD');
+  if (i >= 0) { adv = true; rest.splice(i, 1); }
+  return { name: p[0] || '', org: p[1] || '', record: rest.join(' ') || '', adv: adv };
 }
 
 const items = [];
@@ -855,21 +863,30 @@ function computeQualifiers(ev) {
 
   const auto = parseInt(m[1], 10);
   const extra = m[2] ? parseInt(m[2], 10) : 0;
+  const total = ev.heats.length * auto + extra;
   const nextPlace = [];
 
   ev.heats.forEach(heat => {
     const scored = heat.athletes
       .filter(a => a.record && !isSpecial(a.record) && parseRecord(a.record) !== Infinity)
       .sort((x, y) => parseRecord(x.record) - parseRecord(y.record));
-    if (!scored.length) return;
-    scored.slice(0, auto).forEach(a => q.set(akey(a), 'Q'));
-    if (scored[auto]) nextPlace.push(scored[auto]);
+    if (scored.length) {
+      scored.slice(0, auto).forEach(a => q.set(akey(a), 'Q'));
+      if (scored[auto]) nextPlace.push(scored[auto]);
+    }
+    // 심판 판정 진출은 순위와 무관하게 확정
+    heat.athletes.forEach(a => { if (a.adv) q.set(akey(a), 'AD'); });
   });
 
-  nextPlace
-    .sort((x, y) => parseRecord(x.record) - parseRecord(y.record))
-    .slice(0, extra)
-    .forEach(a => q.set(akey(a), '+Q'));
+  // 남은 자리만 차순위 기록으로 채움
+  const remaining = total - q.size;
+  if (remaining > 0) {
+    nextPlace
+      .filter(a => !q.has(akey(a)))
+      .sort((x, y) => parseRecord(x.record) - parseRecord(y.record))
+      .slice(0, remaining)
+      .forEach(a => q.set(akey(a), '+Q'));
+  }
 
   return q;
 }
@@ -901,7 +918,7 @@ function renderHeats(ev) {
           ? `<span class="athlete-record${sp ? ' dnf' : ''}">${a.record}</span>`
           : '';
         const qv = qual.get(akey(a));
-        const qb = qv ? `<span class="q-badge${qv === '+Q' ? ' plus' : ''}">${qv}</span>` : '';
+        const qb = qv ? `<span class="q-badge${qv === '+Q' ? ' plus' : (qv === 'AD' ? ' ad' : '')}">${qv}</span>` : '';
         html += `<li class="heat-athlete" data-name="${a.name}">
           ${rank}
           <span class="lane-dot ${a.lane.cls}" title="${a.lane.label}"></span>
