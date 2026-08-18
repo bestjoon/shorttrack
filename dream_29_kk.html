@@ -618,7 +618,7 @@
 // 다음 라운드 조편성이 나오면 숫자(예: 5)를 선수 배열로 바꿔 주세요.
 // UPDATED 값을 바꾸면 화면 하단 업데이트 시각이 바뀝니다.
 // ============================================================
-const UPDATED = '전 경기 종료 · 최종 결과 (배점 방식 전환 가능)';
+const UPDATED = '전 경기 종료 · 최종 결과 (포인트는 결승 진출자만)';
 
 // 성남팀 선수 명단
 const SEONGNAM_TEAM = new Set([
@@ -1026,6 +1026,12 @@ function renderSchedule() {
 // ============================================================
 const FA_POINTS = [34, 21, 13, 8, 5, 3, 2, 1];
 const TOP_LIMIT = 8;
+
+// ── 이 대회(제29회 꿈나무선발전) 예외 규칙 ────────────────
+//  포인트를 '결승(Final A/B) 진출자'에게만 부여합니다.
+//  결승 미진출자는 순위(RK)와 CDR 만 산정되고 점수는 0 입니다.
+//  일반 규칙(1~8위 전원 배점)으로 되돌리려면 아래를 false 로 바꾸면 됩니다.
+const FINALISTS_ONLY = true;
 const DIST_ORDER = ['1500M', '500M', '1000M'];
 const GROUP_ORDER = ['W56', 'W34', 'M56', 'M34'];
 const ROUND_DEPTH = { '예선':1, '준준결승':2, '준결승':3, '결승':4 };
@@ -1160,10 +1166,19 @@ function buildMaster() {
         prev = r;
       });
 
-      ordered.forEach(r => {
-        const c = r.d[dist];
-        if (c._yc) return;
-        if (c.rk <= TOP_LIMIT) { c.fa = FA_POINTS[c.rk - 1]; r.fp += FA_POINTS[c.rk - 1]; }
+      // 배점 대상 자리 수
+      //  · 일반 규칙        : 1~8위
+      //  · 결승 진출자 한정 : 결승 진출 인원 만큼 (최대 8)
+      const finalists = ordered.filter(r => r.d[dist].tier < 2).length;
+      const slots = FINALISTS_ONLY ? Math.min(finalists, TOP_LIMIT) : TOP_LIMIT;
+
+      // YC 선수는 배점 대상에서 제외되고, 그 자리는 차순위자에게 넘어갑니다
+      const eligible = ordered.filter(r => !r.d[dist]._yc);
+      let pos = 0, prevE = null;
+      eligible.forEach((r, i) => {
+        if (prevE === null || cmp(prevE, r) !== 0) pos = i + 1;
+        prevE = r;
+        if (pos <= slots) { r.d[dist].fa = FA_POINTS[pos - 1]; r.fp += FA_POINTS[pos - 1]; }
       });
 
       const last = ordered.length + 1;
@@ -1279,6 +1294,9 @@ function renderMaster() {
 
   html += `<div class="master-note">
     · 배점: 종목별 랭킹 1~8위에게 34 · 21 · 13 · 8 · 5 · 3 · 2 · 1점<br>
+    · <b>이 대회 예외 규칙 — 포인트는 결승(Final) 진출 인원 수만큼만 부여합니다.</b>
+      결승 미진출자는 순위(RK)와 CDR 만 산정되고 점수는 없습니다<br>
+    · 단 <b>YC</b> 로 점수가 무효가 된 자리는 <b>차순위자</b>(결승 미진출자 중 최상위)에게 넘어갑니다<br>
     · 종목 최종순위: <b>Final A → Final B → 결승 미진출자</b>.
       Final B 가 있으면 A · B 는 그 경기 결과만 사용합니다<br>
     · 미진출자: 탈락 라운드가 깊은 순 → 그 라운드 finish order →
