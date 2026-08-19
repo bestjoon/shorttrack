@@ -125,6 +125,12 @@ main{max-width:860px;margin:0 auto;padding:8px 8px;}
 .rec-pill{display:inline-flex;align-items:center;gap:4px;background:#fff;border:1px solid var(--line);border-radius:16px;padding:1px 7px 1px 2px;font-size:10.5px;font-weight:700;}
 .rec-pill .dot{width:13px;height:13px;border-radius:50%;border:1px solid rgba(0,0,0,.15);}
 .rec-pill .p{color:var(--red);font-variant-numeric:tabular-nums;}
+.rec-pill{cursor:pointer;user-select:none;transition:all .1s;}
+.rec-pill.sel{outline:2.5px solid var(--track);background:#E3ECF8;transform:scale(1.06);}
+.pill-tools{display:flex;align-items:center;gap:5px;flex-wrap:wrap;background:#E9F1FE;border:1px solid #C4D8F2;border-radius:0 0 9px 9px;margin-top:-2px;padding:5px 8px;}
+.pill-tools button{border:1px solid var(--track);background:#fff;color:var(--track);border-radius:7px;font-size:11px;font-weight:800;padding:4px 9px;cursor:pointer;}
+.pill-tools button.pt-del{border-color:var(--danger);color:var(--danger);}
+.pill-tools .pt-hint{font-size:9.5px;color:var(--ink2);font-weight:600;flex-basis:100%;line-height:1.4;}
 .rl-actions{margin-left:auto;display:flex;gap:6px;}
 .rl-actions button{border:1px solid var(--line);background:#fff;border-radius:7px;font-size:10px;font-weight:700;color:var(--ink2);padding:3px 8px;cursor:pointer;}
 .empty-txt{font-size:12px;color:#9AAABB;font-weight:600;}
@@ -301,6 +307,7 @@ const INTER_PTS  = [15,10];
 let S = null;           // {event, groups:[{skaters:[{lane,name,ad,time}], cp:{cp1:[],cp2:[]}, finish:[]}]}
 let curGroup = 0;
 let curMode  = 'cp1';   // cp1 | cp2 | finish
+let selPill  = null;    // {gi, mode, idx} — 기록 라인에서 선택된 순위 핀
 
 function newState(event, sizes, names){
   return {
@@ -322,7 +329,7 @@ const cpLabel = c => c==='cp1' ? '1000m 통과' : '2000m 통과';
 /* =========================================================
    셋업 화면
 ========================================================= */
-let setEvent = 2000, setGroups = 3;
+let setEvent = 2000, setGroups = 2;
 const $ = id => document.getElementById(id);
 
 $('segEvent').addEventListener('click',e=>{
@@ -342,7 +349,7 @@ function renderSizes(){
     const row=document.createElement('div'); row.className='grp-size-row';
     const sel=document.createElement('select');
     for(let n=2;n<=8;n++){const o=document.createElement('option');o.value=n;o.textContent=n+'명';sel.appendChild(o);}
-    sel.value = prev[i]||6;
+    sel.value = prev[i]||8;
     row.innerHTML=`<span class="gname">${i+1}조 인원</span>`;
     row.appendChild(sel); box.appendChild(row);
   }
@@ -437,7 +444,7 @@ function renderTabs(){
     b.className = gi===curGroup?'on':'';
     const done = g.finish.length===g.skaters.length;
     b.innerHTML = `${gi+1}조${done?'<span class="done-dot"></span>':''}`;
-    b.onclick=()=>{curGroup=gi; if(curMode==='finish'||S.groups[gi]){} renderAll();};
+    b.onclick=()=>{curGroup=gi; curMode='cp1'; selPill=null; renderAll();};
     box.appendChild(b);
   });
 }
@@ -460,7 +467,7 @@ function renderGroupPanel(){
     b.innerHTML = m==='finish'
       ? `결승선 순위<span class="pts">34·21·13·8·5·3·2·1점</span>`
       : `${cpLabel(m)}<span class="pts">1위 15점 · 2위 10점</span>`;
-    b.onclick=()=>{curMode=m; renderGroupPanel();};
+    b.onclick=()=>{curMode=m; selPill=null; renderGroupPanel();};
     seg.appendChild(b);
   });
 
@@ -491,7 +498,10 @@ function renderGroupPanel(){
     btn.onclick=()=>{
       const arr = grpRec(g,curMode);
       const pos = arr.indexOf(i);
-      if(pos>=0){ arr.splice(pos,1); }          // 재탭 = 취소
+      if(pos>=0){ arr.splice(pos,1); if(selPill&&selPill.gi===curGroup&&selPill.mode===curMode) selPill=null; }  // 재탭 = 취소
+      else if(selPill && selPill.gi===curGroup && selPill.mode===curMode && arr.length<recLimit(g,curMode)){
+        arr.splice(selPill.idx,0,i); selPill=null;              // 선택한 자리에 끼워넣기 (누락 보정)
+      }
       else if(arr.length < recLimit(g,curMode)){ arr.push(i); }
       renderAll();
     };
@@ -503,10 +513,11 @@ function renderGroupPanel(){
   [...checkpoints(),'finish'].forEach(m=>{
     const arr = grpRec(g,m);
     const line=document.createElement('div'); line.className='rec-line';
+    const isSel = ri => selPill && selPill.gi===curGroup && selPill.mode===m && selPill.idx===ri;
     let pills = arr.map((si,ri)=>{
       const sk=g.skaters[si], c=LANE_COLORS[sk.lane-1];
       const p = m==='finish' ? FINISH_PTS[ri] : INTER_PTS[ri];
-      return `<span class="rec-pill"><span class="dot" style="background:${c.hex}"></span>${ri+1}위 ${c.name}<span class="p">+${p}</span></span>`;
+      return `<span class="rec-pill${isSel(ri)?' sel':''}" data-m="${m}" data-i="${ri}"><span class="dot" style="background:${c.hex}"></span>${ri+1}위 ${c.name}<span class="p">+${p}</span></span>`;
     }).join('');
     if(!pills) pills = `<span class="empty-txt">미입력</span>`;
     line.innerHTML = `<span class="rl-label">${m==='finish'?'결승선':cpLabel(m)}</span>${pills}
@@ -514,11 +525,36 @@ function renderGroupPanel(){
         ${arr.length?`<button data-m="${m}" data-a="undo">↶ 되돌리기</button><button data-m="${m}" data-a="clear">지우기</button>`:''}
       </span>`;
     rl.appendChild(line);
+    if(selPill && selPill.gi===curGroup && selPill.mode===m && selPill.idx<arr.length){
+      const t=document.createElement('div'); t.className='pill-tools';
+      t.innerHTML=`<button data-m="${m}" data-a="mvL">◀ 한 칸 앞으로</button>
+        <button data-m="${m}" data-a="mvR">한 칸 뒤로 ▶</button>
+        <button data-m="${m}" data-a="del" class="pt-del">✕ 순위에서 빼기</button>
+        <span class="pt-hint">다른 순위 핀을 누르면 서로 자리가 바뀝니다 · 위 색깔 버튼(미기록 선수)을 누르면 선택한 자리에 끼워넣습니다</span>`;
+      rl.appendChild(t);
+    }
   });
   rl.onclick=e=>{
+    const g2=S.groups[curGroup];
+    const pill=e.target.closest('.rec-pill');
+    if(pill){
+      const m=pill.dataset.m, i=+pill.dataset.i;
+      const arr=grpRec(g2,m);
+      if(selPill && selPill.gi===curGroup && selPill.mode===m){
+        if(selPill.idx===i){ selPill=null; }                    // 같은 핀 재탭 = 선택 해제
+        else { const t=arr[selPill.idx]; arr[selPill.idx]=arr[i]; arr[i]=t; selPill=null; }  // 자리 바꾸기
+      } else selPill={gi:curGroup,mode:m,idx:i};                // 선택
+      renderAll(); return;
+    }
     const b=e.target.closest('button'); if(!b) return;
-    const arr=grpRec(S.groups[curGroup],b.dataset.m);
-    if(b.dataset.a==='undo') arr.pop(); else arr.length=0;
+    const m=b.dataset.m, arr=grpRec(g2,m), a=b.dataset.a;
+    if(a==='undo'){ arr.pop(); selPill=null; }
+    else if(a==='clear'){ arr.length=0; selPill=null; }
+    else if(a==='mvL'||a==='mvR'){
+      const i=selPill.idx, j=a==='mvL'?i-1:i+1;
+      if(j>=0 && j<arr.length){ const t=arr[i]; arr[i]=arr[j]; arr[j]=t; selPill.idx=j; }
+    }
+    else if(a==='del'){ arr.splice(selPill.idx,1); selPill=null; }
     renderAll();
   };
 
@@ -531,11 +567,15 @@ function renderGroupPanel(){
     row.innerHTML=`
       <span class="dot" style="background:${c.hex};color:${c.text}">${sk.lane}</span>
       <input class="nm" placeholder="${c.name} 선수 이름(선택)" value="${esc(sk.name)}">
-      <input class="tm" placeholder="기록 m:ss.ms" value="${esc(sk.time)}" ${finished?'':'disabled'}>
+      <input class="tm" inputmode="numeric" placeholder="기록(숫자만)" value="${esc(sk.time)}" ${finished?'':'disabled'}>
       <button class="adbtn ${sk.ad?'on':''}">AD</button>`;
     row.querySelector('.nm').onchange=e=>{sk.name=e.target.value.trim(); renderAll();};
-    row.querySelector('.tm').oninput=e=>{sk.time=e.target.value.trim(); renderStandings();};
-    row.querySelector('.tm').onchange=e=>{sk.time=e.target.value.trim(); renderStandings();};
+    row.querySelector('.tm').oninput=e=>{
+      const el=e.target;
+      el.value=fmtTimeDigits(el.value);
+      sk.time=el.value;
+      renderStandings();
+    };
     row.querySelector('.adbtn').onclick=()=>{sk.ad=!sk.ad; renderAll();};
     rows.appendChild(row);
   });
@@ -544,6 +584,15 @@ function renderGroupPanel(){
 /* =========================================================
    점수 · 순위 · 진출 계산
 ========================================================= */
+/* 숫자만 입력 → 뒤에서부터 1/100초·초·분으로 자동 포맷 (51523 → 5:15.23) */
+function fmtTimeDigits(v){
+  let d=String(v).replace(/\D/g,'').replace(/^0+/,'').slice(0,6);
+  if(!d) return '';
+  const cs =d.slice(-2).padStart(2,'0');
+  const sec=(d.length>2?d.slice(-4,-2):'0').padStart(2,'0');
+  const min= d.length>4?d.slice(0,-4):'0';
+  return `${min}:${sec}.${cs}`;
+}
 function parseTime(t){
   if(!t) return Infinity;
   t=t.trim().replace(',','.');
@@ -736,7 +785,7 @@ function restoreFrom(payload){
   });
   S=st;
   curGroup=Math.min(obj.curGroup||0, S.groups.length-1);
-  curMode='cp1';
+  curMode='cp1'; selPill=null;
   $('viewSetup').classList.add('hidden');
   $('viewRace').classList.remove('hidden');
   $('btnReset').classList.remove('hidden');
