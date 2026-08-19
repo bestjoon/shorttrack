@@ -156,13 +156,15 @@ main{max-width:860px;margin:0 auto;padding:8px 8px;}
 .qs-box .v{font-size:15px;font-weight:900;font-variant-numeric:tabular-nums;letter-spacing:-.5px;}
 .qs-box .l{font-size:9px;font-weight:700;color:var(--ink2);margin-top:0;}
 .qs-box.cut .v{color:var(--red);}
-.stable-wrap{overflow-x:auto;margin:0 -11px;padding:0 11px;}
-table.stable{width:100%;border-collapse:collapse;min-width:470px;}
-table.stable th{font-size:9.5px;font-weight:800;color:var(--ink2);text-align:left;padding:4px 5px;border-bottom:2px solid var(--line);letter-spacing:.3px;white-space:nowrap;}
-table.stable td{padding:4px 5px;border-bottom:1px solid #E4EBF2;font-size:11.5px;white-space:nowrap;font-variant-numeric:tabular-nums;}
-table.stable td.rk{font-weight:900;font-size:12.5px;width:26px;}
+.stable-wrap{margin:0 -5px;}
+table.stable{width:100%;border-collapse:collapse;table-layout:auto;}
+table.stable th{font-size:9px;font-weight:800;color:var(--ink2);text-align:left;padding:3px 3px;border-bottom:2px solid var(--line);white-space:nowrap;}
+table.stable td{padding:3px 3px;border-bottom:1px solid #E4EBF2;font-size:11px;white-space:nowrap;font-variant-numeric:tabular-nums;}
+table.stable td.nm{max-width:92px;overflow:hidden;text-overflow:ellipsis;}
+table.stable td.nm .gtag{font-size:8.5px;font-weight:800;color:var(--ink2);background:rgba(16,30,48,.07);border-radius:4px;padding:0 3px;margin-left:3px;vertical-align:1px;}
+table.stable td.rk{font-weight:900;font-size:12px;width:20px;padding-left:5px;}
 table.stable .cdot{display:inline-flex;width:15px;height:15px;border-radius:50%;border:1px solid rgba(0,0,0,.15);vertical-align:-3px;margin-right:4px;align-items:center;justify-content:center;font-size:9px;font-weight:800;}
-table.stable td.tot{font-weight:900;font-size:13px;}
+table.stable td.tot{font-weight:900;font-size:12.5px;}
 table.stable tr.cutline td{border-bottom:2.5px dashed var(--red);}
 /* 조별 음영 */
 tr.gbg0 td{background:#FFFFFF;}
@@ -174,13 +176,13 @@ tr.gbg5 td{background:#FDECEA;}
 tr.gbg6 td{background:#E8F6F5;}
 tr.gbg7 td{background:#F3F0E3;}
 table.stable td.gcell{font-weight:800;color:var(--ink2);}
-.st-badge{display:inline-block;font-size:9.5px;font-weight:800;border-radius:6px;padding:1px 6px;}
+.st-badge{display:inline-block;font-size:9px;font-weight:800;border-radius:5px;padding:1px 4px;white-space:nowrap;}
 .st-badge.win{background:#E4F4EA;color:var(--ok);}
 .st-badge.ad{background:#FBF1D9;color:var(--warn);}
 .st-badge.pts{background:#E3ECF8;color:var(--track);}
 .st-badge.out{background:#F6E5E4;color:var(--danger);}
 .st-badge.tbd{background:var(--ice2);color:var(--ink2);}
-.pt-detail{font-size:9.5px;color:var(--ink2);}
+.pt-detail{font-size:8.5px;color:var(--ink2);}
 .rule-note{font-size:10px;color:var(--ink2);line-height:1.55;background:var(--ice);border-radius:9px;padding:6px 9px;margin-top:6px;}
 .next-hint{background:#FDF7EC;border:1px solid #EDDDBB;border-radius:9px;padding:6px 9px;margin-bottom:7px;font-size:11px;line-height:1.5;}
 .next-hint b{color:var(--warn);}
@@ -274,7 +276,7 @@ table.stable td.gcell{font-weight:800;color:var(--ink2);}
     <div class="qual-summary" id="qualSummary"></div>
     <div class="stable-wrap"><table class="stable">
       <thead><tr>
-        <th>순위</th><th>선수</th><th>조</th><th>중간</th><th>결승선</th><th>합계</th><th>기록</th><th>상태</th>
+        <th>순위</th><th>선수</th><th>중간</th><th>결승</th><th>합계</th><th>기록</th><th>상태</th>
       </tr></thead>
       <tbody id="stBody"></tbody>
     </table></div>
@@ -602,6 +604,11 @@ function parseTime(t){
   return isNaN(f)?Infinity:f;
 }
 function fmtPts(n){ return n>0?n:'–'; }
+/* '이름(학교)' / '이름 학교' 형태에서 이름만 추출 */
+function shortName(n){
+  if(!n) return '';
+  return n.replace(/\s*[(（\[].*$/,'').trim().split(/\s+/)[0];
+}
 
 function computeAll(){
   const rows=[];
@@ -610,7 +617,7 @@ function computeAll(){
       let inter=0, interDetail=[];
       checkpoints().forEach(cp=>{
         const r=g.cp[cp].indexOf(i);
-        if(r>=0){ inter+=INTER_PTS[r]; interDetail.push(`${cp==='cp1'?'1000':'2000'}m ${r+1}위 +${INTER_PTS[r]}`); }
+        if(r>=0){ inter+=INTER_PTS[r]; interDetail.push(`${cp==='cp1'?'1k':'2k'} ${r+1}위`); }
       });
       const fr=g.finish.indexOf(i);
       const fin = fr>=0?FINISH_PTS[fr]:0;
@@ -663,14 +670,14 @@ function computeAll(){
   }
 
   rows.forEach(r=>{
-    if(r.isWinner)            r.status={cls:'win', txt:'조 1위 진출'};
-    else if(r.ad)             r.status={cls:'ad',  txt:'AD 진출'};
-    else if(cutTiedSet.has(r)) r.status={cls:'tbd', txt:'동률 · 기록 필요'};
+    if(r.isWinner)            r.status={cls:'win', txt:'조1위'};
+    else if(r.ad)             r.status={cls:'ad',  txt:'AD'};
+    else if(cutTiedSet.has(r)) r.status={cls:'tbd', txt:'동률'};
     else{
       const ci=candidates.indexOf(r);
-      if(ci>=0 && ci<scoreSlots && r.total>0) r.status={cls:'pts', txt:'점수 진출권'};
-      else if(!r.raced)                       r.status={cls:'tbd', txt:'경기 전'};
-      else                                    r.status={cls:'out', txt:'커트라인 밖'};
+      if(ci>=0 && ci<scoreSlots && r.total>0) r.status={cls:'pts', txt:'점수권'};
+      else if(!r.raced)                       r.status={cls:'tbd', txt:'경기전'};
+      else                                    r.status={cls:'out', txt:'라인밖'};
     }
   });
   return {rows,totalSlots,nextRound,winnerSlots,adCount:ads.length,scoreSlots,cutoffRow,firstOut,candidates};
@@ -704,10 +711,9 @@ function renderStandings(){
     tr.className='gbg'+(r.gi%8)+(idx===lastIn?' cutline':'');
     tr.innerHTML=`
       <td class="rk">${r.total>0?r.rank+(r.tied?'<span style="font-size:9px;font-weight:700;color:var(--ink2)"> 공동</span>':''):'–'}</td>
-      <td><span class="cdot" style="background:${r.color.hex};color:${r.color.text}">${r.lane}</span>${r.name?esc(r.name):r.color.name}</td>
-      <td class="gcell">${r.gi+1}조</td>
-      <td>${fmtPts(r.inter)}${r.interDetail.length?`<div class="pt-detail">${r.interDetail.join(' · ')}</div>`:''}</td>
-      <td>${r.finRank>=0?`${r.finRank+1}위 +${r.fin}`:'–'}</td>
+      <td class="nm"><span class="cdot" style="background:${r.color.hex};color:${r.color.text}">${r.lane}</span>${esc(shortName(r.name)||r.color.name)}<span class="gtag">${r.gi+1}조</span></td>
+      <td>${fmtPts(r.inter)}${r.interDetail.length?`<div class="pt-detail">${r.interDetail.join('·')}</div>`:''}</td>
+      <td>${r.finRank>=0?`${r.finRank+1}위+${r.fin}`:'–'}</td>
       <td class="tot">${r.total}</td>
       <td>${r.time?esc(r.time):'–'}</td>
       <td><span class="st-badge ${r.status.cls}">${r.status.txt}</span></td>`;
