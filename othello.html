@@ -1,0 +1,393 @@
+<!DOCTYPE html>
+<html lang="ko">
+<head>
+<meta charset="UTF-8">
+<meta name="viewport" content="width=device-width, initial-scale=1, viewport-fit=cover">
+<title>오델로</title>
+<link rel="preconnect" href="https://fonts.googleapis.com">
+<link href="https://fonts.googleapis.com/css2?family=Gowun+Batang:wght@400;700&display=swap" rel="stylesheet">
+<style>
+  :root{
+    --walnut:#3A2718;
+    --walnut-dark:#24170D;
+    --felt:#1E5B44;
+    --felt-dark:#164633;
+    --line:#0E3326;
+    --black:#1A1A1A;
+    --ivory:#F1EEE4;
+    --brass:#C9A24A;
+  }
+  *{box-sizing:border-box;margin:0;padding:0}
+  html,body{height:100%}
+  body{
+    font-family:"Gowun Batang",serif;
+    color:var(--ivory);
+    background:
+      repeating-linear-gradient(92deg, rgba(255,255,255,.025) 0 2px, transparent 2px 9px),
+      radial-gradient(ellipse at 50% 30%, #4A3220 0%, var(--walnut) 45%, var(--walnut-dark) 100%);
+    min-height:100%;
+    display:flex;justify-content:center;
+    padding:max(16px, env(safe-area-inset-top)) 14px 24px;
+    -webkit-tap-highlight-color:transparent;
+  }
+  main{width:100%;max-width:520px;display:flex;flex-direction:column;gap:14px}
+
+  header{display:flex;align-items:baseline;justify-content:space-between}
+  h1{font-size:2rem;font-weight:700;letter-spacing:.02em}
+  .mode{display:flex;gap:6px}
+  select, button{
+    font:inherit;color:var(--ivory);background:rgba(0,0,0,.28);
+    border:1px solid rgba(241,238,228,.22);border-radius:6px;
+    padding:7px 10px;font-size:.92rem;cursor:pointer;
+  }
+  select:focus-visible, button:focus-visible, .cell:focus-visible{outline:2px solid var(--brass);outline-offset:2px}
+  button:disabled{opacity:.4;cursor:default}
+
+  .scores{display:grid;grid-template-columns:1fr 1fr;gap:10px}
+  .player{
+    display:flex;align-items:center;gap:10px;padding:10px 12px;border-radius:8px;
+    background:rgba(0,0,0,.22);border:1px solid transparent;transition:border-color .25s, background .25s;
+  }
+  .player.active{border-color:var(--brass);background:rgba(201,162,74,.12)}
+  .chip{width:26px;height:26px;border-radius:50%;flex:none}
+  .chip.b{background:radial-gradient(circle at 35% 30%, #4a4a4a, var(--black) 60%)}
+  .chip.w{background:radial-gradient(circle at 35% 30%, #fff, var(--ivory) 55%, #cfcabb)}
+  .player .name{font-size:.95rem;opacity:.85}
+  .player .count{margin-left:auto;font-size:1.7rem;font-weight:700;font-variant-numeric:tabular-nums}
+
+  .frame{
+    padding:12px;border-radius:10px;
+    background:linear-gradient(145deg,#5a3d26,#2c1d11);
+    box-shadow:0 18px 40px rgba(0,0,0,.45), inset 0 1px 0 rgba(255,255,255,.08);
+  }
+  .board{
+    display:grid;grid-template-columns:repeat(8,1fr);
+    aspect-ratio:1;background:var(--line);gap:2px;padding:2px;border-radius:3px;
+    position:relative;
+  }
+  .cell{
+    background:radial-gradient(circle at 50% 40%, var(--felt), var(--felt-dark));
+    position:relative;display:flex;align-items:center;justify-content:center;
+    cursor:default;perspective:400px;border:none;padding:0;border-radius:0;
+  }
+  .cell.legal{cursor:pointer}
+  .cell.legal::after{
+    content:"";width:22%;height:22%;border-radius:50%;
+    background:rgba(241,238,228,.22);transition:transform .15s, background .15s;
+  }
+  .board.turn-b .cell.legal::after{background:rgba(26,26,26,.38)}
+  .cell.legal:hover::after{transform:scale(1.5)}
+  .hints-off .cell.legal::after{opacity:0}
+  /* star points */
+  .cell.star::before{
+    content:"";position:absolute;width:7px;height:7px;border-radius:50%;background:var(--line);
+    right:-4.5px;bottom:-4.5px;z-index:1;
+  }
+
+  .disc{
+    width:82%;height:82%;position:relative;transform-style:preserve-3d;
+    transition:transform .42s cubic-bezier(.45,.05,.3,1.3);z-index:2;
+  }
+  .disc.w{transform:rotateY(180deg)}
+  .disc .face{
+    position:absolute;inset:0;border-radius:50%;backface-visibility:hidden;
+    box-shadow:0 3px 5px rgba(0,0,0,.45);
+  }
+  .disc .front{background:radial-gradient(circle at 35% 30%, #505050, var(--black) 58%)}
+  .disc .back{
+    transform:rotateY(180deg);
+    background:radial-gradient(circle at 35% 30%, #fff, var(--ivory) 55%, #c9c4b4);
+  }
+  .disc.placed{animation:drop .3s ease-out}
+  @keyframes drop{from{transform:scale(1.35) translateY(-6px);opacity:0}}
+  .disc.w.placed{animation:dropw .3s ease-out}
+  @keyframes dropw{from{transform:rotateY(180deg) scale(1.35) translateY(-6px);opacity:0}}
+  .last::before{
+    content:"";position:absolute;width:8px;height:8px;border-radius:50%;
+    background:var(--brass);z-index:3;left:50%;top:50%;transform:translate(-50%,-50%);
+  }
+
+  .status{min-height:1.5em;text-align:center;font-size:1.05rem}
+  .controls{display:flex;gap:8px;justify-content:center;flex-wrap:wrap}
+  .controls label{display:flex;align-items:center;gap:6px;font-size:.92rem;opacity:.9;cursor:pointer}
+  .controls input{accent-color:var(--brass);width:16px;height:16px}
+
+  .result{
+    position:absolute;inset:0;display:none;align-items:center;justify-content:center;flex-direction:column;gap:14px;
+    background:rgba(14,51,38,.82);backdrop-filter:blur(2px);z-index:10;border-radius:3px;text-align:center;
+  }
+  .result.show{display:flex;animation:fade .4s ease}
+  @keyframes fade{from{opacity:0}}
+  .result h2{font-size:2.2rem}
+  .result p{font-size:1.1rem;opacity:.9}
+  .result button{background:var(--brass);color:var(--walnut-dark);border:none;padding:10px 22px;font-weight:700;font-size:1rem}
+
+  @media (prefers-reduced-motion: reduce){
+    .disc{transition:none}.disc.placed,.disc.w.placed,.result.show{animation:none}
+  }
+  @media (max-width:400px){ h1{font-size:1.6rem} .player .count{font-size:1.4rem} }
+</style>
+</head>
+<body>
+<main>
+  <header>
+    <h1>오델로</h1>
+    <div class="mode">
+      <select id="mode" aria-label="대전 방식">
+        <option value="ai">컴퓨터와 대전</option>
+        <option value="pvp">둘이서 대전</option>
+      </select>
+      <select id="level" aria-label="난이도">
+        <option value="1">쉬움</option>
+        <option value="3" selected>보통</option>
+        <option value="5">어려움</option>
+      </select>
+    </div>
+  </header>
+
+  <section class="scores">
+    <div class="player" id="pB"><span class="chip b"></span><span class="name" id="nB">나 (흑)</span><span class="count" id="cB">2</span></div>
+    <div class="player" id="pW"><span class="chip w"></span><span class="name" id="nW">컴퓨터 (백)</span><span class="count" id="cW">2</span></div>
+  </section>
+
+  <div class="frame">
+    <div class="board" id="board" role="grid" aria-label="오델로 판">
+      <div class="result" id="result"><h2 id="rTitle"></h2><p id="rText"></p><button id="again">새 게임</button></div>
+    </div>
+  </div>
+
+  <div class="status" id="status" aria-live="polite"></div>
+
+  <div class="controls">
+    <button id="undo">한 수 무르기</button>
+    <button id="restart">새 게임</button>
+    <label><input type="checkbox" id="hints" checked> 둘 수 있는 곳 표시</label>
+  </div>
+</main>
+
+<script>
+const N=8, EMPTY=0, B=1, W=2;
+const DIRS=[[-1,-1],[-1,0],[-1,1],[0,-1],[0,1],[1,-1],[1,0],[1,1]];
+const WEIGHTS=[
+ [120,-20,20, 5, 5,20,-20,120],
+ [-20,-40,-5,-5,-5,-5,-40,-20],
+ [ 20, -5,15, 3, 3,15, -5, 20],
+ [  5, -5, 3, 3, 3, 3, -5,  5],
+ [  5, -5, 3, 3, 3, 3, -5,  5],
+ [ 20, -5,15, 3, 3,15, -5, 20],
+ [-20,-40,-5,-5,-5,-5,-40,-20],
+ [120,-20,20, 5, 5,20,-20,120]];
+
+const boardEl=document.getElementById('board');
+const resultEl=document.getElementById('result');
+const statusEl=document.getElementById('status');
+const modeEl=document.getElementById('mode');
+const levelEl=document.getElementById('level');
+let board, turn, history, last, busy=false, over=false;
+const cells=[], discs=[];
+
+// build grid
+for(let r=0;r<N;r++)for(let c=0;c<N;c++){
+  const cell=document.createElement('button');
+  cell.className='cell'+(((r===1||r===5)&&(c===1||c===5))?' star':'');
+  cell.setAttribute('role','gridcell');
+  cell.setAttribute('aria-label',`${String.fromCharCode(65+c)}${r+1}`);
+  cell.tabIndex=-1;
+  cell.addEventListener('click',()=>onClick(r,c));
+  boardEl.insertBefore(cell,resultEl);
+  cells.push(cell); discs.push(null);
+}
+
+const opp=p=>3-p;
+const inB=(r,c)=>r>=0&&r<N&&c>=0&&c<N;
+
+function flipsFor(b,r,c,p){
+  if(b[r][c]!==EMPTY)return [];
+  const out=[];
+  for(const[dr,dc]of DIRS){
+    let rr=r+dr,cc=c+dc;const line=[];
+    while(inB(rr,cc)&&b[rr][cc]===opp(p)){line.push([rr,cc]);rr+=dr;cc+=dc}
+    if(line.length&&inB(rr,cc)&&b[rr][cc]===p)out.push(...line);
+  }
+  return out;
+}
+function legalMoves(b,p){
+  const m=[];
+  for(let r=0;r<N;r++)for(let c=0;c<N;c++){const f=flipsFor(b,r,c,p);if(f.length)m.push({r,c,f})}
+  return m;
+}
+function apply(b,mv,p){
+  const nb=b.map(row=>row.slice());
+  nb[mv.r][mv.c]=p;for(const[r,c]of mv.f)nb[r][c]=p;return nb;
+}
+function count(b){let x=0,y=0;for(const row of b)for(const v of row){if(v===B)x++;else if(v===W)y++}return[x,y]}
+
+// ---- AI: alpha-beta with positional + mobility evaluation ----
+function evaluate(b,p){
+  let pos=0;
+  for(let r=0;r<N;r++)for(let c=0;c<N;c++){
+    if(b[r][c]===p)pos+=WEIGHTS[r][c];else if(b[r][c]===opp(p))pos-=WEIGHTS[r][c];
+  }
+  const mine=legalMoves(b,p).length, theirs=legalMoves(b,opp(p)).length;
+  const mob=(mine+theirs)?100*(mine-theirs)/(mine+theirs):0;
+  return pos+mob;
+}
+function search(b,p,depth,alpha,beta,me){
+  const moves=legalMoves(b,p);
+  if(depth===0||(!moves.length&&!legalMoves(b,opp(p)).length)){
+    if(!moves.length&&!legalMoves(b,opp(p)).length){
+      const[x,y]=count(b);const d=(me===B?x-y:y-x);return d*1000;
+    }
+    return evaluate(b,me);
+  }
+  if(!moves.length)return search(b,opp(p),depth-1,alpha,beta,me);
+  moves.sort((a,z)=>WEIGHTS[z.r][z.c]-WEIGHTS[a.r][a.c]);
+  if(p===me){
+    let v=-Infinity;
+    for(const m of moves){v=Math.max(v,search(apply(b,m,p),opp(p),depth-1,alpha,beta,me));alpha=Math.max(alpha,v);if(alpha>=beta)break}
+    return v;
+  }else{
+    let v=Infinity;
+    for(const m of moves){v=Math.min(v,search(apply(b,m,p),opp(p),depth-1,alpha,beta,me));beta=Math.min(beta,v);if(alpha>=beta)break}
+    return v;
+  }
+}
+function bestMove(b,p,depth){
+  const moves=legalMoves(b,p);
+  const empties=64-count(b).reduce((a,z)=>a+z,0);
+  if(depth>=3&&empties<=10)depth=empties; // 종반 완전 탐색
+  let best=null,bv=-Infinity;
+  for(const m of moves){
+    let v=search(apply(b,m,p),opp(p),depth-1,-Infinity,Infinity,p);
+    if(depth===1)v+=Math.random()*40; // 쉬움 모드에 약간의 무작위성
+    if(v>bv){bv=v;best=m}
+  }
+  return best;
+}
+
+// ---- rendering ----
+function render(placed=null){
+  const moves=over?[]:legalMoves(board,turn);
+  const legalSet=new Set(moves.map(m=>m.r*N+m.c));
+  const showLegal=!busy&&!isAITurn();
+  for(let r=0;r<N;r++)for(let c=0;c<N;c++){
+    const i=r*N+c,v=board[r][c],cell=cells[i];
+    if(v!==EMPTY){
+      if(!discs[i]){
+        const d=document.createElement('div');
+        d.className='disc'+(v===W?' w':'')+(placed&&placed.r===r&&placed.c===c?' placed':'');
+        d.innerHTML='<div class="face front"></div><div class="face back"></div>';
+        cell.appendChild(d);discs[i]=d;
+      }else{
+        discs[i].classList.remove('placed');
+        discs[i].classList.toggle('w',v===W);
+      }
+    }else if(discs[i]){discs[i].remove();discs[i]=null}
+    const legal=showLegal&&legalSet.has(i);
+    cell.classList.toggle('legal',legal);
+    cell.tabIndex=legal?0:-1;
+    cell.classList.toggle('last',!!last&&last.r===r&&last.c===c);
+  }
+  boardEl.classList.toggle('turn-b',turn===B);
+  const[x,y]=count(board);
+  document.getElementById('cB').textContent=x;
+  document.getElementById('cW').textContent=y;
+  document.getElementById('pB').classList.toggle('active',!over&&turn===B);
+  document.getElementById('pW').classList.toggle('active',!over&&turn===W);
+  document.getElementById('undo').disabled=busy||history.length===0;
+}
+
+function isAITurn(){return modeEl.value==='ai'&&turn===W&&!over}
+function name(p){
+  if(modeEl.value==='ai')return p===B?'내':'컴퓨터';
+  return p===B?'흑':'백';
+}
+
+function setStatus(msg){statusEl.textContent=msg}
+
+function play(mv){
+  history.push({board:board.map(r=>r.slice()),turn,last});
+  board=apply(board,mv,turn);last={r:mv.r,c:mv.c};
+  turn=opp(turn);
+  render(mv);
+  advance();
+}
+
+function advance(){
+  if(legalMoves(board,turn).length){
+    setStatus(modeEl.value==='ai'&&turn===W?'컴퓨터가 생각하는 중…':`${name(turn)} 차례입니다.`);
+  }else if(legalMoves(board,opp(turn)).length){
+    const skipped=turn;turn=opp(turn);
+    setStatus(`${name(skipped)}${modeEl.value==='ai'?(skipped===B?'가':'는'):'은'} 둘 곳이 없어 차례를 넘깁니다.`);
+  }else{
+    finish();return;
+  }
+  render();
+  if(isAITurn())runAI();
+}
+
+function runAI(){
+  busy=true;render();
+  setTimeout(()=>{
+    const mv=bestMove(board,W,+levelEl.value);
+    busy=false;
+    if(mv)play(mv);
+  },450);
+}
+
+function finish(){
+  over=true;render();
+  const[x,y]=count(board);
+  let title,text=`흑 ${x} : 백 ${y}`;
+  if(x===y)title='무승부';
+  else if(modeEl.value==='ai')title=x>y?'이겼습니다!':'컴퓨터 승리';
+  else title=x>y?'흑 승리':'백 승리';
+  setStatus(`게임 종료 — ${text}`);
+  document.getElementById('rTitle').textContent=title;
+  document.getElementById('rText').textContent=text;
+  setTimeout(()=>resultEl.classList.add('show'),500);
+}
+
+function onClick(r,c){
+  if(busy||over||isAITurn())return;
+  const f=flipsFor(board,r,c,turn);
+  if(!f.length)return;
+  play({r,c,f});
+}
+
+function newGame(){
+  board=Array.from({length:N},()=>Array(N).fill(EMPTY));
+  board[3][3]=W;board[4][4]=W;board[3][4]=B;board[4][3]=B;
+  turn=B;history=[];last=null;over=false;busy=false;
+  resultEl.classList.remove('show');
+  for(let i=0;i<64;i++)if(discs[i]){discs[i].remove();discs[i]=null}
+  const ai=modeEl.value==='ai';
+  document.getElementById('nB').textContent=ai?'나 (흑)':'흑';
+  document.getElementById('nW').textContent=ai?'컴퓨터 (백)':'백';
+  levelEl.style.display=ai?'':'none';
+  render();
+  setStatus(ai?'흑이 먼저 둡니다. 당신 차례입니다.':'흑이 먼저 둡니다.');
+}
+
+document.getElementById('undo').addEventListener('click',()=>{
+  if(busy||!history.length)return;
+  // 컴퓨터 대전이면 내 차례로 돌아갈 때까지 되돌림
+  let s=history.pop();
+  if(modeEl.value==='ai'){
+    while(s.turn!==B&&history.length)s=history.pop();
+  }
+  board=s.board;turn=s.turn;last=s.last;over=false;
+  resultEl.classList.remove('show');
+  render();
+  setStatus(`${name(turn)} 차례입니다.`);
+  if(isAITurn())runAI();
+});
+document.getElementById('restart').addEventListener('click',newGame);
+document.getElementById('again').addEventListener('click',newGame);
+modeEl.addEventListener('change',newGame);
+document.getElementById('hints').addEventListener('change',e=>boardEl.classList.toggle('hints-off',!e.target.checked));
+
+newGame();
+</script>
+</body>
+</html>

@@ -1,0 +1,309 @@
+<!DOCTYPE html>
+<html lang="ko">
+<head>
+<meta charset="UTF-8">
+<meta name="viewport" content="width=device-width,initial-scale=1,maximum-scale=1,user-scalable=no,viewport-fit=cover">
+<title>똑같은 그림 찾기</title>
+<link rel="preconnect" href="https://fonts.googleapis.com">
+<link href="https://fonts.googleapis.com/css2?family=Jua&display=swap" rel="stylesheet">
+<style>
+:root{--ink:#1F2A44;--paper:#FFFDF7;--p0:#F0544F;--p1:#3D9BE9;--p2:#F5B82E;--p3:#8E5CD9}
+*{box-sizing:border-box;margin:0;padding:0;-webkit-tap-highlight-color:transparent}
+html,body{height:100%;background:var(--ink);color:var(--paper);font-family:'Jua',system-ui,sans-serif;
+  user-select:none;-webkit-user-select:none;touch-action:manipulation;overflow:hidden}
+button{font:inherit;cursor:pointer;border:none}
+button:focus-visible{outline:3px solid #fff;outline-offset:3px}
+
+#setup,#result{position:fixed;inset:0;display:flex;flex-direction:column;align-items:center;justify-content:flex-start;gap:22px;padding:24px 16px calc(24px + env(safe-area-inset-bottom));text-align:center;overflow-y:auto;-webkit-overflow-scrolling:touch;touch-action:pan-y}
+#setup>:first-child,#result>:first-child{margin-top:auto}
+#setup>:last-child,#result>:last-child{margin-bottom:auto}
+.modal{position:fixed;inset:0;display:none;place-items:center;background:rgba(31,42,68,.85);z-index:10}
+.modal .box{display:flex;flex-direction:column;gap:12px;align-items:stretch;width:min(300px,86vw);text-align:center}
+.modal p{font-size:26px;margin-bottom:6px}
+@media (max-height:700px){.logo{display:none}h1{font-size:30px}.sub{font-size:15px}}
+.logo{display:flex;gap:10px;align-items:center}
+.logo .dot{width:60px;height:60px;border-radius:50%;background:var(--paper);display:grid;place-items:center;font-size:34px;box-shadow:0 0 0 5px var(--p0)}
+.logo .dot:nth-child(2){box-shadow:0 0 0 5px var(--p1);transform:rotate(-12deg);font-size:22px}
+.logo .dot:nth-child(3){box-shadow:0 0 0 5px var(--p2);font-size:42px}
+h1{font-size:38px;font-weight:400;line-height:1.1}
+.sub{font-size:16px;opacity:.75;max-width:30ch;line-height:1.5}
+.group{display:flex;flex-direction:column;gap:10px;align-items:center;width:100%}
+.group h2{font-size:18px;font-weight:400;opacity:.8}
+.seg{display:flex;flex-wrap:wrap;justify-content:center;gap:8px;max-width:420px}
+.seg button{min-width:64px;padding:10px 14px;border-radius:14px;background:rgba(255,255,255,.1);color:var(--paper);font-size:19px;
+  display:flex;flex-direction:column;align-items:center;gap:2px}
+.seg button small{font-size:13px;opacity:.7}
+.seg button[aria-pressed=true]{background:var(--paper);color:var(--ink)}
+.form{display:grid;grid-template-columns:auto 1fr;gap:14px 14px;align-items:center;width:min(380px,100%);text-align:left}
+.form label{font-size:20px}
+.form select{width:100%;font:inherit;font-size:18px;padding:14px 40px 14px 14px;border-radius:14px;border:3px solid var(--paper);
+  background:var(--paper) url("data:image/svg+xml,%3Csvg xmlns='http://www.w3.org/2000/svg' width='14' height='9'%3E%3Cpath d='M1 1l6 6 6-6' stroke='%231F2A44' stroke-width='2.5' fill='none'/%3E%3C/svg%3E") no-repeat right 14px center;
+  color:var(--ink);-webkit-appearance:none;appearance:none;cursor:pointer;user-select:auto;-webkit-user-select:auto}
+.form select:focus-visible{outline:3px solid var(--p2);outline-offset:2px}
+.go{padding:16px 48px;border-radius:999px;background:var(--p2);color:var(--ink);font-size:24px;box-shadow:0 6px 0 #B9861A}
+.go:active{transform:translateY(4px);box-shadow:0 2px 0 #B9861A}
+
+#game{position:fixed;inset:0;display:none;flex-direction:column}
+.half{display:flex;flex-direction:column;min-height:0}
+.zone{position:relative;flex:1;display:flex;flex-direction:column;align-items:center;justify-content:center;gap:4px;
+  padding:6px;border:4px solid var(--c);background:color-mix(in srgb,var(--c) 18%,var(--ink));transition:background .2s;min-height:0}
+.zone.flip{transform:rotate(180deg)}
+.zone.win{background:color-mix(in srgb,var(--c) 55%,var(--ink))}
+.zone.miss{animation:shake .35s}
+.zone.locked .cards{opacity:.35;filter:grayscale(1)}
+@keyframes shake{25%{translate:-8px}50%{translate:8px}75%{translate:-4px}}
+.info{display:flex;gap:12px;align-items:baseline;font-size:17px}
+.info .name{color:var(--c)}
+.info .score{font-size:22px}
+.cards{display:flex;gap:10px;align-items:center;justify-content:center;transition:opacity .2s}
+.cards.col{flex-direction:column}
+.slot{display:flex;flex-direction:column;align-items:center;gap:2px}
+.slot small{font-size:13px;opacity:.7}
+.card{position:relative;width:var(--cs);height:var(--cs);border-radius:50%;background:var(--paper);
+  box-shadow:0 0 0 4px var(--rim,#fff),0 4px 0 6px rgba(0,0,0,.25)}
+.card.center{--rim:#2B3A5E}
+.card.mine{--rim:var(--c)}
+.sym{position:absolute;display:grid;place-items:center;border-radius:50%;cursor:pointer;line-height:1;
+  transform:translate(-50%,-50%) rotate(var(--r));font-size:calc(var(--cs) * var(--f))}
+.sym.hit{animation:pop .6s}
+@keyframes pop{40%{transform:translate(-50%,-50%) rotate(var(--r)) scale(1.6)}}
+.toast{position:absolute;inset:auto 0 50% 0;translate:0 50%;text-align:center;font-size:26px;pointer-events:none;opacity:0;transition:opacity .2s;text-shadow:0 2px 6px rgba(0,0,0,.6)}
+.toast.show{opacity:1}
+
+.bar{display:flex;align-items:center;justify-content:space-between;gap:12px;padding:6px 14px;background:var(--ink);font-size:16px;flex:none}
+.bar button{background:rgba(255,255,255,.12);color:var(--paper);padding:6px 14px;border-radius:10px;font-size:15px}
+.deck{display:flex;align-items:center;gap:8px}
+.deck b{font-weight:400;font-size:20px;color:var(--p2)}
+#count{position:fixed;inset:0;display:none;place-items:center;font-size:120px;background:rgba(31,42,68,.7);pointer-events:none}
+
+#result{display:none}
+.rank{display:flex;flex-direction:column;gap:10px;width:min(340px,100%)}
+.rank div{display:flex;justify-content:space-between;align-items:center;padding:14px 18px;border-radius:16px;background:rgba(255,255,255,.08);border-left:8px solid var(--c);font-size:20px}
+.rank div:first-child{background:var(--paper);color:var(--ink);font-size:24px}
+.row{display:flex;gap:12px}
+.ghost{padding:14px 24px;border-radius:999px;background:rgba(255,255,255,.12);color:var(--paper);font-size:18px}
+@media (prefers-reduced-motion:reduce){.zone.miss,.sym.hit{animation:none}}
+</style>
+</head>
+<body>
+
+<section id="setup">
+  <div class="logo"><div class="dot">🦊</div><div class="dot">⭐</div><div class="dot">🍉</div></div>
+  <h1>똑같은 그림 찾기</h1>
+  <p class="sub">내 카드와 가운데 카드에 똑같이 있는 그림을 먼저 누르면 가운데 카드를 가져가요.</p>
+  <div class="form">
+    <label for="players">인원</label>
+    <select id="players">
+      <option value="1">1명 (혼자 연습)</option>
+      <option value="2" selected>2명</option>
+      <option value="3">3명</option>
+      <option value="4">4명</option>
+    </select>
+    <label for="level">난이도</label>
+    <select id="level">
+      <option value="3">아주 쉬움 — 그림 4개, 13장</option>
+      <option value="4">쉬움 — 그림 5개, 21장</option>
+      <option value="5">보통 — 그림 6개, 31장</option>
+      <option value="7" selected>어려움 — 그림 8개, 57장</option>
+      <option value="8">아주 어려움 — 그림 9개, 73장</option>
+    </select>
+  </div>
+  <button class="go" id="start">게임 시작</button>
+</section>
+
+<section id="game">
+  <div class="half" id="top"></div>
+  <div class="bar">
+    <div class="deck">남은 카드 <b id="left">0</b></div>
+    <button id="quit">멈춤 · 설정</button>
+  </div>
+  <div class="half" id="bottom"></div>
+</section>
+
+<div id="count"></div>
+
+<div class="modal" id="pause">
+  <div class="box">
+    <p>잠깐 멈춤</p>
+    <button class="go" id="resume">계속하기</button>
+    <button class="ghost" id="toSetup">인원·난이도 바꾸기</button>
+    <button class="ghost" id="endNow">지금 끝내고 결과 보기</button>
+  </div>
+</div>
+
+<section id="result">
+  <h1 id="winner"></h1>
+  <div class="rank" id="rank"></div>
+  <div class="row">
+    <button class="go" id="again">한 판 더</button>
+    <button class="ghost" id="home">설정 바꾸기</button>
+  </div>
+</section>
+
+<script>
+/* 그림 130종 — 판마다 필요한 수만큼 무작위로 골라 씀 */
+const SYMBOLS=[
+"🍎","🍌","🍇","🍉","🍓","🍒","🍑","🍍","🥝","🍋","🥕","🌽","🍄","🥦","🍆","🥑","🍞","🧀","🍔","🍕",
+"🌭","🍟","🍩","🍪","🎂","🍦","🍭","🍬","🥨","🍿",
+"🌵","🌻","🌷","🌹","🍀","🍁","🌲","🌈","⭐","🌙","☀️","⚡","❄️","🔥","💧","☁️","🌊","⛄","🌋","🪐",
+"🐶","🐱","🐭","🐰","🦊","🐻","🐼","🐸","🐵","🐔","🐧","🐢","🐙","🦋","🐞","🐝","🐳","🦄","🦖","🐘",
+"🦒","🦓","🐷","🐮","🦁","🐯","🐨","🦀","🐌","🦉","🐬","🦈","🐊","🦔","🐿️","🦩","🦜","🐠","🐍","🦇",
+"⚽","🏀","🏈","🎾","🎈","🎁","🎸","🥁","🎺","🎨","✏️","📚","⏰","🔑","💡","🚗","🚲","✈️","🚀","⛵",
+"🚂","🎩","👓","👑","💎","🔔","📷","☂️","🧸","🪁","🎯","🧲","🔨","⚓","🏠","🗿","🎃","🧩","🎲","🛸"];
+const COLORS=["var(--p0)","var(--p1)","var(--p2)","var(--p3)"];
+const $=s=>document.querySelector(s);
+let N=2, ORDER=7, S=null;
+
+/* ---------- 유한체 (2,3,5,7은 소수, 4·8은 GF(2^k)) ---------- */
+function field(q){
+  if(q===4||q===8){
+    const poly=q===4?0b111:0b1011, deg=q===4?2:3;
+    const mul=(a,b)=>{let r=0;while(b){if(b&1)r^=a;b>>=1;a<<=1;if(a&(1<<deg))a^=poly}return r};
+    return{add:(a,b)=>a^b,mul};
+  }
+  return{add:(a,b)=>(a+b)%q,mul:(a,b)=>(a*b)%q};
+}
+/* 사영평면: 어떤 두 카드든 공통 그림이 정확히 1개 */
+function buildDeck(q){
+  const F=field(q), lines=[], P=(x,y)=>x*q+y, SL=m=>q*q+m, INF=q*q+q;
+  for(let m=0;m<q;m++)for(let b=0;b<q;b++){const l=[SL(m)];for(let x=0;x<q;x++)l.push(P(x,F.add(F.mul(m,x),b)));lines.push(l)}
+  for(let c=0;c<q;c++){const l=[INF];for(let y=0;y<q;y++)l.push(P(c,y));lines.push(l)}
+  const li=[INF];for(let m=0;m<q;m++)li.push(SL(m));lines.push(li);
+  const map=shuffle([...SYMBOLS.keys()]).slice(0,q*q+q+1);
+  return shuffle(lines.map(l=>makeCard(shuffle(l.map(x=>map[x])))));
+}
+function shuffle(a){for(let i=a.length-1;i>0;i--){const j=Math.random()*(i+1)|0;[a[i],a[j]]=[a[j],a[i]]}return a}
+
+/* 크기가 제각각인 원을 카드 안에 겹치지 않게 무작위 배치 */
+function layout(k){
+  const R=47;
+  for(let att=0;att<120;att++){
+    const w=Array.from({length:k},()=>0.45+Math.random()*1.2);
+    const fill=Math.max(.28,.47-att*.004);
+    const s=Math.sqrt(fill*R*R/w.reduce((a,b)=>a+b*b,0));
+    const rs=w.map(x=>x*s), order=[...rs.keys()].sort((a,b)=>rs[b]-rs[a]);
+    const out=new Array(k); let ok=true;
+    for(const i of order){
+      const r=rs[i]; let done=false;
+      for(let t=0;t<400&&!done;t++){
+        const a=Math.random()*Math.PI*2, d=Math.sqrt(Math.random())*(R-r);
+        const x=50+d*Math.cos(a), y=50+d*Math.sin(a);
+        if(out.every(p=>!p||Math.hypot(p.x-x,p.y-y)>=p.r+r+1)){out[i]={x,y,r};done=true}
+      }
+      if(!done){ok=false;break}
+    }
+    if(ok)return out;
+  }
+}
+function makeCard(syms){
+  const L=layout(syms.length);
+  return{syms,layout:L.map(p=>({...p,rot:(Math.random()*360|0)+"deg"}))};
+}
+
+/* ---------- 소리 ---------- */
+let ac;
+function beep(f,d=.12,t="sine"){try{const o=ac.createOscillator(),g=ac.createGain();
+  o.type=t;o.frequency.value=f;g.gain.setValueAtTime(.15,ac.currentTime);g.gain.exponentialRampToValueAtTime(.001,ac.currentTime+d);
+  o.connect(g).connect(ac.destination);o.start();o.stop(ac.currentTime+d)}catch(e){}}
+
+/* ---------- 설정 ---------- */
+$("#start").onclick=start; $("#again").onclick=start;
+function showSetup(){S=null;["#game","#result","#pause"].forEach(x=>$(x).style.display="none");$("#setup").style.display="flex"}
+$("#home").onclick=showSetup;
+$("#quit").onclick=()=>{if(!S||S.counting)return;S.paused=true;$("#pause").style.display="grid"};
+$("#resume").onclick=()=>{S.paused=false;$("#pause").style.display="none"};
+$("#toSetup").onclick=showSetup;
+$("#endNow").onclick=()=>{$("#pause").style.display="none";finish()};
+
+/* ---------- 게임 ---------- */
+function start(){
+  N=+$("#players").value; ORDER=+$("#level").value;
+  try{ac=ac||new (window.AudioContext||window.webkitAudioContext)()}catch(e){}
+  const deck=buildDeck(ORDER);
+  S={deck,busy:true,players:[]};
+  for(let i=0;i<N;i++)S.players.push({name:N===1?"나":`플레이어 ${i+1}`,score:0,top:deck.pop(),lock:0});
+  S.center=deck.pop();
+  $("#setup").style.display="none";$("#result").style.display="none";$("#game").style.display="flex";
+  buildZones(); render(); countdown();
+}
+function buildZones(){
+  const top=$("#top"),bot=$("#bottom");top.innerHTML=bot.innerHTML="";
+  const flipCount=Math.floor(N/2);
+  top.style.flex=flipCount; bot.style.flex=N-flipCount;
+  S.players.forEach((p,i)=>{
+    const z=document.createElement("div");
+    z.className="zone"+(i<flipCount?" flip":"");z.style.setProperty("--c",COLORS[i]);
+    z.innerHTML=`<div class="info"><span class="name">${p.name}</span><span class="score">0장</span></div>
+      <div class="cards"><div class="slot"><div class="card center"></div><small>가운데</small></div>
+      <div class="slot"><div class="card mine"></div><small>내 카드</small></div></div><div class="toast"></div>`;
+    z.addEventListener("pointerdown",e=>{const s=e.target.closest(".sym");if(s){e.preventDefault();tap(i,+s.dataset.id,z)}});
+    (i<flipCount?top:bot).appendChild(z);p.el=z;
+  });
+  sizeCards();
+}
+function sizeCards(){
+  if(!S)return;
+  S.players.forEach(p=>{
+    const z=p.el, w=z.clientWidth-20, h=z.clientHeight-50;
+    const row=Math.min(w/2-16,h-26), col=Math.min(w-20,h/2-30);
+    const useCol=col>row; const cs=Math.max(80,Math.floor(useCol?col:row));
+    z.querySelector(".cards").classList.toggle("col",useCol);
+    z.style.setProperty("--cs",cs+"px");
+  });
+}
+addEventListener("resize",sizeCards);
+
+function cardHTML(c){return c.syms.map((s,i)=>{const l=c.layout[i];
+  return `<span class="sym" data-id="${s}" style="left:${l.x}%;top:${l.y}%;width:${l.r*2}%;height:${l.r*2}%;--r:${l.rot};--f:${(l.r*1.3/100).toFixed(4)}">${SYMBOLS[s]}</span>`}).join("")}
+function render(){
+  const ch=cardHTML(S.center);
+  S.players.forEach(p=>{
+    p.el.querySelector(".center").innerHTML=ch;
+    p.el.querySelector(".mine").innerHTML=cardHTML(p.top);
+    p.el.querySelector(".score").textContent=p.score+"장";
+  });
+  $("#left").textContent=S.deck.length+1;
+}
+function countdown(){
+  const c=$("#count");c.style.display="grid";let n=3;S.counting=true;
+  const step=()=>{if(!S){c.style.display="none";return}if(n===0){c.style.display="none";S.busy=false;S.counting=false;S.t0=Date.now();beep(880,.25);return}
+    c.textContent=n;beep(440);n--;setTimeout(step,700)};step();
+}
+function tap(i,id,z){
+  const p=S.players[i];
+  if(!S||S.busy||S.paused||Date.now()<p.lock)return;
+  if(S.center.syms.includes(id)&&p.top.syms.includes(id)){
+    S.busy=true;p.score++;beep(660,.1,"triangle");setTimeout(()=>beep(990,.15,"triangle"),90);
+    z.querySelectorAll(`.sym[data-id="${id}"]`).forEach(s=>s.classList.add("hit"));
+    z.classList.add("win");
+    S.players.forEach(q=>{if(q!==p){const t=q.el.querySelector(".toast");t.textContent=`${p.name} ${SYMBOLS[id]}`;t.classList.add("show")}});
+    setTimeout(()=>{
+      if(!S)return;
+      z.classList.remove("win");S.players.forEach(q=>q.el.querySelector(".toast").classList.remove("show"));
+      p.top=S.center;
+      if(!S.deck.length){render();finish();return}
+      S.center=S.deck.pop();render();S.busy=false;
+    },N===1?450:800);
+  }else{
+    p.lock=Date.now()+1200;beep(160,.25,"square");
+    z.classList.remove("miss");void z.offsetWidth;z.classList.add("miss","locked");
+    setTimeout(()=>z.classList.remove("locked"),1200);
+  }
+}
+function finish(){
+  S.busy=true;
+  const r=[...S.players].map((p,i)=>({...p,i})).sort((a,b)=>b.score-a.score);
+  if(N===1){
+    const sec=((Date.now()-(S.t0||Date.now()))/1000).toFixed(1);
+    $("#winner").textContent=`${sec}초 걸렸어요`;
+  }else{
+    const tie=r[0].score===r[1].score;
+    $("#winner").textContent=tie?"공동 1등이에요!":`${r[0].name} 승리!`;
+  }
+  $("#rank").innerHTML=r.map(p=>`<div style="--c:${COLORS[p.i]}"><span>${p.name}</span><span>${p.score}장</span></div>`).join("");
+  $("#game").style.display="none";$("#pause").style.display="none";$("#result").style.display="flex";
+  beep(523,.15);setTimeout(()=>beep(659,.15),150);setTimeout(()=>beep(784,.3),300);
+}
+</script>
+</body>
+</html>
