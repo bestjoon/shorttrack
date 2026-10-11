@@ -1,0 +1,763 @@
+<!DOCTYPE html>
+<html lang="ko">
+<head>
+<meta charset="UTF-8">
+<meta name="viewport" content="width=device-width, initial-scale=1, maximum-scale=1, user-scalable=no, viewport-fit=cover">
+<meta name="apple-mobile-web-app-capable" content="yes">
+<meta name="apple-mobile-web-app-status-bar-style" content="black-translucent">
+<title>지구 한 바퀴</title>
+<link rel="preconnect" href="https://fonts.googleapis.com">
+<link href="https://fonts.googleapis.com/css2?family=Jua&family=Gowun+Dodum&display=swap" rel="stylesheet">
+<style>
+:root{
+  --deep:#0C2640; --ocean:#12355B; --sea:#1C4E7E;
+  --tile:#F5FAFD; --ink:#1B2430; --muted:#5C6B7A;
+  --gold:#F2B134; --gold-dark:#B37F0E; --coral:#E4572E; --keybg:#FFE9B0;
+}
+*{box-sizing:border-box;margin:0;padding:0;-webkit-tap-highlight-color:transparent}
+html,body{height:100%;background:var(--deep);color:var(--ink);font-family:'Gowun Dodum',system-ui,sans-serif;
+  touch-action:manipulation;-webkit-user-select:none;user-select:none;overflow:hidden;-webkit-text-size-adjust:100%}
+button{font-family:'Jua',system-ui,sans-serif;cursor:pointer;border:none;color:inherit;background:none;touch-action:manipulation}
+input{font-family:inherit;-webkit-user-select:text;user-select:text}
+button:focus-visible,input:focus-visible{outline:3px solid var(--gold);outline-offset:2px}
+
+.app{display:flex;height:100vh;height:100dvh;gap:14px;
+  padding:max(12px,env(safe-area-inset-top)) max(12px,env(safe-area-inset-right)) max(12px,env(safe-area-inset-bottom)) max(12px,env(safe-area-inset-left))}
+
+/* ---------- 보드 ---------- */
+.board{position:relative;container-type:size;flex:none;aspect-ratio:1/1;
+  width:min(calc(100dvh - 24px), calc(100vw - 300px));
+  display:grid;grid-template-columns:1.45fr repeat(9,1fr) 1.45fr;grid-template-rows:1.45fr repeat(9,1fr) 1.45fr;
+  gap:2px;padding:3px;background:var(--deep);border-radius:16px;box-shadow:0 0 0 2px #24527d}
+.tile{position:relative;background:var(--tile);border-radius:4px;overflow:hidden;display:flex;flex-direction:column;align-items:center;cursor:pointer}
+.tile .band{width:100%;height:17%;flex:none}
+.tile .nm{font-family:'Jua';font-size:1.75cqw;line-height:1.1;text-align:center;padding:.35cqw .2cqw 0;word-break:keep-all}
+.tile .bld{font-size:1.6cqw;line-height:1.2;min-height:1.9cqw}
+.tile .pr{font-size:1.3cqw;color:var(--muted);line-height:1.1}
+.tile.owned .pr{font-weight:700;color:var(--ink)}
+.tile .own{position:absolute;left:0;right:0;bottom:0;height:13%}
+.tile .ic{font-size:2.6cqw;line-height:1.2;margin-top:.5cqw}
+.tile.key{background:var(--keybg)}
+.tile.key .ic{color:var(--gold-dark);font-size:3cqw;margin-top:1.4cqw}
+.tile.lm{background:#E6F0FB}
+.tile.corner{justify-content:center;gap:.4cqw}
+.tile.corner .ic{font-size:5cqw;margin:0}
+.tile.corner .nm{font-size:2cqw}
+.tile.corner .pr{font-size:1.4cqw}
+.c-start{background:#DDF3E1}.c-island{background:#FBEBD3}.c-fund{background:#FCE4EC}.c-space{background:#E5E1F7}
+.tile.donate{background:#FCE4EC}
+.tile.pick{box-shadow:inset 0 0 0 .5cqw var(--gold);animation:pick 1s ease-in-out infinite alternate}
+@keyframes pick{to{background:#FFF3CF}}
+.tokens{position:absolute;left:0;right:0;bottom:14%;display:flex;flex-wrap:wrap;justify-content:center;gap:.2cqw;pointer-events:none}
+.corner .tokens{bottom:6%}
+.tok{width:3cqw;height:3cqw;border-radius:50%;display:grid;place-items:center;font-size:1.8cqw;border:.3cqw solid #fff;box-shadow:0 .2cqw .5cqw rgba(0,0,0,.35)}
+.corner .tok{width:3.6cqw;height:3.6cqw;font-size:2.2cqw}
+.tok.now{animation:bob .7s ease-in-out infinite alternate}
+@keyframes bob{to{transform:translateY(-.5cqw)}}
+
+/* ---------- 보드 가운데 ---------- */
+.center{grid-row:2/11;grid-column:2/11;border-radius:6px;position:relative;overflow:hidden;color:#fff;
+  display:flex;flex-direction:column;align-items:center;justify-content:center;gap:2.2cqw;
+  background:
+    repeating-linear-gradient(0deg,rgba(255,255,255,.06) 0 1px,transparent 1px 6.4cqw),
+    repeating-linear-gradient(90deg,rgba(255,255,255,.06) 0 1px,transparent 1px 6.4cqw),
+    radial-gradient(circle at 50% 42%,var(--sea) 0%,var(--ocean) 72%)}
+.stamp{font-family:'Jua';color:var(--gold);font-size:5.4cqw;letter-spacing:.05em;padding:.6cqw 2.6cqw;
+  border:.5cqw double var(--gold);border-radius:1.4cqw;transform:rotate(-5deg);opacity:.95}
+.turn{display:flex;align-items:center;gap:1.2cqw;font-family:'Jua';font-size:3cqw;padding:.8cqw 2.4cqw .8cqw 1cqw;border-radius:999px;background:rgba(255,255,255,.12)}
+.turn .te{width:5cqw;height:5cqw;border-radius:50%;display:grid;place-items:center;font-size:3cqw;border:.4cqw solid #fff}
+.dice{display:flex;gap:2.4cqw;align-items:center}
+.die{width:10cqw;height:10cqw;background:#fff;border-radius:22%;display:grid;grid-template:repeat(3,1fr)/repeat(3,1fr);padding:1.5cqw;box-shadow:0 .8cqw 0 #c9d6e2}
+.die i{width:65%;height:65%;border-radius:50%;background:var(--ink);place-self:center;visibility:hidden}
+.die i.on{visibility:visible}
+.die.rolling{animation:shake .13s linear infinite}
+@keyframes shake{0%{transform:rotate(-12deg)}50%{transform:rotate(12deg) translateY(-.6cqw)}100%{transform:rotate(-12deg)}}
+.sum{font-family:'Jua';font-size:3.4cqw;min-width:9cqw;text-align:center;color:var(--gold)}
+.roll{font-size:3.6cqw;background:var(--gold);color:var(--ink);padding:1.6cqw 5cqw;border-radius:999px;box-shadow:0 .8cqw 0 var(--gold-dark);transition:transform .08s}
+.roll:active{transform:translateY(.6cqw);box-shadow:0 .2cqw 0 var(--gold-dark)}
+.roll:disabled{opacity:.45}
+.hint{font-family:'Jua';font-size:2.8cqw;color:var(--gold);text-align:center}
+.msgs{width:78%;text-align:center;font-size:2.1cqw;line-height:1.45;min-height:10cqw}
+.msgs div:first-child{font-size:2.5cqw;color:#fff}
+.msgs div{color:rgba(255,255,255,.55)}
+
+/* ---------- 대화상자 ---------- */
+.overlay{position:absolute;inset:0;z-index:10;display:grid;place-items:center;background:rgba(12,38,64,.55);border-radius:16px}
+.overlay[hidden]{display:none}
+.dialog{background:#fff;color:var(--ink);border-radius:18px;padding:22px 22px 18px;width:min(88%,430px);max-height:92%;overflow:auto;
+  box-shadow:0 18px 40px rgba(0,0,0,.35);animation:pop .18s ease-out}
+@keyframes pop{from{transform:scale(.92);opacity:0}}
+.dialog h2{font-family:'Jua';font-weight:400;font-size:26px;margin-bottom:8px}
+.dbody{font-size:16px;line-height:1.6;color:#33414f;margin-bottom:16px}
+.dbody b{color:var(--ink)}
+.dbtns{display:flex;flex-direction:column;gap:9px}
+.btn{font-size:19px;padding:13px 16px;border-radius:12px;background:#EAF1F7;color:var(--ink);display:flex;justify-content:space-between;align-items:center;gap:10px;text-align:left}
+.btn small{font-family:'Gowun Dodum';font-size:15px;color:var(--muted)}
+.btn.primary{background:var(--gold)}
+.btn.primary small{color:#5a4206}
+.btn.danger{background:var(--coral);color:#fff}
+.btn.ghost{background:transparent;box-shadow:inset 0 0 0 2px #d5e0ea;justify-content:center}
+.btn:disabled{opacity:.38}
+.dialog .topband{height:12px;border-radius:6px;margin-bottom:12px}
+.dialog.card{background:var(--keybg)}
+.cardtag{font-family:'Jua';color:var(--gold-dark);font-size:16px;margin-bottom:4px}
+.rank{display:flex;align-items:center;gap:10px;padding:8px 0;border-bottom:1px solid #e3eaf0;font-size:17px}
+.rank .no{font-family:'Jua';font-size:22px;width:28px}
+.rank .em{font-size:24px}
+.rank .v{margin-left:auto;font-family:'Jua'}
+.rules p{margin-bottom:8px}
+
+/* ---------- 오른쪽 패널 ---------- */
+.side{flex:1;min-width:240px;display:flex;flex-direction:column;gap:10px;overflow:auto;color:#fff}
+.meta{display:flex;justify-content:space-between;align-items:baseline;font-family:'Jua';font-size:18px;padding:2px 4px}
+.meta .fund{color:var(--gold)}
+.players{display:flex;flex-direction:column;gap:10px}
+.pc{background:var(--tile);color:var(--ink);border-radius:14px;padding:11px 12px;display:flex;gap:11px;align-items:center;border-left:9px solid var(--pc);transition:box-shadow .2s}
+.pc.active{box-shadow:0 0 0 3px var(--gold)}
+.pc.dead{opacity:.45}
+.pc.dead .pn{text-decoration:line-through}
+.pe{width:46px;height:46px;flex:none;border-radius:50%;background:var(--pc);display:grid;place-items:center;font-size:27px;border:3px solid #fff;box-shadow:0 1px 4px rgba(0,0,0,.25)}
+.pinfo{min-width:0;flex:1}
+.pn{font-family:'Jua';font-size:18px;white-space:nowrap;overflow:hidden;text-overflow:ellipsis}
+.pm{font-family:'Jua';font-size:24px;line-height:1.1}
+.ps{font-size:13px;color:var(--muted);margin-top:2px}
+.badge{display:inline-block;font-size:12px;padding:1px 7px;border-radius:999px;background:#E6EDF3;margin:3px 4px 0 0;color:var(--ink)}
+.tools{margin-top:auto;display:flex;flex-wrap:wrap;gap:8px}
+.tools button{flex:1 1 auto;font-size:16px;padding:11px 12px;border-radius:12px;box-shadow:inset 0 0 0 2px rgba(255,255,255,.28)}
+
+/* ---------- 시작 화면 ---------- */
+.setup{position:fixed;inset:0;z-index:50;display:grid;place-items:center;overflow:auto;padding:20px;
+  background:
+    repeating-linear-gradient(0deg,rgba(255,255,255,.05) 0 1px,transparent 1px 48px),
+    repeating-linear-gradient(90deg,rgba(255,255,255,.05) 0 1px,transparent 1px 48px),
+    radial-gradient(circle at 50% 30%,var(--sea),var(--deep) 75%)}
+.setup[hidden]{display:none}
+.scard{width:min(560px,100%);background:#fff;border-radius:22px;padding:30px 28px 24px;text-align:center;box-shadow:0 24px 50px rgba(0,0,0,.4)}
+.scard .stamp{display:inline-block;font-size:44px;border-width:6px;border-radius:14px;padding:4px 22px;margin:6px 0 14px;color:var(--gold-dark);border-color:var(--gold)}
+.scard .sub{color:var(--muted);font-size:16px;margin-bottom:22px}
+.field{text-align:left;margin-bottom:18px}
+.field>span{display:block;font-family:'Jua';font-size:18px;margin-bottom:8px}
+.seg{display:flex;gap:6px;background:#EAF1F7;border-radius:14px;padding:5px}
+.seg button{flex:1;font-size:18px;padding:10px 4px;border-radius:10px}
+.seg button.on{background:var(--ocean);color:#fff}
+.prow{display:flex;gap:10px;align-items:center;margin-bottom:9px}
+.prow .em{width:52px;height:52px;flex:none;border-radius:50%;font-size:29px;border:3px solid #fff;box-shadow:0 0 0 2px #dbe5ee}
+.prow input{flex:1;min-width:0;font-size:18px;padding:13px 14px;border-radius:12px;border:2px solid #dbe5ee;background:#F7FAFC}
+.prow input:focus{border-color:var(--ocean);outline:none}
+.go{width:100%;font-size:24px;padding:15px;border-radius:999px;background:var(--gold);box-shadow:0 6px 0 var(--gold-dark);margin-top:6px}
+.go:active{transform:translateY(4px);box-shadow:0 2px 0 var(--gold-dark)}
+.resume{width:100%;font-size:19px;padding:12px;border-radius:999px;margin-top:14px;box-shadow:inset 0 0 0 2px #d5e0ea}
+.resume[hidden]{display:none}
+.tip{font-size:13px;color:var(--muted);margin-top:12px}
+
+/* 세로 화면 */
+@media (max-aspect-ratio: 1/1){
+  .app{flex-direction:column;align-items:center}
+  .board{width:min(calc(100vw - 24px), calc(100dvh - 280px))}
+  .side{width:100%;min-width:0}
+  .players{display:grid;grid-template-columns:1fr 1fr}
+  .tools{margin-top:0}
+}
+@media (prefers-reduced-motion: reduce){
+  .tok.now,.tile.pick,.die.rolling,.dialog{animation:none}
+}
+</style>
+</head>
+<body>
+
+<div class="app">
+  <div class="board" id="board">
+    <div class="center">
+      <div class="stamp">지구 한 바퀴</div>
+      <div class="turn" id="turn"></div>
+      <div class="dice">
+        <div class="die" id="d1"></div>
+        <div class="sum" id="sum"></div>
+        <div class="die" id="d2"></div>
+      </div>
+      <button class="roll" id="rollBtn">주사위 굴리기</button>
+      <div class="hint" id="hint" hidden></div>
+      <div class="msgs" id="msgs"></div>
+    </div>
+    <div class="overlay" id="overlay" hidden></div>
+  </div>
+
+  <aside class="side">
+    <div class="meta"><span id="roundTxt"></span><span class="fund" id="fundTxt"></span></div>
+    <div class="players" id="players"></div>
+    <div class="tools">
+      <button id="rulesBtn">규칙 보기</button>
+      <button id="endBtn">게임 끝내기</button>
+      <button id="newBtn">새 게임</button>
+    </div>
+  </aside>
+</div>
+
+<div class="setup" id="setup">
+  <div class="scard">
+    <div class="stamp">지구 한 바퀴</div>
+    <p class="sub">세계 도시를 사고, 건물을 짓고, 통행료를 받는 여행 보드게임</p>
+    <div class="field"><span>몇 명이 하나요?</span><div class="seg" id="countSeg"></div></div>
+    <div class="field"><span>플레이어</span><div id="pRows"></div></div>
+    <div class="field"><span>게임 길이</span><div class="seg" id="roundSeg"></div></div>
+    <button class="go" id="startBtn">게임 시작</button>
+    <button class="resume" id="resumeBtn" hidden>하던 게임 이어서 하기</button>
+    <p class="tip">동물 얼굴을 누르면 말을 바꿀 수 있어요</p>
+  </div>
+</div>
+
+<script>
+/* ================= 데이터 ================= */
+const START_MONEY = 2000, SALARY = 200, DONATE = 100;
+const GROUP_COLORS = ['#7CC47F','#F4A259','#4EA8DE','#9D79D9','#EF6F9C','#3BB7A8','#E4572E','#2E4A7D'];
+const GROUP_PRICE  = [50, 80, 100, 120, 140, 160, 180, 220];
+const BUILD = [0.5, 1, 1.5];             // 별장, 빌딩, 호텔 건설비 (땅값 대비)
+const TOLL  = [0.2, 0.6, 1.4, 2.4];       // 통행료 (땅값 대비, 단계별)
+const LV_ICON = ['', '🏠', '🏢', '🏨'];
+const LV_NAME = ['땅', '별장', '빌딩', '호텔'];
+const EMOJIS = ['🐯','🐰','🐻','🦊','🐼','🐸','🐧','🦁'];
+const PCOLORS = ['#E63946','#1D7BD8','#2A9D5B','#E9A100'];
+
+const city = (name, g, bump = 0) => ({ type:'city', name, g, price: GROUP_PRICE[g] + bump });
+const lm = (name, price, icon) => ({ type:'lm', name, price, icon });
+const KEY = () => ({ type:'key', name:'행운 카드' });
+
+const TILES = [
+  { type:'start', name:'출발', icon:'🚩' },
+  city('타이베이',0), KEY(), city('베이징',0), city('마닐라',0,10), lm('제주도',200,'🍊'),
+  city('싱가포르',1), KEY(), city('카이로',1), city('이스탄불',1,10),
+  { type:'island', name:'무인도', icon:'🏝️' },
+  city('아테네',2), KEY(), city('코펜하겐',2), city('스톡홀름',2,10), lm('크루즈',250,'🛳️'),
+  city('베른',3), KEY(), city('베를린',3), city('오타와',3,10),
+  { type:'fund', name:'기부금 받기', icon:'💝' },
+  city('부에노스',4), KEY(), city('상파울루',4), city('시드니',4,10), lm('부산',300,'🌉'),
+  city('하와이',5), city('리스본',5), KEY(), city('마드리드',5,10),
+  { type:'space', name:'우주여행', icon:'🚀' },
+  city('도쿄',6), KEY(), city('파리',6), city('로마',6,10), lm('세계일주',350,'✈️'),
+  city('런던',7), city('뉴욕',7), { type:'donate', name:'기부하기', icon:'🎁' }, city('서울',7,30)
+];
+const ISLAND = 10, SPACE = 30, SEOUL = 39;
+
+const CARDS = [
+  { t:'여행 사진 공모전 당선', d:'상금 100만을 받아요.', f: async p => { p.money += 100; } },
+  { t:'복권 당첨', d:'200만을 받아요.', f: async p => { p.money += 200; } },
+  { t:'과속 벌금', d:'관광버스가 과속했어요. 벌금 50만을 기부금으로 내요.', f: async p => { await pay(p, 50, 'fund'); } },
+  { t:'출발지로!', d:'출발지로 이동해서 월급을 받아요.', f: async p => { await moveTo(p, 0); return 'land'; } },
+  { t:'배가 고장 났어요', d:'무인도로 떠내려갑니다.', f: async p => { goIsland(p); return 'stop'; } },
+  { t:'우주여행 초대장', d:'우주여행 칸으로 이동해요.', f: async p => { await moveTo(p, SPACE); return 'land'; } },
+  { t:'길을 잘못 들었어요', d:'뒤로 세 칸 이동해요.', f: async p => { await moveBack(p, 3); return 'land'; } },
+  { t:'생일 축하해!', d:'다른 플레이어 모두에게 20만씩 받아요.', f: async p => {
+      for (const q of S.players) if (q !== p && q.alive) await pay(q, 20, p);
+    } },
+  { t:'건물 수리비', d:'내 건물 한 단계마다 30만씩 기부금으로 내요.', f: async p => {
+      const lv = owned(p).reduce((s, i) => s + S.level[i], 0);
+      if (lv === 0) { log(`${p.name}은(는) 건물이 없어서 수리비가 0원이에요`); return; }
+      await pay(p, lv * 30, 'fund');
+    } },
+  { t:'통행료 면제권', d:'다음 통행료를 한 번 내지 않아도 돼요. 자동으로 사용돼요.', f: async p => { p.pass++; } },
+  { t:'서울 구경', d:'서울로 이동해요. 출발지를 지나면 월급을 받아요.', f: async p => { await moveTo(p, SEOUL); return 'land'; } },
+  { t:'자선 바자회', d:'기부금으로 50만을 내요.', f: async p => { await pay(p, 50, 'fund'); } },
+];
+
+/* ================= 상태 ================= */
+let S = null, deck = [];
+const $ = s => document.querySelector(s);
+const sleep = ms => new Promise(r => setTimeout(r, ms));
+const reduceMotion = matchMedia('(prefers-reduced-motion: reduce)').matches;
+const fmt = n => n.toLocaleString('ko-KR') + '만';
+const esc = s => String(s).replace(/[&<>"']/g, c => ({'&':'&amp;','<':'&lt;','>':'&gt;','"':'&quot;',"'":'&#39;'}[c]));
+const cur = () => S.players[S.turn];
+const shuffle = a => { for (let i = a.length - 1; i > 0; i--) { const j = Math.floor(Math.random() * (i + 1)); [a[i], a[j]] = [a[j], a[i]]; } return a; };
+const rnd = () => 1 + Math.floor(Math.random() * 6);
+
+const buildCost = (i, k) => Math.round(TILES[i].price * BUILD[k]);
+const owned = p => S.owner.map((o, i) => o === p.id ? i : -1).filter(i => i >= 0);
+function invested(i) {
+  let v = TILES[i].price;
+  for (let k = 0; k < S.level[i]; k++) v += buildCost(i, k);
+  return v;
+}
+const sellValue = i => Math.round(invested(i) / 2);
+const assets = p => p.money + owned(p).reduce((s, i) => s + invested(i), 0);
+const ownsGroup = (o, g) => TILES.every((t, i) => t.type !== 'city' || t.g !== g || S.owner[i] === o);
+function toll(i) {
+  const t = TILES[i], o = S.owner[i];
+  if (o < 0) return 0;
+  if (t.type === 'lm') {
+    const n = TILES.filter((x, j) => x.type === 'lm' && S.owner[j] === o).length;
+    return Math.round(t.price * 0.4 * n);
+  }
+  let v = Math.round(t.price * TOLL[S.level[i]]);
+  if (ownsGroup(o, t.g)) v *= 2;
+  return v;
+}
+function log(text) { S.log.unshift(text); S.log.length = Math.min(S.log.length, 30); renderCenter(); }
+
+/* ================= 보드 그리기 ================= */
+const tileEls = [];
+function gridPos(i) {
+  if (i === 0) return [11, 11];
+  if (i < 10) return [11, 11 - i];
+  if (i === 10) return [11, 1];
+  if (i < 20) return [11 - (i - 10), 1];
+  if (i === 20) return [1, 1];
+  if (i < 30) return [1, 1 + (i - 20)];
+  if (i === 30) return [1, 11];
+  return [1 + (i - 30), 11];
+}
+function buildBoard() {
+  const board = $('#board');
+  TILES.forEach((t, i) => {
+    const el = document.createElement('div');
+    const [r, c] = gridPos(i);
+    el.style.gridRow = r; el.style.gridColumn = c;
+    el.className = 'tile';
+    if (t.type === 'city') {
+      el.innerHTML = `<div class="band" style="background:${GROUP_COLORS[t.g]}"></div><div class="nm">${t.name}</div><div class="bld"></div><div class="pr"></div><div class="own"></div>`;
+    } else if (t.type === 'lm') {
+      el.classList.add('lm');
+      el.innerHTML = `<div class="ic">${t.icon}</div><div class="nm">${t.name}</div><div class="pr"></div><div class="own"></div>`;
+    } else if (t.type === 'key') {
+      el.classList.add('key');
+      el.innerHTML = `<div class="ic">★</div><div class="nm">행운<br>카드</div>`;
+    } else if (t.type === 'donate') {
+      el.classList.add('donate');
+      el.innerHTML = `<div class="ic">${t.icon}</div><div class="nm">기부하기</div><div class="pr">${fmt(DONATE)}</div>`;
+    } else {
+      el.classList.add('corner', 'c-' + t.type);
+      const sub = { start:`월급 ${fmt(SALARY)}`, island:'3턴 쉬기', fund:'', space:'원하는 곳으로' }[t.type];
+      el.innerHTML = `<div class="ic">${t.icon}</div><div class="nm">${t.name}</div><div class="pr">${sub}</div>`;
+    }
+    const tk = document.createElement('div'); tk.className = 'tokens'; el.appendChild(tk);
+    el.addEventListener('click', () => onTileTap(i));
+    board.insertBefore(el, board.querySelector('.center'));
+    tileEls[i] = el;
+  });
+  ['#d1', '#d2'].forEach(s => { $(s).innerHTML = '<i></i>'.repeat(9); setFace($(s), 1); });
+}
+const PIPS = { 1:[4], 2:[0,8], 3:[0,4,8], 4:[0,2,6,8], 5:[0,2,4,6,8], 6:[0,2,3,5,6,8] };
+function setFace(el, n) { [...el.children].forEach((p, k) => p.classList.toggle('on', PIPS[n].includes(k))); }
+
+/* ================= 화면 갱신 ================= */
+function renderTiles() {
+  TILES.forEach((t, i) => {
+    const el = tileEls[i], o = S.owner[i];
+    el.classList.toggle('owned', o >= 0);
+    el.classList.toggle('pick', S.phase === 'space' && i !== SPACE);
+    const own = el.querySelector('.own');
+    if (own) own.style.background = o >= 0 ? S.players[o].color : 'transparent';
+    const bld = el.querySelector('.bld');
+    if (bld) bld.textContent = o >= 0 ? LV_ICON[S.level[i]] : '';
+    const pr = el.querySelector('.pr');
+    if (pr && (t.type === 'city' || t.type === 'lm')) pr.textContent = o >= 0 ? fmt(toll(i)) : fmt(t.price);
+    if (t.type === 'fund') pr.textContent = S.fund ? fmt(S.fund) : '';
+  });
+  renderTokens();
+}
+function renderTokens() {
+  tileEls.forEach(el => el.querySelector('.tokens').innerHTML = '');
+  S.players.forEach((p, k) => {
+    if (!p.alive) return;
+    const d = document.createElement('div');
+    d.className = 'tok' + (k === S.turn && S.phase !== 'over' ? ' now' : '');
+    d.style.background = p.color; d.textContent = p.emoji;
+    tileEls[p.pos].querySelector('.tokens').appendChild(d);
+  });
+}
+function renderPlayers() {
+  $('#players').innerHTML = S.players.map((p, k) => {
+    const badges = [];
+    if (!p.alive) badges.push('파산');
+    if (p.island > 0) badges.push(`무인도 ${p.island}턴`);
+    if (p.space) badges.push('우주여행 대기');
+    if (p.pass > 0) badges.push(`면제권 ${p.pass}장`);
+    return `<div class="pc ${k === S.turn && S.phase !== 'over' ? 'active' : ''} ${p.alive ? '' : 'dead'}" style="--pc:${p.color}">
+      <div class="pe">${p.emoji}</div>
+      <div class="pinfo">
+        <div class="pn">${esc(p.name)}</div>
+        <div class="pm">${fmt(p.money)}</div>
+        <div class="ps">도시 ${owned(p).length}곳, 총자산 ${fmt(assets(p))}</div>
+        ${badges.map(b => `<span class="badge">${b}</span>`).join('')}
+      </div></div>`;
+  }).join('');
+  $('#roundTxt').textContent = S.maxRounds ? `라운드 ${S.round} / ${S.maxRounds}` : `라운드 ${S.round}`;
+  $('#fundTxt').textContent = `모인 기부금 ${fmt(S.fund)}`;
+}
+function renderCenter() {
+  const p = cur();
+  $('#turn').innerHTML = S.phase === 'over' ? '게임 끝' :
+    `<span class="te" style="background:${p.color}">${p.emoji}</span>${esc(p.name)} 차례`;
+  const btn = $('#rollBtn'), hint = $('#hint');
+  btn.hidden = S.phase === 'space' || S.phase === 'over';
+  btn.disabled = S.phase !== 'roll';
+  btn.textContent = p.island > 0 ? '탈출 주사위 굴리기' : '주사위 굴리기';
+  hint.hidden = S.phase !== 'space';
+  hint.textContent = '🚀 날아갈 칸을 눌러 주세요';
+  $('#msgs').innerHTML = S.log.slice(0, 3).map(m => `<div>${esc(m)}</div>`).join('');
+}
+function render() { renderTiles(); renderPlayers(); renderCenter(); }
+
+/* ================= 대화상자 ================= */
+function ask(title, body, buttons, opts = {}) {
+  return new Promise(res => {
+    const ov = $('#overlay');
+    ov.innerHTML = `<div class="dialog ${opts.cls || ''}" role="dialog" aria-modal="true">${opts.top || ''}<h2>${title}</h2><div class="dbody">${body}</div><div class="dbtns"></div></div>`;
+    const box = ov.querySelector('.dbtns');
+    buttons.forEach(b => {
+      const el = document.createElement('button');
+      el.className = 'btn ' + (b.kind || '');
+      el.innerHTML = b.label; el.disabled = !!b.disabled;
+      el.onclick = () => { ov.hidden = true; ov.innerHTML = ''; res(b.value); };
+      box.appendChild(el);
+    });
+    ov.hidden = false;
+    const first = box.querySelector('button:not(:disabled)'); if (first) first.focus({ preventScroll:true });
+  });
+}
+const band = i => TILES[i].type === 'city' ? `<div class="topband" style="background:${GROUP_COLORS[TILES[i].g]}"></div>` : '';
+
+/* ================= 이동 ================= */
+async function moveSteps(p, n, speed = 170) {
+  for (let s = 0; s < n; s++) {
+    p.pos = (p.pos + 1) % 40;
+    if (p.pos === 0) { p.money += SALARY; log(`${p.name} 출발지 통과, 월급 ${fmt(SALARY)}`); renderPlayers(); }
+    renderTokens();
+    await sleep(reduceMotion ? 30 : speed);
+  }
+}
+async function moveBack(p, n) {
+  for (let s = 0; s < n; s++) { p.pos = (p.pos + 39) % 40; renderTokens(); await sleep(reduceMotion ? 30 : 200); }
+}
+async function moveTo(p, target) { await moveSteps(p, (target - p.pos + 40) % 40, 70); }
+function goIsland(p) {
+  p.pos = ISLAND; p.island = 3; p.doubles = 0;
+  log(`${p.name} 무인도에 갇혔어요`);
+  render();
+}
+
+/* ================= 돈 ================= */
+async function pay(p, amt, to) {
+  if (p.money < amt) {
+    const ok = await raiseFunds(p, amt);
+    if (!ok) { bankrupt(p, to); return false; }
+  }
+  p.money -= amt;
+  if (to === 'fund') S.fund += amt;
+  else if (to && typeof to === 'object') to.money += amt;
+  render();
+  return true;
+}
+async function raiseFunds(p, amt) {
+  while (p.money < amt) {
+    const props = owned(p);
+    const btns = props.map(i => ({ label:`${TILES[i].name} ${S.level[i] ? LV_ICON[S.level[i]] : ''} 팔기 <small>+${fmt(sellValue(i))}</small>`, value:i }));
+    btns.push({ label:'파산하기', value:'bankrupt', kind:'danger' });
+    const v = await ask(`${esc(p.name)}, 돈이 모자라요`,
+      `내야 할 돈 <b>${fmt(amt)}</b>, 가진 돈 <b>${fmt(p.money)}</b><br>${props.length ? '도시를 팔아 돈을 마련하세요. 들인 돈의 절반을 돌려받아요.' : '팔 수 있는 도시가 없어요.'}`, btns);
+    if (v === 'bankrupt') return false;
+    p.money += sellValue(v);
+    log(`${p.name}이(가) ${TILES[v].name}을(를) ${fmt(sellValue(v))}에 팔았어요`);
+    S.owner[v] = -1; S.level[v] = 0;
+    render();
+  }
+  return true;
+}
+function bankrupt(p, to) {
+  if (to === 'fund') S.fund += p.money;
+  else if (to && typeof to === 'object') to.money += p.money;
+  p.money = 0; p.alive = false;
+  owned(p).forEach(i => { S.owner[i] = -1; S.level[i] = 0; });
+  S.outOrder.push(p.id);
+  log(`${p.name} 파산했어요`);
+  render();
+}
+
+/* ================= 칸 도착 ================= */
+async function landOn(p, i) {
+  const t = TILES[i];
+  render();
+  switch (t.type) {
+    case 'start': return;
+    case 'island': goIsland(p); return 'stop';
+    case 'space':
+      p.space = true; log(`${p.name} 다음 차례에 원하는 칸으로 날아가요`); render(); return 'stop';
+    case 'fund':
+      if (S.fund > 0) {
+        const got = S.fund;
+        await ask('기부금 받기 💝', `모인 기부금 <b>${fmt(got)}</b>을 모두 받았어요!`, [{ label:'신난다', kind:'primary' }]);
+        p.money += got; S.fund = 0; log(`${p.name} 기부금 ${fmt(got)} 받음`); render();
+      } else log('모인 기부금이 아직 없어요');
+      return;
+    case 'donate':
+      await ask('기부하기 🎁', `기부금 <b>${fmt(DONATE)}</b>을 내요.<br>모인 돈은 ‘기부금 받기’ 칸에 도착한 사람이 모두 가져가요.`, [{ label:'기부하기', kind:'primary' }]);
+      await pay(p, DONATE, 'fund'); log(`${p.name} 기부금 ${fmt(DONATE)} 냄`);
+      return;
+    case 'key': {
+      if (!deck.length) deck = shuffle([...CARDS.keys()]);
+      const c = CARDS[deck.pop()];
+      await ask(c.t, c.d, [{ label:'확인', kind:'primary' }], { cls:'card', top:'<div class="cardtag">★ 행운 카드</div>' });
+      log(`${p.name}: ${c.t}`);
+      const r = await c.f(p);
+      render();
+      if (r === 'land' && p.alive) return landOn(p, p.pos);
+      return r;
+    }
+    case 'city':
+    case 'lm':
+      return property(p, i);
+  }
+}
+
+async function property(p, i) {
+  const t = TILES[i], o = S.owner[i];
+  if (o < 0) {
+    if (t.type === 'lm') {
+      const v = await ask(`${t.icon} ${t.name}`, `특별 관광지예요. 관광지를 여러 곳 가질수록 통행료가 올라가요.<br>가진 돈 <b>${fmt(p.money)}</b>`,
+        [{ label:`사기 <small>${fmt(t.price)}</small>`, value:1, kind:'primary', disabled:p.money < t.price },
+         { label:'사지 않기', value:0, kind:'ghost' }]);
+      if (v) { p.money -= t.price; S.owner[i] = p.id; log(`${p.name} ${t.name} 구입`); }
+      render(); return;
+    }
+    let cum = t.price;
+    const opts = [{ label:`땅만 사기 <small>${fmt(cum)}</small>`, value:0, kind:'primary', disabled:p.money < cum }];
+    for (let k = 0; k < 3; k++) {
+      cum += buildCost(i, k);
+      opts.push({ label:`${LV_ICON[k + 1]} ${LV_NAME[k + 1]}까지 짓기 <small>${fmt(cum)}</small>`, value:k + 1, disabled:p.money < cum });
+    }
+    opts.push({ label:'사지 않기', value:-1, kind:'ghost' });
+    const v = await ask(t.name, `주인 없는 도시예요. 가진 돈 <b>${fmt(p.money)}</b>`, opts, { top:band(i) });
+    if (v >= 0) {
+      let cost = t.price; for (let k = 0; k < v; k++) cost += buildCost(i, k);
+      p.money -= cost; S.owner[i] = p.id; S.level[i] = v;
+      log(`${p.name} ${t.name} 구입${v ? `, ${LV_NAME[v]}까지 지음` : ''}`);
+    }
+    render(); return;
+  }
+  if (o === p.id) {
+    if (t.type === 'lm' || S.level[i] >= 3) { log(`${p.name}의 ${t.name}에 도착`); return; }
+    let cum = 0; const opts = [];
+    for (let k = S.level[i]; k < 3; k++) {
+      cum += buildCost(i, k);
+      opts.push({ label:`${LV_ICON[k + 1]} ${LV_NAME[k + 1]}${k > S.level[i] ? '까지' : ''} 짓기 <small>${fmt(cum)}</small>`, value:k + 1, kind:k === S.level[i] ? 'primary' : '', disabled:p.money < cum });
+    }
+    opts.push({ label:'짓지 않기', value:-1, kind:'ghost' });
+    const v = await ask(`내 도시 ${t.name}`, `건물을 올리면 통행료가 크게 올라요. 가진 돈 <b>${fmt(p.money)}</b>`, opts, { top:band(i) });
+    if (v > 0) {
+      let cost = 0; for (let k = S.level[i]; k < v; k++) cost += buildCost(i, k);
+      p.money -= cost; S.level[i] = v; log(`${p.name} ${t.name}에 ${LV_NAME[v]} 지음`);
+    }
+    render(); return;
+  }
+  const owner = S.players[o], amt = toll(i);
+  if (p.pass > 0) {
+    p.pass--;
+    await ask('통행료 면제권 사용', `${owner.emoji} ${esc(owner.name)}의 ${t.name}! 통행료 ${fmt(amt)}을 면제권으로 넘어가요.`, [{ label:'휴, 다행이다', kind:'primary' }], { top:band(i) });
+    log(`${p.name} 면제권 사용`); render(); return;
+  }
+  const extra = t.type === 'city' && ownsGroup(o, t.g) ? '<br>같은 색 도시를 모두 가진 주인이라 통행료가 두 배예요.' : '';
+  await ask(`통행료 ${fmt(amt)}`, `${owner.emoji} <b>${esc(owner.name)}</b>의 ${t.name}에 도착했어요.${extra}`, [{ label:'통행료 내기', kind:'primary' }], { top:band(i) });
+  const ok = await pay(p, amt, owner);
+  if (ok) log(`${p.name} → ${owner.name} 통행료 ${fmt(amt)}`);
+}
+
+/* ================= 차례 진행 ================= */
+async function animateDice() {
+  const d = [$('#d1'), $('#d2')];
+  d.forEach(x => x.classList.add('rolling'));
+  $('#sum').textContent = '';
+  for (let k = 0; k < (reduceMotion ? 1 : 9); k++) { setFace(d[0], rnd()); setFace(d[1], rnd()); await sleep(65); }
+  const a = rnd(), b = rnd();
+  setFace(d[0], a); setFace(d[1], b);
+  d.forEach(x => x.classList.remove('rolling'));
+  $('#sum').textContent = a === b ? `${a + b} 더블` : `${a + b}`;
+  await sleep(300);
+  return [a, b];
+}
+
+async function onRoll() {
+  if (!S || S.phase !== 'roll') return;
+  S.phase = 'busy'; renderCenter();
+  const p = cur();
+  const [a, b] = await animateDice();
+  const dbl = a === b, sum = a + b;
+
+  if (p.island > 0) {
+    if (dbl) {
+      p.island = 0; log(`더블! ${p.name} 무인도 탈출`);
+      await moveSteps(p, sum); await landOn(p, p.pos);
+    } else {
+      p.island--;
+      log(p.island > 0 ? `${p.name} 탈출 실패, ${p.island}턴 남음` : `${p.name} 탈출 실패, 다음 차례엔 떠나요`);
+    }
+    return endTurn();
+  }
+
+  if (dbl) {
+    p.doubles++;
+    if (p.doubles >= 3) { log(`더블 세 번! ${p.name} 과속으로 무인도행`); goIsland(p); return endTurn(); }
+  }
+  await moveSteps(p, sum);
+  const r = await landOn(p, p.pos);
+  if (S.phase === 'over' || !p.alive) return endTurn();
+  if (dbl && r !== 'stop' && p.island === 0 && !p.space) {
+    log(`더블! ${p.name} 한 번 더`);
+    S.phase = 'roll'; render(); return;
+  }
+  endTurn();
+}
+
+async function onTileTap(i) {
+  if (!S) return;
+  if (S.phase === 'space') {
+    if (i === SPACE) return;
+    S.phase = 'busy';
+    const p = cur(); p.space = false;
+    log(`${p.name} 🚀 ${TILES[i].name}(으)로 출발`);
+    render();
+    await moveSteps(p, (i - p.pos + 40) % 40, 55);
+    await landOn(p, p.pos);
+    return endTurn();
+  }
+  if (S.phase === 'roll') showTileInfo(i);
+}
+
+function showTileInfo(i) {
+  const t = TILES[i], o = S.owner[i];
+  if (t.type !== 'city' && t.type !== 'lm') return;
+  let body = `땅값 <b>${fmt(t.price)}</b><br>`;
+  if (o >= 0) {
+    const ow = S.players[o];
+    body += `주인 ${ow.emoji} <b>${esc(ow.name)}</b>${t.type === 'city' ? `, ${LV_NAME[S.level[i]]}` : ''}<br>지금 통행료 <b>${fmt(toll(i))}</b>`;
+  } else body += '아직 주인이 없어요';
+  if (t.type === 'city') {
+    body += `<br><br>건설비: ${[1,2,3].map(k => `${LV_ICON[k]} ${fmt(buildCost(i, k - 1))}`).join(', ')}`;
+    body += `<br>통행료: ${[0,1,2,3].map(k => `${LV_NAME[k]} ${fmt(Math.round(t.price * TOLL[k]))}`).join(', ')}`;
+  } else body += '<br><br>관광지를 여러 곳 가질수록 통행료가 올라요';
+  ask(`${t.icon || ''} ${t.name}`, body, [{ label:'닫기', kind:'ghost' }], { top:band(i) });
+}
+
+function endTurn() {
+  if (S.phase === 'over') return;
+  const alive = S.players.filter(p => p.alive);
+  if (alive.length <= 1) return gameOver(alive.length ? `${alive[0].name} 혼자 남았어요!` : '');
+  cur().doubles = 0;
+  let n = S.turn;
+  do { n = (n + 1) % S.players.length; } while (!S.players[n].alive);
+  if (n <= S.turn) {
+    S.round++;
+    if (S.maxRounds && S.round > S.maxRounds) { S.round = S.maxRounds; return gameOver(`${S.maxRounds}라운드가 모두 끝났어요`); }
+  }
+  S.turn = n;
+  const q = cur();
+  S.phase = q.space ? 'space' : 'roll';
+  render();
+  save();
+}
+
+async function gameOver(reason) {
+  S.phase = 'over'; render(); clearSave();
+  const alive = S.players.filter(p => p.alive).sort((a, b) => assets(b) - assets(a));
+  const out = [...S.outOrder].reverse().map(id => S.players[id]);
+  const list = [...alive, ...out];
+  const body = `${esc(reason)}<br><br>` + list.map((p, k) =>
+    `<div class="rank"><span class="no">${k + 1}</span><span class="em">${p.emoji}</span>${esc(p.name)}<span class="v">${p.alive ? fmt(assets(p)) : '파산'}</span></div>`).join('');
+  const v = await ask(`🏆 ${esc(list[0].name)} 우승!`, body, [{ label:'새 게임', value:'new', kind:'primary' }, { label:'보드 보기', value:'view', kind:'ghost' }]);
+  if (v === 'new') showSetup();
+}
+
+/* ================= 저장 (Claude 앱 안에서만) ================= */
+const SAVE_KEY = 'earth-trip-save';
+async function save() {
+  try { if (window.storage && S && S.phase !== 'over') await window.storage.set(SAVE_KEY, JSON.stringify({ S, deck }), false); } catch (e) {}
+}
+async function loadSave() {
+  try { if (!window.storage) return null; const r = await window.storage.get(SAVE_KEY, false); return r ? JSON.parse(r.value) : null; } catch (e) { return null; }
+}
+async function clearSave() { try { if (window.storage) await window.storage.delete(SAVE_KEY, false); } catch (e) {} }
+
+/* ================= 시작 화면 ================= */
+let setupCount = 4, setupRounds = 20;
+const setupPlayers = [0,1,2,3].map(k => ({ name:'', emoji:EMOJIS[k] }));
+
+function renderSetup() {
+  $('#countSeg').innerHTML = [2,3,4].map(n => `<button class="${n === setupCount ? 'on' : ''}" data-n="${n}">${n}명</button>`).join('');
+  $('#roundSeg').innerHTML = [[10,'짧게 10'],[20,'보통 20'],[30,'길게 30'],[0,'끝까지']].map(([v, l]) =>
+    `<button class="${v === setupRounds ? 'on' : ''}" data-r="${v}">${l}${v ? '라운드' : ''}</button>`).join('');
+  const rows = $('#pRows');
+  rows.querySelectorAll('input').forEach((inp, k) => setupPlayers[k].name = inp.value);
+  rows.innerHTML = setupPlayers.slice(0, setupCount).map((p, k) =>
+    `<div class="prow"><button class="em" data-k="${k}" style="background:${PCOLORS[k]}" aria-label="말 바꾸기">${p.emoji}</button>
+     <input maxlength="8" placeholder="플레이어 ${k + 1}" value="${esc(p.name)}"></div>`).join('');
+}
+function showSetup() {
+  $('#overlay').hidden = true;
+  renderSetup();
+  $('#setup').hidden = false;
+  loadSave().then(sv => { $('#resumeBtn').hidden = !(sv && sv.S && sv.S.phase !== 'over'); });
+}
+$('#countSeg').addEventListener('click', e => { const n = +e.target.dataset.n; if (n) { setupCount = n; renderSetup(); } });
+$('#roundSeg').addEventListener('click', e => { const r = e.target.dataset.r; if (r !== undefined) { setupRounds = +r; renderSetup(); } });
+$('#pRows').addEventListener('click', e => {
+  const k = e.target.dataset.k; if (k === undefined) return;
+  const used = setupPlayers.slice(0, setupCount).map(p => p.emoji);
+  let idx = EMOJIS.indexOf(setupPlayers[k].emoji);
+  do { idx = (idx + 1) % EMOJIS.length; } while (used.includes(EMOJIS[idx]) && EMOJIS[idx] !== setupPlayers[k].emoji);
+  setupPlayers[k].emoji = EMOJIS[idx];
+  renderSetup();
+});
+$('#startBtn').addEventListener('click', () => {
+  const names = [...$('#pRows').querySelectorAll('input')].map(i => i.value.trim());
+  S = {
+    players: names.map((n, k) => ({ id:k, name:n || `플레이어 ${k + 1}`, emoji:setupPlayers[k].emoji, color:PCOLORS[k],
+      money:START_MONEY, pos:0, alive:true, island:0, space:false, pass:0, doubles:0 })),
+    owner: Array(40).fill(-1), level: Array(40).fill(0),
+    turn:0, round:1, maxRounds:setupRounds, fund:0, phase:'roll', log:[], outOrder:[]
+  };
+  deck = shuffle([...CARDS.keys()]);
+  log(`모두 ${fmt(START_MONEY)}씩 들고 출발! ${S.players[0].name}부터 시작해요`);
+  $('#setup').hidden = true;
+  render(); save();
+});
+$('#resumeBtn').addEventListener('click', async () => {
+  const sv = await loadSave(); if (!sv) return;
+  S = sv.S; deck = sv.deck || shuffle([...CARDS.keys()]);
+  if (S.phase === 'busy') S.phase = cur().space ? 'space' : 'roll';
+  $('#setup').hidden = true; render();
+});
+
+/* ================= 버튼 ================= */
+$('#rollBtn').addEventListener('click', onRoll);
+$('#rulesBtn').addEventListener('click', () => {
+  if (S && S.phase === 'busy') return;
+  ask('게임 규칙', `<div class="rules">
+    <p>🎲 주사위 두 개를 굴려 나온 수만큼 이동해요. 같은 수(더블)가 나오면 한 번 더! 더블 세 번이면 무인도로 가요.</p>
+    <p>🏙️ 주인 없는 도시는 살 수 있어요. 내 도시에 다시 오면 별장, 빌딩, 호텔을 지을 수 있어요.</p>
+    <p>💰 남의 도시에 서면 통행료를 내요. 같은 색 도시 3곳을 모두 가지면 통행료가 두 배예요.</p>
+    <p>🚩 출발지를 지날 때마다 월급 ${fmt(SALARY)}을 받아요.</p>
+    <p>🏝️ 무인도에선 3턴 쉬어요. 더블이 나오면 바로 탈출해요.</p>
+    <p>🚀 우주여행 칸에 서면 다음 차례에 원하는 칸으로 날아가요.</p>
+    <p>🎁 기부하기 칸에서 낸 돈은 💝 기부금 받기 칸에 도착한 사람이 모두 가져가요.</p>
+    <p>📉 돈이 모자라면 도시를 반값에 팔아야 해요. 그래도 모자라면 파산! 마지막까지 남거나, 정한 라운드가 끝났을 때 총자산이 가장 많은 사람이 이겨요.</p>
+    <p>👆 도시 칸을 누르면 통행료와 건설비를 볼 수 있어요.</p></div>`,
+    [{ label:'알겠어요', kind:'primary' }]);
+});
+$('#endBtn').addEventListener('click', async () => {
+  if (!S || S.phase === 'busy' || S.phase === 'over') return;
+  const v = await ask('게임을 끝낼까요?', '지금 총자산으로 순위를 매겨요.', [{ label:'끝내고 순위 보기', value:1, kind:'danger' }, { label:'계속하기', value:0, kind:'ghost' }]);
+  if (v) gameOver('게임을 여기서 끝냈어요');
+});
+$('#newBtn').addEventListener('click', async () => {
+  if (S && S.phase === 'busy') return;
+  if (S && S.phase !== 'over') {
+    const v = await ask('새 게임을 시작할까요?', '지금 하던 게임은 사라져요.', [{ label:'새 게임', value:1, kind:'danger' }, { label:'계속하기', value:0, kind:'ghost' }]);
+    if (!v) return;
+    await clearSave();
+  }
+  showSetup();
+});
+
+buildBoard();
+showSetup();
+</script>
+</body>
+</html>
