@@ -634,13 +634,22 @@
 // 다음 라운드 조편성이 나오면 숫자(예: 5)를 선수 배열로 바꿔 주세요.
 // UPDATED 값을 바꾸면 화면 하단 업데이트 시각이 바뀝니다.
 // ============================================================
-const UPDATED = '제5회 국무총리배 일정·조편성 반영 (2026-10-30 01:05)';
+const UPDATED = '성남팀 명단 반영 (2026-10-30 01:11)';
 
 // 성남팀 선수 명단 (이름만 적으면 노란색 + \u2713 로 강조됩니다)
-//  이번 대회 출전: 이소윤 · 한지아 · 임정현 · 백준우 · 김이겸 · 최하빈 · 백시원
 const SEONGNAM_TEAM = new Set([
-  '이소윤','한지아','임정현','백준우','김이겸','최하빈','백시원',
+  // 초등부
+  '한지아','이소윤','최하빈','윤우재','백준우','김이겸','백시원','임정현',
+  // 중등부
+  '정예은','임채민','박보민','용지윤','조수빈','이세움','임지우','김윤후','우서진','정지흔','한호',
+  // 고등부
+  '주시하','유지수','이제인','정현우','국대헌',
+  // 대학부
+  '이나을',
 ]);
+// 일반부: 이 소속의 선수는 전원 성남팀으로 강조
+const SEONGNAM_ORGS = new Set(['성남시청']);
+const isSeongnam = a => SEONGNAM_TEAM.has(a.name) || SEONGNAM_ORGS.has(a.org);
 
 // 출발 위치(아웃코스) — 조 안의 순서대로 배정됩니다
 const LANES = [
@@ -1218,7 +1227,7 @@ function renderHeats(ev) {
         html += `<li class="heat-athlete" data-name="${a.name}">
           ${rank}
           <span class="lane-dot ${a.lane.cls}" title="${a.lane.label}"></span>
-          <span class="athlete-name${SEONGNAM_TEAM.has(a.name) ? ' seongnam' : ''}">${a.name}</span>
+          <span class="athlete-name${isSeongnam(a) ? ' seongnam' : ''}">${a.name}</span>
           <span class="athlete-org">${a.org}</span>
           ${rec}${qb}
         </li>`;
@@ -1563,7 +1572,7 @@ function renderMaster() {
     rows.forEach((r, i) => {
       body += `<tr>
         <td class="c-no">${i + 1}</td>
-        <td class="name c-name${SEONGNAM_TEAM.has(r.name) ? ' seongnam' : ''}">${r.name}</td>
+        <td class="name c-name${isSeongnam(r) ? ' seongnam' : ''}">${r.name}</td>
         <td class="org">${r.org}</td>`;
       dists.forEach(d => {
         const c = r.d[d] || {};
