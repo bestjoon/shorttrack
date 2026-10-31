@@ -635,7 +635,7 @@
 // 다음 라운드 조편성이 나오면 숫자(예: 5)를 선수 배열로 바꿔 주세요.
 // UPDATED 값을 바꾸면 화면 하단 업데이트 시각이 바뀝니다.
 // ============================================================
-const UPDATED = '마스터 컨트롤 시트 재계산 — 미출전 종목 RK·CDR 제외 (2026-10-31 20:36)';
+const UPDATED = '마스터 시트 TOTAL 공동 순위 적용 (2026-11-01 08:20)';
 
 // 성남팀 선수 명단 (이름만 적으면 노란색 + \u2713 로 강조됩니다)
 const SEONGNAM_TEAM = new Set([
@@ -1486,7 +1486,7 @@ function renderSchedule() {
 //  [한 경기 내 순서] 정상 완주 → DNF(no time) → PEN → DNS
 //  [라운드별 순위] 완주자는 조 순위 / DNF·no time 은 같은 조 완주자 다음 순위 /
 //                  PEN · DNS 는 라운드 전체의 마지막 순위 (PEN → DNS)
-//  [TOTAL] FP 내림차순 → 동점 시 CDR(종목 랭킹 합계) 오름차순 → 이름순
+//  [TOTAL] FP 내림차순 → 동점 시 CDR(종목 랭킹 합계) 오름차순 → … → 그래도 같으면 공동 순위(표 나열만 이름순)
 // ============================================================
 const FA_POINTS = [34, 21, 13, 8, 5, 3, 2, 1];
 const TOP_LIMIT = 8;
@@ -1662,7 +1662,7 @@ function buildMaster() {
 // TOTAL 동점 처리
 //  FP 내림차순 → CDR 오름차순
 //  → 종목별 RK 를 좋은 순으로 나열해 차례대로 비교(최고 순위 → 그다음 순위 …)
-//  → 그래도 같으면 대회 프로그램상 가장 긴 거리의 best time → 이름순
+//  → 그래도 같으면 대회 프로그램상 가장 긴 거리의 best time → 그래도 같으면 공동 순위
 function rankVector(r, dists) {
   return dists
     .map(d => (r.d[d] && typeof r.d[d].rk === 'number') ? r.d[d].rk : Infinity)
@@ -1687,7 +1687,8 @@ function cmpTotal(a, b, dists, longest) {
   r = cmpNum(bt(a), bt(b));
   if (r) return r;
 
-  return a.name.localeCompare(b.name, 'ko');
+  // 여기까지 같으면 동점 → 공동 순위 (이름순은 표 나열 순서에만 사용)
+  return 0;
 }
 
 function renderMaster() {
@@ -1715,7 +1716,10 @@ function renderMaster() {
     const anyDone = DIST_ORDER.some(d => g.dists[d] && g.dists[d].done);
 
     const longest = longestDist(dists);
-    const rows = [...g.ath.values()].sort((a, b) => cmpTotal(a, b, dists, longest));
+    const rows = [...g.ath.values()].sort((a, b) => cmpTotal(a, b, dists, longest) || a.name.localeCompare(b.name, 'ko'));
+    // TOTAL 순위: 동점자는 공동 순위, 다음 순위는 인원수만큼 건너뜀 (예: 3,3,5)
+    const trk = [];
+    rows.forEach((r, i) => { trk[i] = (i > 0 && cmpTotal(rows[i - 1], r, dists, longest) === 0) ? trk[i - 1] : i + 1; });
 
     let head1 = `<th class="dist-head c-no">&nbsp;</th><th class="dist-head c-name">Distance</th><th class="dist-head">&nbsp;</th>`;
     dists.forEach(d => { head1 += `<th class="dist-head" colspan="${subs[d].length + 2}">${d.toLowerCase()}</th>`; });
@@ -1740,7 +1744,7 @@ function renderMaster() {
         body += c._na ? cellHtml('', 'fa') + `<td class="rk dns">-</td>`
                       : cellHtml(c.fa, 'fa') + cellHtml(c.rk, 'rk' + (c._dns ? ' dns' : ''));
       });
-      body += `<td class="fp">${r.fp || ''}</td><td class="cdr">${r.cdr === null ? '' : r.cdr}</td><td class="trk">${anyDone ? i + 1 : ''}</td>
+      body += `<td class="fp">${r.fp || ''}</td><td class="cdr">${r.cdr === null ? '' : r.cdr}</td><td class="trk">${anyDone ? trk[i] : ''}</td>
       </tr>`;
     });
 
@@ -1771,7 +1775,7 @@ function renderMaster() {
     · <b>YC</b>(한 경기 PEN 2회) 는 해당 종목 전 기록이 무효가 되어 DNS 상당의 최하위·무득점<br>
     · 이번 대회는 4개 종목 중 2개 종목만 선택 출전 — <b>미출전 종목은 랭킹(RK)·CDR 계산에서 제외</b>하고 '-' 로 표시합니다<br>
     · PR = 예선, QF = 준준결승, SF = 준결승 순위 · FA = 획득 점수 · RK = 종목 랭킹<br>
-    · CDR = 종목별 RK 합계 · TOTAL RK 는 FP 내림차순, 동점 시 CDR 오름차순<br>
+    · CDR = 종목별 RK 합계 · TOTAL RK 는 FP 내림차순, 동점 시 CDR 오름차순 → 종목 RK 비교 → 가장 긴 거리 best time, 그래도 같으면 <b>공동 순위</b>(예: 3·3·5위)<br>
     · FP · CDR 까지 같으면 <b>각 종목 최고 순위 → 그다음 순위 …</b> 순으로 비교하고,
       그래도 같으면 <b>가장 긴 거리의 best time</b> 으로 가립니다
   </div>`;
