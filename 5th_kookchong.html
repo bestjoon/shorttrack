@@ -415,6 +415,7 @@
     flex-shrink: 0;
   }
   .q-badge.plus { background: #7fe3a0; }
+  .pts-badge { font-size: 10px; font-weight: 700; color: #f5c842; white-space: nowrap; flex-shrink: 0; }
   .q-badge.ad { background: #f4a261; }
 
   /* Lane colors */
@@ -634,7 +635,7 @@
 // 다음 라운드 조편성이 나오면 숫자(예: 5)를 선수 배열로 바꿔 주세요.
 // UPDATED 값을 바꾸면 화면 하단 업데이트 시각이 바뀝니다.
 // ============================================================
-const UPDATED = '2일차 #38 남자 대학부 3000M 결승 조편성, #35 김세아 DNS 반영 (2026-10-31 18:02)';
+const UPDATED = '2일차 #34 3000M 남자 대학부 준결승, #35~#38 3000M 결승 결과(득점 우선 순위) 반영 (2026-10-31 19:14)';
 
 // 성남팀 선수 명단 (이름만 적으면 노란색 + \u2713 로 강조됩니다)
 const SEONGNAM_TEAM = new Set([
@@ -1074,21 +1075,21 @@ const PROGRAM = [
   ]},
   { day:2, ice:'빙판정리 (Full)', time:'16:40' },
   { n:34, day:2, time:'17:00', dist:'3000M', grp:'MU', round:'준결승', adv:'2조 (T1+6)', heats:[
-    ['이정민 경희대','한병찬 단국대','주재희 한국체육대','김한성 동의대','김유성 한국체육대','신희서 경희사이버대','이승호 경일대'],
-    ['이선호 단국대','장윤성 국민대','임민섭 한국체육대','이광호 단국대','장요셉 경남대','정우혁 디지털서울문화예술대','최성혁 한국체육대'],
+    ['이정민 경희대 5:09.610 P13','한병찬 단국대 5:09.750 P28 +Q','주재희 한국체육대 5:08.360 P36 Q','김한성 동의대 5:45.346 P2','김유성 한국체육대 5:07.890 P34 +Q','신희서 경희사이버대 5:10.441 P5','이승호 경일대 5:14.770 P18 +Q'],
+    ['이선호 단국대 4:58.920 P33 +Q','장윤성 국민대 4:57.080 P21 +Q','임민섭 한국체육대 4:57.580 P13','이광호 단국대 4:56.830 P49 Q','장요셉 경남대 5:34.831 P2','정우혁 디지털서울문화예술대 5:01.070 P3','최성혁 한국체육대 4:59.280 P15 +Q'],
   ]},
   { day:2, ice:'빙판정리 (Track)', time:'17:20' },
   { n:35, day:2, time:'17:35', dist:'3000M', grp:'WU', round:'결승', adv:'Final A', heats:[
-    ['김도연 경희사이버대','이나을 용인대','오윤지 경희사이버대','김지원 한국체육대','김세아 용인대 DNS'],
+    ['김도연 경희사이버대 8:29.220 P33','이나을 용인대 7:16.060 P46','오윤지 경희사이버대 7:18.270 P13','김지원 한국체육대 7:15.930 P34','김세아 용인대 DNS'],
   ]},
   { n:36, day:2, time:'17:35', dist:'3000M', grp:'WG', round:'결승', adv:'Final A', heats:[
-    ['유현민 전북도청','김찬서 서울일반','박윤정 서울일반','장연재 화성시청','김이현 전북도청'],
+    ['유현민 전북도청 6:40.930 P15','김찬서 서울일반 5:26.730 P49','박윤정 서울일반 5:31.790 P13','장연재 화성시청 5:31.760 P46','김이현 전북도청 6:13.774 P8'],
   ]},
   { n:37, day:2, time:'17:35', dist:'3000M', grp:'MG', round:'결승', adv:'Final A', heats:[
-    ['김한별 성남시청','심준철 화성시청','송현우 성남시청','이도현 부산일반','원주성 서울시청','황대헌 강원도청','강이안 전북연맹','정원식 스포츠토토'],
+    ['김한별 성남시청 4:52.770 P34','심준철 화성시청 4:54.950 P33','송현우 성남시청 4:55.080 P23','이도현 부산일반 5:28.510 P2','원주성 서울시청 4:56.870 P5','황대헌 강원도청 6:09.990 P16','강이안 전북연맹 5:15.885 P3','정원식 스포츠토토 4:53.530 P21'],
   ]},
   { n:38, day:2, time:'17:35', dist:'3000M', grp:'MU', round:'결승', adv:'Final A', heats:[
-    ['이광호 단국대','주재희 한국체육대','이선호 단국대','김유성 한국체육대','장윤성 국민대','한병찬 단국대','최성혁 한국체육대','이승호 경일대'],
+    ['이광호 단국대 5:24.350 P23','주재희 한국체육대 PEN(EQP)','이선호 단국대 5:22.470 P49','김유성 한국체육대 6:07.030 P12','장윤성 국민대 5:22.720 P21','한병찬 단국대 5:29.038 P5','최성혁 한국체육대 5:22.830 P13','이승호 경일대 5:35.087 P3'],
   ]},
   { day:2, ice:'2일차 경기 종료', time:'18:10' },
 
@@ -1232,7 +1233,20 @@ function parseAthlete(str) {
   let q = '';
   const j = rest.findIndex(t => /^\+?Q$/i.test(t));
   if (j >= 0) { q = rest[j].toUpperCase(); rest.splice(j, 1); }
-  return { name: p[0] || '', org: p[1] || '', record: rest.join(' ') || '', adv: adv, q: q };
+  // 'P46' = 2000M·3000M 득점제 경기 득점 (결과지 기록 앞 괄호 숫자). 순위는 득점 우선
+  let pts;
+  const k = rest.findIndex(t => /^P\d+$/i.test(t));
+  if (k >= 0) { pts = parseInt(rest[k].slice(1), 10); rest.splice(k, 1); }
+  return { name: p[0] || '', org: p[1] || '', record: rest.join(' ') || '', adv: adv, q: q, pts: pts };
+}
+
+// 순위 비교: 득점이 있으면(2000M·3000M) 득점 높은 순 → 같은 득점이면 기록 순, 그 외는 기록 순
+function cmpAth(a, b) {
+  if (a.pts !== undefined || b.pts !== undefined) {
+    const x = a.pts === undefined ? -1 : a.pts, y = b.pts === undefined ? -1 : b.pts;
+    if (x !== y) return y - x;
+  }
+  return parseRecord(a.record) - parseRecord(b.record);
 }
 
 const items = [];
@@ -1319,7 +1333,7 @@ function computeQualifiers(ev) {
   ev.heats.forEach(heat => {
     const scored = heat.athletes
       .filter(a => a.record && !isSpecial(a.record) && parseRecord(a.record) !== Infinity)
-      .sort((x, y) => parseRecord(x.record) - parseRecord(y.record));
+      .sort(cmpAth);
     if (scored.length) {
       scored.slice(0, auto).forEach(a => q.set(akey(a), 'Q'));
       if (scored[auto]) nextPlace.push(scored[auto]);
@@ -1355,7 +1369,7 @@ function renderHeats(ev) {
     } else {
       const hasRecords = heat.athletes.some(a => a.record);
       let list = heat.athletes.map((a, i) => ({ ...a, lane: LANES[i] || LANES[0] }));
-      if (hasRecords) list.sort((a, b) => parseRecord(a.record) - parseRecord(b.record));
+      if (hasRecords) list.sort(cmpAth);
 
       html += '<ul class="heat-athletes">';
       list.forEach((a, i) => {
@@ -1364,6 +1378,7 @@ function renderHeats(ev) {
         const rank = hasRecords
           ? `<span class="rank-badge${scored ? ' r' + (i + 1) : ''}">${scored ? i + 1 : '-'}</span>`
           : '';
+        const pt = a.pts !== undefined ? `<span class="pts-badge">${a.pts}점</span>` : '';
         const rec = a.record
           ? `<span class="athlete-record${sp ? ' dnf' : ''}">${a.record}</span>`
           : '';
@@ -1374,7 +1389,7 @@ function renderHeats(ev) {
           <span class="lane-dot ${a.lane.cls}" title="${a.lane.label}"></span>
           <span class="athlete-name${isSeongnam(a) ? ' seongnam' : ''}">${a.name}</span>
           <span class="athlete-org">${a.org}</span>
-          ${rec}${qb}
+          ${pt}${rec}${qb}
         </li>`;
       });
       html += '</ul>';
@@ -1507,7 +1522,7 @@ function rankRound(heats) {
   heats.forEach(h => {
     const done = h.athletes
       .filter(a => a.record && !isSpecial(a.record) && parseRecord(a.record) !== Infinity)
-      .sort((x, y) => parseRecord(x.record) - parseRecord(y.record));
+      .sort(cmpAth);
     done.forEach((a, i) => map.set(akey(a), { rk:i+1, code:null }));
 
     const inHeat = h.athletes.filter(a =>
@@ -1744,6 +1759,7 @@ function renderMaster() {
     · 배점: 종목별 랭킹 1~8위에게 34 · 21 · 13 · 8 · 5 · 3 · 2 · 1점<br>
     · <b>YC</b> 로 점수가 무효가 된 자리는 <b>차순위자</b>에게 넘어갑니다<br>
     · 2000M · 3000M(득점제) 경기의 Q 표시는 결과지 표기를 그대로 따릅니다<br>
+    · 2000M · 3000M 경기 순위는 결과지 <b>득점</b>(기록 앞 괄호 숫자) 우선, 같은 득점이면 기록 순<br>
     · 종목 최종순위: <b>Final A → Final B → 결승 미진출자</b>.
       Final B 가 있으면 A · B 는 그 경기 결과만 사용합니다<br>
     · 미진출자: 탈락 라운드가 깊은 순 → 그 라운드 finish order →
