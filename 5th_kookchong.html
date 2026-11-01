@@ -314,6 +314,22 @@
   .event-meta-round { white-space: nowrap; }
   .event-meta-detail { opacity: 0.7; white-space: nowrap; }
 
+
+  /* 2000M·3000M 득점 기록 팝업 */
+  .score-btn { flex-shrink: 0; margin-right: 6px; padding: 3px 8px; border-radius: 6px; border: 1px solid var(--accent);
+    background: rgba(0,201,255,0.12); color: var(--accent); font-size: 11px; font-weight: 700; cursor: pointer;
+    font-family: 'Noto Sans KR', sans-serif; line-height: 1.4; }
+  .score-btn:active { background: rgba(0,201,255,0.3); }
+  .score-pop { position: fixed; inset: 0; z-index: 1000; background: rgba(5,12,24,0.75); display: flex;
+    align-items: stretch; justify-content: center; padding: 8px; }
+  .score-pop-box { position: relative; width: 100%; max-width: 900px; background: #EAF1F6; border-radius: 12px;
+    overflow: hidden; display: flex; flex-direction: column; box-shadow: 0 10px 40px rgba(0,0,0,0.5); }
+  .score-pop-bar { display: flex; align-items: center; gap: 8px; padding: 6px 10px; background: #0E2A47; color: #fff;
+    font-size: 12px; font-weight: 700; }
+  .score-pop-bar span { flex: 1; overflow: hidden; text-overflow: ellipsis; white-space: nowrap; }
+  .score-pop-close { border: 1px solid rgba(255,255,255,0.5); background: transparent; color: #fff; border-radius: 6px;
+    padding: 3px 10px; font-size: 12px; font-weight: 700; cursor: pointer; }
+  .score-pop iframe { flex: 1; width: 100%; border: 0; background: #EAF1F6; }
   .toggle-icon { color: var(--muted); font-size: 15px; transition: transform 0.25s; flex-shrink: 0; }
   .time-group.open .toggle-icon { transform: rotate(180deg); }
 
@@ -1468,6 +1484,8 @@ function buildEventEl(it) {
         <span class="event-meta-round">${roundIcon(it.round)}</span>
         <span class="event-meta-detail">${detail}</span>
       </div>
+      ${(it.dist === '2000M' || it.dist === '3000M') && drawn
+        ? `<button class="score-btn" onclick="event.stopPropagation(); openScoring('${it._uid}')">기록</button>` : ''}
       <span class="toggle-icon">\u25bc</span>
     </div>
     <div class="time-group-body">${renderHeats(it)}</div>
@@ -2020,6 +2038,38 @@ function clearHighlights() {
 function closeSearch() { searchResults.style.display = 'none'; }
 
 // ============================================================
+
+// ============================================================
+// 2000M·3000M 득점 기록 팝업 — 해당 경기 데이터를 득점 집계 페이지로 전달
+// ============================================================
+const SCORING_PAGE = '5th_kookchong_scoring.html';
+function openScoring(uid) {
+  const ev = items.find(x => x._uid === uid);
+  if (!ev) return;
+  const data = {
+    v: 1, n: ev.n, day: ev.day, title: `${ev.n}. ${ev.name}`,
+    event: parseInt(ev.dist, 10), round: ev.round, adv: ev.adv,
+    groups: ev.heats.map(h => ({
+      skaters: h.athletes.map((a, i) => ({
+        lane: i + 1, name: a.name, org: a.org, ad: !!a.adv,
+        record: a.record || '', pts: (a.pts === undefined ? null : a.pts),
+      })),
+    })),
+  };
+  const enc = btoa(unescape(encodeURIComponent(JSON.stringify(data))));
+  const url = SCORING_PAGE + '#data=' + encodeURIComponent(enc);
+  const pop = document.createElement('div');
+  pop.className = 'score-pop';
+  pop.innerHTML = `<div class="score-pop-box">
+      <div class="score-pop-bar"><span>${data.title} · 득점 기록</span>
+        <button class="score-pop-close">닫기 ✕</button></div>
+      <iframe src="${url}" title="득점 기록"></iframe></div>`;
+  const close = () => { pop.remove(); document.body.style.overflow = ''; };
+  pop.querySelector('.score-pop-close').onclick = close;
+  pop.addEventListener('click', e => { if (e.target === pop) close(); });
+  document.body.style.overflow = 'hidden';
+  document.body.appendChild(pop);
+}
 buildTabs();
 renderSchedule();
 renderMaster();
